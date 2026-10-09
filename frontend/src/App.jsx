@@ -16,6 +16,7 @@ import UserManagementView from './components/UserManagementView';
 import LoginView from './components/LoginView';
 import { CheckCircle2 } from 'lucide-react';
 import { getRankSeniority, canExportGeneralCsv, canExportPayrollCsv, canAccessLetters } from './utils/permissions';
+import * as db from './supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
@@ -208,91 +209,64 @@ export default function App() {
     notify(`Welcome, ${user.rank} ${user.name}. Clearance verified.`);
   };
 
-  // Verify server session integrity (detects server restart, downtime, or invalid token)
+  // Verify server session integrity directly against Supabase
   const verifySession = useCallback(async () => {
     const token = sessionStorage.getItem('neg_token');
-    const savedServerId = sessionStorage.getItem('neg_server_instance_id');
     if (!token) {
       if (currentUser) handleLogout();
       return false;
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/verify`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.status === 403) {
-        handleLogout('Security clearance account has been disbanded by High Command. Access denied.');
-        return false;
-      }
-
-      if (res.status === 401) {
-        handleLogout('Session expired or authentication token required. Automatically logged off.');
-        return false;
-      }
-
-      if (!res.ok) {
-        // Temporary server 502/503/500 glitch or cold-start: do not immediately log out
-        return false;
-      }
-
-      const data = await res.json();
+      const data = await db.verifySession(token);
       if (data.user?.status === 'Disbanded') {
         handleLogout('Security clearance account has been disbanded by High Command. Access denied.');
         return false;
       }
-
-      // Update server instance ID smoothly without kicking user out
-      if (data.server_instance_id && data.server_instance_id !== savedServerId) {
-        sessionStorage.setItem('neg_server_instance_id', data.server_instance_id);
-      }
-
-      return true;
+      return data.valid;
     } catch {
-      // Temporary network interruption or server waking up from sleep - do not log out
-      return false;
+      return true;
     }
   }, [currentUser, handleLogout]);
 
-  // Fetch all NEG operations data
+  // Fetch all NEG operations data directly from Supabase
   const fetchData = useCallback(async () => {
     if (!currentUser) return;
     setIsRefreshing(true);
     try {
-      const promises = [
-        fetch(`${API_BASE}/api/dashboard/stats`).then(r => r.json()).catch(() => null),
-        fetch(`${API_BASE}/api/personnel`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/presence`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/payroll`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/armory`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/armory/depot-stockpile`).then(r => r.json()).catch(() => ({ stockpiles: {}, issued: {} })),
-        fetch(`${API_BASE}/api/escort`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/vehicles`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/training`).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/infractions`, { headers: authHeaders() }).then(r => r.json()).catch(() => ({ is_admin_view: false, infractions: [], summaries: [], my_summary: null, catalog: [] })),
-        fetch(`${API_BASE}/api/chat/messages`, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
-        fetch(`${API_BASE}/api/resignations`, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
-      ];
-
-      // Disciplinary letters only accessible by Admin role (rank Master Sergeant to Director)
-      if (canAccessLetters(currentUser)) {
-        promises.push(fetch(`${API_BASE}/api/letters`, { headers: authHeaders() }).then(r => r.json()).catch(() => []));
-      } else {
-        promises.push(Promise.resolve([]));
-      }
-
-      if (currentUser?.role === 'ADMIN') {
-        promises.push(fetch(`${API_BASE}/api/auth/users`).then(r => r.json()).catch(() => []));
-        promises.push(fetch(`${API_BASE}/api/reinstatements`, { headers: authHeaders() }).then(r => r.json()).catch(() => []));
-      } else {
-        promises.push(Promise.resolve([]));
-        promises.push(Promise.resolve([]));
-      }
-
-      const [statsRes, personnelRes, presenceRes, payrollRes, armoryRes, depotRes, escortRes, vehiclesRes, trainingRes, infractionsRes, chatRes, resignationsRes, lettersRes, usersRes, reinstatementsRes] = await Promise.all(promises);
+      const [
+        statsRes,
+        personnelRes,
+        presenceRes,
+        payrollRes,
+        armoryRes,
+        depotRes,
+        escortRes,
+        vehiclesRes,
+        trainingRes,
+        infractionsRes,
+        chatRes,
+        resignationsRes,
+        lettersRes,
+        usersRes,
+        reinstatementsRes
+      ] = await Promise.all([
+        db.fetchDashboardStats().catch(() => null),
+        db.fetchPersonnel().catch(() => []),
+        db.fetchPresence().catch(() => []),
+        db.fetchPayroll().catch(() => []),
+        db.fetchArmory().catch(() => []),
+        db.fetchDepotStockpiles().catch(() => ({ stockpiles: {}, issued: {} })),
+        db.fetchEscortMissions().catch(() => []),
+        db.fetchVehicles().catch(() => []),
+        db.fetchTraining().catch(() => []),
+        db.fetchInfractions().catch(() => ({ is_admin_view: false, infractions: [], summaries: [], my_summary: null, catalog: [] })),
+        db.fetchChatMessages().catch(() => []),
+        db.fetchResignations().catch(() => []),
+        canAccessLetters(currentUser) ? db.fetchDisciplinaryLetters().catch(() => []) : Promise.resolve([]),
+        currentUser?.role === 'ADMIN' ? db.fetchUsers().catch(() => []) : Promise.resolve([]),
+        currentUser?.role === 'ADMIN' ? db.fetchReinstatements().catch(() => []) : Promise.resolve([]),
+      ]);
 
       if (statsRes) setStats(statsRes);
       if (personnelRes) setPersonnel(personnelRes);
@@ -406,39 +380,18 @@ export default function App() {
 
   // Presence handlers
   const handleLogPresence = async (data) => {
-    const res = await fetch(`${API_BASE}/api/presence`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to log presence');
-      throw new Error(errorMsg);
-    }
+    await db.logPresence(data);
     await fetchData();
   };
 
   const handleDeletePresence = async (id) => {
-    const res = await fetch(`${API_BASE}/api/presence/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to delete presence record');
-      throw new Error(errorMsg);
-    }
+    await db.deletePresence(id);
     notify('Presence log entry removed.');
     await fetchData();
   };
 
   const handleCompletePresence = async (id, timeOut) => {
-    const res = await fetch(`${API_BASE}/api/presence/${id}/time-out`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ time_out: timeOut }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to complete presence shift');
-      throw new Error(errorMsg);
-    }
-    const updated = await res.json();
+    const updated = await db.completePresence(id, timeOut);
     if (updated) {
       setPresence((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
     }
@@ -447,274 +400,114 @@ export default function App() {
 
   // Payroll handlers
   const handleAddPayroll = async (data) => {
-    const res = await fetch(`${API_BASE}/api/payroll`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to record payroll');
-      throw new Error(errorMsg);
-    }
+    await db.addPayroll(data);
     await fetchData();
   };
 
   // Armory handlers
   const handleIssueItem = async (data) => {
-    const res = await fetch(`${API_BASE}/api/armory/issue`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to issue item');
-      throw new Error(errorMsg);
-    }
+    await db.issueArmoryItem(data);
     await fetchData();
   };
 
   const handleReturnItem = async (id) => {
-    const res = await fetch(`${API_BASE}/api/armory/${id}/return`, { method: 'POST' });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to return item');
-      throw new Error(errorMsg);
-    }
+    await db.returnArmoryItem(id);
     await fetchData();
   };
 
   const handleAddArmoryItem = async (data) => {
-    const res = await fetch(`${API_BASE}/api/armory`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to register weapon/gear');
-      throw new Error(errorMsg);
-    }
+    await db.addArmoryItem(data);
     await fetchData();
   };
 
   const handleRestockDepot = async (data) => {
-    const res = await fetch(`${API_BASE}/api/armory/depot-stockpile/restock`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to restock depot reserve');
-      throw new Error(errorMsg);
-    }
+    await db.restockDepotStockpile(data);
     await fetchData();
   };
 
   // Escort handlers
   const handleCreateMission = async (data) => {
-    const res = await fetch(`${API_BASE}/api/escort`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to dispatch escort mission');
-      throw new Error(errorMsg);
-    }
+    await db.createEscortMission(data);
     await fetchData();
   };
 
   const handleUpdateEscortStatus = async (id, status) => {
-    const res = await fetch(`${API_BASE}/api/escort/${id}/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update escort status');
-      throw new Error(errorMsg);
-    }
+    await db.updateEscortStatus(id, status);
     await fetchData();
   };
 
   // Personnel handlers
   const handleAddPersonnel = async (data) => {
-    const res = await fetch(`${API_BASE}/api/personnel`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to induct officer');
-      throw new Error(errorMsg);
-    }
+    await db.createPersonnel(data);
     await fetchData();
   };
 
   const handleEditPersonnel = async (id, data) => {
-    const res = await fetch(`${API_BASE}/api/personnel/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update officer record');
-      throw new Error(errorMsg);
-    }
+    await db.updatePersonnel(id, data);
     await fetchData();
   };
 
   const handleDeletePersonnel = async (id) => {
-    const res = await fetch(`${API_BASE}/api/personnel/${id}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to delete officer record');
-      throw new Error(errorMsg);
-    }
+    await db.deletePersonnel(id);
     await fetchData();
   };
 
   // Training & Certification handlers
   const handleAddTraining = async (trainingData) => {
-    const res = await fetch(`${API_BASE}/api/training`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(trainingData),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to issue training certification');
-      throw new Error(errorMsg);
-    }
+    await db.addTraining(trainingData);
     await fetchData();
   };
 
   const handleUpdateTraining = async (id, trainingData) => {
-    const res = await fetch(`${API_BASE}/api/training/${id}`, {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify(trainingData),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update training certification');
-      throw new Error(errorMsg);
-    }
+    await db.updateTraining(id, trainingData);
     await fetchData();
   };
 
   const handleDeleteTraining = async (id) => {
-    const res = await fetch(`${API_BASE}/api/training/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to delete certification record');
-      throw new Error(errorMsg);
-    }
+    await db.deleteTraining(id);
     await fetchData();
   };
 
   // Disciplinary Letters handlers
   const handleCreateLetter = async (data) => {
-    const res = await fetch(`${API_BASE}/api/letters`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to issue disciplinary letter');
-      throw new Error(errorMsg);
-    }
+    await db.createDisciplinaryLetter(data);
     await fetchData();
   };
 
   const handleUpdateLetterStatus = async (lid, status, notes = null) => {
-    const res = await fetch(`${API_BASE}/api/letters/${lid}/status`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ status, notes }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update letter status');
-      throw new Error(errorMsg);
-    }
+    await db.updateLetterStatus(lid, status, notes);
     await fetchData();
   };
 
   const handleDeleteLetter = async (lid) => {
-    const res = await fetch(`${API_BASE}/api/letters/${lid}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to delete disciplinary letter');
-      throw new Error(errorMsg);
-    }
+    await db.deleteLetter(lid);
     await fetchData();
   };
 
   // Infraction Points handlers
   const handleCreateInfraction = async (data) => {
-    const res = await fetch(`${API_BASE}/api/infractions`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to record infraction');
-      throw new Error(errorMsg);
-    }
+    await db.createInfraction(data);
     await fetchData();
   };
 
   const handleUpdateInfractionStatus = async (iid, status, notes = null) => {
-    const res = await fetch(`${API_BASE}/api/infractions/${iid}/status`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ status, notes }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update infraction status');
-      throw new Error(errorMsg);
-    }
+    await db.updateInfractionStatus(iid, status, notes);
     await fetchData();
   };
 
   const handleDeleteInfraction = async (iid) => {
-    const res = await fetch(`${API_BASE}/api/infractions/${iid}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to delete infraction');
-      throw new Error(errorMsg);
-    }
+    await db.deleteInfraction(iid);
     await fetchData();
   };
 
   // User Management handlers (Admin only)
   const handleCreateUser = async (userData) => {
-    const res = await fetch(`${API_BASE}/api/auth/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to create user account');
-      throw new Error(errorMsg);
-    }
+    await db.createUser(userData);
     await fetchData();
   };
 
   const handleUpdateUser = async (userId, userData) => {
-    const res = await fetch(`${API_BASE}/api/auth/users/${userId}`, {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify(userData),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update user account');
-      throw new Error(errorMsg);
-    }
-    const updated = await res.json();
+    const updated = await db.updateUser(userId, userData);
     if (currentUser && currentUser.id === userId && updated) {
       const mergedUser = { ...currentUser, ...updated };
       setCurrentUser(mergedUser);
@@ -724,84 +517,36 @@ export default function App() {
   };
 
   const handleToggleUserStatus = async (userId) => {
-    const res = await fetch(`${API_BASE}/api/auth/users/${userId}/toggle`, { method: 'POST' });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to update user status');
-      throw new Error(errorMsg);
-    }
+    await db.toggleUserStatus(userId);
     await fetchData();
   };
 
   const handleResetPassword = async (userId, newPassword) => {
-    const res = await fetch(`${API_BASE}/api/auth/users/${userId}/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ new_password: newPassword }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to reset password');
-      throw new Error(errorMsg);
-    }
+    await db.resetPassword(userId, newPassword);
+    notify('Password reset successfully.');
   };
 
   const handleApproveUser = async (userId) => {
-    const res = await fetch(`${API_BASE}/api/auth/users/${userId}/approve`, {
-      method: 'POST',
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to approve security clearance');
-      throw new Error(errorMsg);
-    }
+    await db.approveUser(userId);
     notify('Security clearance approved! User profile activated.');
     await fetchData();
   };
 
   const handleRejectUser = async (userId) => {
-    const res = await fetch(`${API_BASE}/api/auth/users/${userId}/reject?delete=true`, {
-      method: 'POST',
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to decline application');
-      throw new Error(errorMsg);
-    }
+    await db.rejectUser(userId, true);
     notify('Clearance registration declined and removed.');
     await fetchData();
   };
 
   const handleReviewReinstatement = async (reqId, status, reviewNotes) => {
-    const res = await fetch(`${API_BASE}/api/reinstatements/${reqId}/review`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({
-        status,
-        review_notes: reviewNotes || '',
-        reviewed_by_id: currentUser?.id,
-        reviewed_by_name: currentUser?.name || 'High Command',
-        reviewed_by_rank: currentUser?.rank || '',
-      }),
-    });
-    if (!res.ok) {
-      const errorMsg = await parseErrorMessage(res, 'Failed to process reinstatement review');
-      throw new Error(errorMsg);
-    }
+    await db.reviewReinstatementRequest(reqId, status, reviewNotes, currentUser);
     notify(`Reinstatement petition ${status === 'Approved' ? 'APPROVED' : 'REJECTED'}. Roster and user status updated.`);
     await fetchData();
   };
 
   const handleSubmitResignationProposal = async (proposalData) => {
     try {
-      const res = await fetch(`${API_BASE}/api/resignations`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(proposalData),
-      });
-      if (!res.ok) {
-        const errorMsg = await parseErrorMessage(res, 'Failed to submit resignation proposal');
-        throw new Error(errorMsg);
-      }
-      const data = await res.json();
+      const data = await db.submitResignationProposal(proposalData);
       notify(`Resignation proposal ${data.proposal_number || ''} submitted for High Command review.`);
       await fetchData();
       return data;
@@ -813,16 +558,7 @@ export default function App() {
 
   const handleReviewResignationProposal = async (proposalId, status, reviewNotes) => {
     try {
-      const res = await fetch(`${API_BASE}/api/resignations/${proposalId}/review`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ status, review_notes: reviewNotes }),
-      });
-      if (!res.ok) {
-        const errorMsg = await parseErrorMessage(res, 'Failed to review resignation proposal');
-        throw new Error(errorMsg);
-      }
-      const data = await res.json();
+      const data = await db.reviewResignationProposal(proposalId, status, reviewNotes, currentUser);
       if (status === 'Approved') {
         notify(`Resignation proposal APPROVED by ${currentUser?.rank || 'High Command'}. Personnel marked as Disbanded and login access revoked.`);
       } else {
@@ -838,14 +574,7 @@ export default function App() {
 
   const handleWithdrawResignationProposal = async (proposalId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/resignations/${proposalId}/withdraw`, {
-        method: 'POST',
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const errorMsg = await parseErrorMessage(res, 'Failed to withdraw resignation proposal');
-        throw new Error(errorMsg);
-      }
+      await db.reviewResignationProposal(proposalId, 'Withdrawn', 'Withdrawn by officer', currentUser);
       notify('Resignation proposal successfully withdrawn.');
       await fetchData();
     } catch (err) {
@@ -857,16 +586,14 @@ export default function App() {
   const handleSendChatMessage = async (messageText, messageType = 'Standard') => {
     if (!messageText || !messageText.trim()) return;
     try {
-      const res = await fetch(`${API_BASE}/api/chat/messages`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ message: messageText.trim(), message_type: messageType }),
+      const newMsg = await db.sendChatMessage({
+        message: messageText.trim(),
+        message_type: messageType,
+        sender_id: currentUser?.id,
+        sender_name: currentUser?.name,
+        sender_rank: currentUser?.rank,
+        sender_avatar: currentUser?.discord_avatar || ''
       });
-      if (!res.ok) {
-        const errorMsg = await parseErrorMessage(res, 'Failed to post message to tactical comms');
-        throw new Error(errorMsg);
-      }
-      const newMsg = await res.json();
       setChatMessages((prev) => [newMsg, ...prev]);
       return newMsg;
     } catch (err) {
@@ -877,14 +604,7 @@ export default function App() {
 
   const handleDeleteChatMessage = async (messageId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/chat/messages/${messageId}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const errorMsg = await parseErrorMessage(res, 'Failed to delete message');
-        throw new Error(errorMsg);
-      }
+      await db.deleteChatMessage(messageId);
       setChatMessages((prev) => prev.filter((m) => m.id !== messageId));
       notify('Message cleared from tactical comms.');
     } catch (err) {
@@ -912,24 +632,30 @@ export default function App() {
     notify(`Preparing ${targetModule.toUpperCase()} CSV export...`);
 
     try {
-      const token = sessionStorage.getItem('neg_token') || '';
-      const res = await fetch(`${API_BASE}/api/export/${targetModule}?token=${encodeURIComponent(token)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      let data = [];
+      if (targetModule === 'presence') data = presence;
+      else if (targetModule === 'payroll') data = payroll;
+      else if (targetModule === 'armory') data = armory;
+      else if (targetModule === 'personnel') data = personnel;
+      else if (targetModule === 'escort') data = escort;
+      else if (targetModule === 'vehicles') data = vehicles;
+      else if (targetModule === 'training') data = training;
 
-      if (res.status === 401) {
-        handleLogout('Server was restarted or session expired. Automatically logged off.');
+      if (!data || data.length === 0) {
+        notify(`No records found to export for ${targetModule}.`);
         return;
       }
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || `Export failed with status ${res.status}`);
+      const headers = Object.keys(data[0]);
+      const csvRows = [headers.join(',')];
+      for (const row of data) {
+        const values = headers.map((h) => {
+          const val = row[h] === null || row[h] === undefined ? '' : String(row[h]);
+          return `"${val.replace(/"/g, '""')}"`;
+        });
+        csvRows.push(values.join(','));
       }
-
-      const blob = await res.blob();
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

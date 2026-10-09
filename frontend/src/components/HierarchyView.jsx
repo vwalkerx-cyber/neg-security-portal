@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as db from '../supabaseClient';
 import { 
   Network, 
   Crown, 
@@ -1086,10 +1087,9 @@ export default function HierarchyView({
     assignedOfficerId: ''
   });
 
-  // Fetch saved tree from backend on mount
+  // Fetch saved tree from Supabase on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/hierarchy`)
-      .then(res => res.json())
+    db.fetchHierarchy()
       .then(data => {
         if (data && data.tree) {
           setTreeModel(data.tree);
@@ -1098,10 +1098,10 @@ export default function HierarchyView({
           } catch {}
         }
       })
-      .catch(err => console.warn('Could not fetch hierarchy from backend:', err));
+      .catch(err => console.warn('Could not fetch hierarchy from Supabase:', err));
   }, []);
 
-  // Helper to persist tree state to backend and localStorage
+  // Helper to persist tree state to Supabase and localStorage
   const saveTreeToBackend = async (newTree, message = 'Hierarchy updated successfully') => {
     setTreeModel(newTree);
     try {
@@ -1109,18 +1109,11 @@ export default function HierarchyView({
     } catch {}
 
     try {
-      await fetch(`${API_BASE}/api/hierarchy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tree: newTree,
-          updated_by: currentUser?.name || 'Administrator'
-        })
-      });
+      await db.saveHierarchy(newTree, currentUser?.name || 'Administrator');
       if (onNotify) onNotify(message, 'success');
     } catch (err) {
-      console.error('Failed to save hierarchy to backend:', err);
-      if (onNotify) onNotify('Saved locally. Backend sync failed.', 'warning');
+      console.error('Failed to save hierarchy to Supabase:', err);
+      if (onNotify) onNotify('Saved locally. Cloud sync failed.', 'warning');
     }
   };
 
@@ -1185,7 +1178,7 @@ export default function HierarchyView({
   const handleResetAll = async () => {
     if (window.confirm('Reset entire hierarchy chart back to factory defaults?')) {
       try {
-        await fetch(`${API_BASE}/api/hierarchy/reset`, { method: 'POST' });
+        await db.saveHierarchy(BASE_TREE_CHART_MODEL, currentUser?.name || 'Administrator');
       } catch {}
       setTreeModel(BASE_TREE_CHART_MODEL);
       try {

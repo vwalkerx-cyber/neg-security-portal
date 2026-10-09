@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as db from '../supabaseClient';
 import { 
   User, 
   KeyRound, 
@@ -113,15 +114,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Authentication failed');
-      }
+      const data = await db.loginUser(username, password);
       onLoginSuccess(data.user, data.token, data.server_instance_id);
     } catch (err) {
       setErrorMessage(err.message);
@@ -148,15 +141,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(regData),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Registration failed');
-      }
+      const data = await db.registerUser(regData);
       setRegisteredSuccess(data);
     } catch (err) {
       setErrorMessage(err.message);
@@ -170,15 +155,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/api/reinstatements/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reinstatementData),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Reinstatement petition failed to submit.');
-      }
+      const data = await db.submitReinstatementRequest(reinstatementData);
       setReinstatementSuccess(data);
     } catch (err) {
       setErrorMessage(err.message);

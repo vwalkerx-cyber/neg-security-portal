@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as db from '../supabaseClient';
 import { 
   Users, 
   Plus, 
@@ -114,19 +115,7 @@ export default function PersonnelView({
     if (!vehicleModalOfficer) return;
     setSavingPlates(true);
     try {
-      const token = sessionStorage.getItem('neg_auth_token') || sessionStorage.getItem('neg_token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`${API_BASE}/api/personnel/${vehicleModalOfficer.id}/vehicle-plates`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(vehiclePlatesForm)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Failed to update vehicle plates');
-      }
+      await db.updateVehiclePlates(vehicleModalOfficer.id, vehiclePlatesForm);
       setVehicleModalOfficer(null);
       if (onNotify) onNotify(`Department vehicle plates updated for ${vehicleModalOfficer.name}`);
       if (onRefresh) onRefresh();

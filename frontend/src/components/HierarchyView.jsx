@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+
 // Comprehensive military/tactical NEG rank hierarchy definition
 const NEG_RANKS_HIERARCHY = [
   {
@@ -1086,7 +1088,7 @@ export default function HierarchyView({
 
   // Fetch saved tree from backend on mount
   useEffect(() => {
-    fetch('/api/hierarchy')
+    fetch(`${API_BASE}/api/hierarchy`)
       .then(res => res.json())
       .then(data => {
         if (data && data.tree) {
@@ -1107,7 +1109,7 @@ export default function HierarchyView({
     } catch {}
 
     try {
-      await fetch('/api/hierarchy', {
+      await fetch(`${API_BASE}/api/hierarchy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1183,7 +1185,7 @@ export default function HierarchyView({
   const handleResetAll = async () => {
     if (window.confirm('Reset entire hierarchy chart back to factory defaults?')) {
       try {
-        await fetch('/api/hierarchy/reset', { method: 'POST' });
+        await fetch(`${API_BASE}/api/hierarchy/reset`, { method: 'POST' });
       } catch {}
       setTreeModel(BASE_TREE_CHART_MODEL);
       try {

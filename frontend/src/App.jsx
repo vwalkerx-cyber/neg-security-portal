@@ -348,20 +348,33 @@ export default function App() {
 
       initSession();
 
-      // Frequent session probe: every 4 seconds to immediately detect server restarts / downtime
+      // Optimize polling intervals and pause when tab is inactive to prevent CPU/memory spikes
       const sessionInterval = setInterval(() => {
-        verifySession();
-      }, 4000);
+        if (!document.hidden) {
+          verifySession();
+        }
+      }, 15000);
 
-      // Operational data refresh
+      // Operational data refresh every 25s when tab is active
       const dataInterval = setInterval(() => {
-        fetchData();
-      }, 10000);
+        if (!document.hidden) {
+          fetchData();
+        }
+      }, 25000);
+
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          verifySession();
+          fetchData();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
 
       return () => {
         isMounted = false;
         clearInterval(sessionInterval);
         clearInterval(dataInterval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
   }, [currentUser, verifySession, fetchData]);

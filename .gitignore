@@ -14,9 +14,11 @@ env/
 venv/
 ENV/
 
-# Temporary SQLite WAL files
+# Temporary SQLite WAL files & Backups
 *.db-wal
 *.db-shm
+*.bak
+*.pre-reset-backup
 
 # Node / Frontend
 frontend/node_modules/

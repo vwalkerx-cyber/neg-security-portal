@@ -39,7 +39,7 @@ const VALID_TABS = [
 
 const pathToTab = (pathname) => {
   const clean = (pathname || '').toLowerCase().replace(/^\/+|\/+$/g, '');
-  if (!clean || clean === 'overview') return 'overview';
+  if (!clean || clean === 'overview' || clean === 'command-hub' || clean === 'commandhub' || clean === 'hub') return 'overview';
   if (clean === 'roster') return 'personnel';
   if (['login', 'signin', 'auth'].includes(clean)) return 'login';
   if (['register', 'signup', 'recruit'].includes(clean)) return 'register';
@@ -49,7 +49,7 @@ const pathToTab = (pathname) => {
 };
 
 const tabToPath = (tab) => {
-  if (!tab || tab === 'overview') return '/';
+  if (!tab || tab === 'overview' || tab === 'command-hub') return '/';
   return `/${tab}`;
 };
 
@@ -178,12 +178,16 @@ export default function App() {
     notify(reason || 'Successfully logged out of security session.');
   }, [setActiveTab]);
 
-  // Direct unauthenticated users to /login, /register, or /reinstatement route
+  // Direct unauthenticated users to auth routes, and redirect authenticated users to Command Hub (/)
   useEffect(() => {
+    const currentTab = pathToTab(window.location.pathname);
     if (!currentUser) {
-      const currentTab = pathToTab(window.location.pathname);
       if (!['login', 'register', 'reinstatement'].includes(currentTab)) {
         setActiveTab('login');
+      }
+    } else {
+      if (['login', 'register', 'reinstatement'].includes(currentTab)) {
+        setActiveTab('overview');
       }
     }
   }, [currentUser, setActiveTab]);
@@ -199,6 +203,8 @@ export default function App() {
     localStorage.removeItem('neg_user');
     localStorage.removeItem('neg_token');
     localStorage.removeItem('neg_server_instance_id');
+    // Seamlessly navigate to Command Hub (main page '/') in logged-in state
+    setActiveTab('overview');
     notify(`Welcome, ${user.rank} ${user.name}. Clearance verified.`);
   };
 

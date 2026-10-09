@@ -1,11 +1,115 @@
 import sqlite3
 import json
 import os
+import re
 from datetime import datetime, timedelta, date
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
 DB_PATH = os.path.join(os.path.dirname(__file__), "neg_security.db")
 
+def is_postgres():
+    return bool(DATABASE_URL and DATABASE_URL.strip().startswith("postgres"))
+
+class PostgresDictRow(dict):
+    """Dictionary-like row for PostgreSQL queries to match sqlite3.Row behavior"""
+    def __init__(self, cursor, row):
+        super().__init__()
+        for idx, col in enumerate(cursor.description):
+            self[col.name] = row[idx]
+        self._raw = row
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._raw[key]
+        return super().__getitem__(key)
+
+class PostgresCursorWrapper:
+    def __init__(self, cursor):
+        self._cursor = cursor
+        self.lastrowid = None
+
+    def execute(self, query, params=None):
+        # Convert SQLite parameter placeholder ? to PostgreSQL %s
+        converted_query = query.replace("?", "%s")
+        # Convert COLLATE NOCASE to case-insensitive lower() or ILIKE if encountered
+        converted_query = re.sub(r"\bCOLLATE\s+NOCASE\b", "", converted_query, flags=re.IGNORECASE)
+        # Capture generated ID if returning serial is appropriate
+        is_insert = converted_query.strip().upper().startswith("INSERT")
+        if is_insert and "RETURNING" not in converted_query.upper():
+            # Check if inserting into presence or payroll which have auto-increment primary key
+            if "INTO presence " in converted_query or "INTO payroll " in converted_query:
+                converted_query += " RETURNING id"
+
+        if params:
+            self._cursor.execute(converted_query, params)
+        else:
+            self._cursor.execute(converted_query)
+
+        if is_insert and "RETURNING id" in converted_query:
+            try:
+                row = self._cursor.fetchone()
+                if row:
+                    self.lastrowid = row[0]
+            except Exception:
+                pass
+        return self
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        return PostgresDictRow(self._cursor, row)
+
+    def fetchall(self):
+        rows = self._cursor.fetchall()
+        return [PostgresDictRow(self._cursor, r) for r in rows]
+
+    def close(self):
+        self._cursor.close()
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
+
+class PostgresConnectionWrapper:
+    def __init__(self, raw_conn):
+        self._conn = raw_conn
+
+    def cursor(self):
+        return PostgresCursorWrapper(self._conn.cursor())
+
+    def execute(self, query, params=None):
+        cur = self.cursor()
+        cur.execute(query, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._conn.rollback()
+        else:
+            self._conn.commit()
+        self._conn.close()
+
 def get_connection():
+    if is_postgres():
+        import psycopg2
+        url = DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        raw = psycopg2.connect(url, sslmode="require")
+        return PostgresConnectionWrapper(raw)
+
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
@@ -13,6 +117,12 @@ def get_connection():
     return conn
 
 def init_db():
+    if is_postgres():
+        # Postgres tables are created via Supabase migration schema
+        print("Connected to Supabase PostgreSQL database.")
+        auto_sync_inactivity()
+        return
+
     conn = get_connection()
     cursor = conn.cursor()
 

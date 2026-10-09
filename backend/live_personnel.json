@@ -1,0 +1,344 @@
+[
+  {
+    "id": "NEG-001",
+    "name": "Nemo Boy",
+    "badge_id": "PASPAM050",
+    "rank": "Officer II",
+    "join_date": "2026-09-18",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-002",
+    "name": "Deandra R Adhipratama",
+    "badge_id": "PASPAM046",
+    "rank": "Corporal",
+    "join_date": "2026-08-22",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-003",
+    "name": "Ray S Van DenBerg",
+    "badge_id": "PASPAM049",
+    "rank": "Senior Officer II",
+    "join_date": "2026-09-01",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-004",
+    "name": "Riff Calyx Redfield",
+    "badge_id": "PASPAM044",
+    "rank": "Corporal",
+    "join_date": "2026-07-23",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-005",
+    "name": "Simon Tsabit Calyx Rahman",
+    "badge_id": "PASPAM042",
+    "rank": "Corporal",
+    "join_date": "2026-07-23",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-006",
+    "name": "Goner Romanov",
+    "badge_id": "PASPAM039",
+    "rank": "Master Sergeant",
+    "join_date": "2026-07-10",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  },
+  {
+    "id": "NEG-007",
+    "name": "Simon Romanov",
+    "badge_id": "PASPAM038",
+    "rank": "Senior Corporal",
+    "join_date": "2026-06-27",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-008",
+    "name": "Arsenix Ganji Romanov",
+    "badge_id": "PASPAM040",
+    "rank": "Corporal",
+    "join_date": "2026-07-23",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-009",
+    "name": "Kei G Romanov",
+    "badge_id": "PASPAM035",
+    "rank": "Senior Officer II",
+    "join_date": "2026-06-29",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  },
+  {
+    "id": "NEG-010",
+    "name": "Agam Brama Madhava",
+    "badge_id": "SS-002",
+    "rank": "Deputy Director",
+    "join_date": "2025-12-08",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-011",
+    "name": "Jepri S Djoyokusumo",
+    "badge_id": "PASPAM003",
+    "rank": "Master Sergeant",
+    "join_date": "2025-10-28",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-012",
+    "name": "Calvin Van DenBerg",
+    "badge_id": "PASPAM037",
+    "rank": "Corporal",
+    "join_date": "2026-06-27",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-013",
+    "name": "Winter R. F. Romanov",
+    "badge_id": "PASPAM031",
+    "rank": "Staff Sergeant",
+    "join_date": "2026-05-11",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-014",
+    "name": "Diaval L Olathe",
+    "badge_id": "-",
+    "rank": "Corporal",
+    "join_date": "2026-01-07",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  },
+  {
+    "id": "NEG-015",
+    "name": "Nathan Ganji W Romanov",
+    "badge_id": "SS-001",
+    "rank": "Director",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-016",
+    "name": "Gerry Stanley",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-01-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-017",
+    "name": "Daniel Allister",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-01-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-018",
+    "name": "Gabriel Sananta",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-01-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-019",
+    "name": "Riont Antonio",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-11-05",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-020",
+    "name": "Robin Hood",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-01-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-021",
+    "name": "Kenneth L Olathe",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-022",
+    "name": "John C Olathe",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-023",
+    "name": "Azuel Gadang",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-08",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-024",
+    "name": "Muhammad Alan Walker Musthofa",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-01-20",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-025",
+    "name": "Akaza D Olathe",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-22",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-026",
+    "name": "Dodo Salawasna",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-11-16",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-027",
+    "name": "Yuki C.A Olathe",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-22",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-028",
+    "name": "Azuel Gadang",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2025-12-08",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-029",
+    "name": "Ryubuu Majapahit",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-05-10",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-030",
+    "name": "Kiyoshi Katsuro",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-05-10",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-031",
+    "name": "Tyler Creator",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-05-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-032",
+    "name": "Gaizz Khalid Madhava",
+    "badge_id": "PASPAM036",
+    "rank": "Senior Corporal",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-033",
+    "name": "Xendra Everly",
+    "badge_id": "PASPAM051",
+    "rank": "Officer II",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  },
+  {
+    "id": "NEG-034",
+    "name": "Jesse B. Suryodiningrat",
+    "badge_id": "PASPAM043",
+    "rank": "Senior Corporal",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Active"
+  },
+  {
+    "id": "NEG-035",
+    "name": "Louis Leonardo",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-036",
+    "name": "Gilbert Adolf Decker",
+    "badge_id": "-",
+    "rank": "Officer I",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Disbanded"
+  },
+  {
+    "id": "NEG-037",
+    "name": "Sky Jaden",
+    "badge_id": "PASPAM045",
+    "rank": "Senior Officer II",
+    "join_date": "2026-06-15",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  },
+  {
+    "id": "NEG-038",
+    "name": "Minto Ganji Romanov",
+    "badge_id": "PASPAM028",
+    "rank": "Sergeant",
+    "join_date": "2026-02-24",
+    "license_certificate": "Standard Guard License",
+    "status": "Inactive"
+  }
+]

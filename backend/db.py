@@ -723,26 +723,37 @@ def update_user(uid, data):
         status = data.get("status", current["status"])
         name = data.get("name", current["name"])
         rank = data.get("rank", current["rank"])
+        username = data.get("username", current["username"])
         discord_id = data.get("discord_id", current.get("discord_id", ""))
         discord_username = data.get("discord_username", current.get("discord_username", ""))
         discord_avatar = data.get("discord_avatar", current.get("discord_avatar", ""))
 
         conn.execute("""
             UPDATE users SET 
-                role = ?, status = ?, name = ?, rank = ?,
+                username = ?, role = ?, status = ?, name = ?, rank = ?,
                 discord_id = ?, discord_username = ?, discord_avatar = ?
             WHERE id = ?
-        """, (role, status, name, rank, str(discord_id).strip(), str(discord_username).strip(), str(discord_avatar).strip(), uid))
+        """, (str(username).strip(), role, status, name, rank, str(discord_id).strip(), str(discord_username).strip(), str(discord_avatar).strip(), uid))
         
         p_id = current.get("personnel_id")
         if p_id:
-            conn.execute("""
-                UPDATE personnel SET 
-                    status = ?, name = ?, rank = ?,
-                    discord_id = coalesce(nullif(?, ''), discord_id),
-                    discord_username = coalesce(nullif(?, ''), discord_username)
-                WHERE id = ?
-            """, (status, name, rank, str(discord_id).strip(), str(discord_username).strip(), p_id))
+            # If manually activated, bump join_date/presence to today so auto_sync_inactivity doesn't immediately mark them Inactive again
+            if status == "Active":
+                conn.execute("""
+                    UPDATE personnel SET 
+                        status = ?, name = ?, rank = ?, join_date = ?,
+                        discord_id = coalesce(nullif(?, ''), discord_id),
+                        discord_username = coalesce(nullif(?, ''), discord_username)
+                    WHERE id = ?
+                """, (status, name, rank, date.today().isoformat(), str(discord_id).strip(), str(discord_username).strip(), p_id))
+            else:
+                conn.execute("""
+                    UPDATE personnel SET 
+                        status = ?, name = ?, rank = ?,
+                        discord_id = coalesce(nullif(?, ''), discord_id),
+                        discord_username = coalesce(nullif(?, ''), discord_username)
+                    WHERE id = ?
+                """, (status, name, rank, str(discord_id).strip(), str(discord_username).strip(), p_id))
         conn.commit()
     return get_user_by_id(uid)
 

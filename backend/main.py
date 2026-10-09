@@ -103,6 +103,7 @@ class UserResetPasswordRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     username: Optional[str] = None
+    password: Optional[str] = None
     name: Optional[str] = None
     rank: Optional[str] = None
     role: Optional[str] = None
@@ -614,6 +615,13 @@ def update_user_account(user_id: str, data: UserUpdateRequest):
         "role": data.role.upper() if data.role else user["role"],
         "status": new_status,
     }
+    if data.username and data.username.strip():
+        new_username = data.username.strip()
+        if new_username.lower() != user["username"].lower():
+            existing = db.get_user_by_username(new_username)
+            if existing and existing["id"] != user_id:
+                raise HTTPException(status_code=400, detail="Username is already taken by another account")
+        update_payload["username"] = new_username
     if data.name:
         update_payload["name"] = data.name
     if data.rank:
@@ -624,6 +632,9 @@ def update_user_account(user_id: str, data: UserUpdateRequest):
         update_payload["discord_username"] = data.discord_username
     if data.discord_avatar is not None:
         update_payload["discord_avatar"] = data.discord_avatar
+
+    if data.password and data.password.strip():
+        db.update_user_password(user_id, data.password.strip())
 
     updated = db.update_user(user_id, update_payload)
 

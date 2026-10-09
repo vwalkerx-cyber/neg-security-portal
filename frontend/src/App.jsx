@@ -698,12 +698,18 @@ export default function App() {
   const handleUpdateUser = async (userId, userData) => {
     const res = await fetch(`${API_BASE}/api/auth/users/${userId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify(userData),
     });
     if (!res.ok) {
       const errorMsg = await parseErrorMessage(res, 'Failed to update user account');
       throw new Error(errorMsg);
+    }
+    const updated = await res.json();
+    if (currentUser && currentUser.id === userId && updated) {
+      const mergedUser = { ...currentUser, ...updated };
+      setCurrentUser(mergedUser);
+      sessionStorage.setItem('neg_user', JSON.stringify(mergedUser));
     }
     await fetchData();
   };

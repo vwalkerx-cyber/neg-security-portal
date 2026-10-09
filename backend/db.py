@@ -71,8 +71,10 @@ class PostgresCursorWrapper:
         return getattr(self._cursor, name)
 
 class PostgresConnectionWrapper:
-    def __init__(self, raw_conn):
+    def __init__(self, raw_conn, pool=None):
         self._conn = raw_conn
+        self._pool = pool
+        self._closed = False
 
     def cursor(self):
         return PostgresCursorWrapper(self._conn.cursor())
@@ -89,26 +91,55 @@ class PostgresConnectionWrapper:
         self._conn.rollback()
 
     def close(self):
-        self._conn.close()
+        if not self._closed:
+            self._closed = True
+            if self._pool:
+                try:
+                    self._conn.commit()
+                except Exception:
+                    pass
+                self._pool.putconn(self._conn)
+            else:
+                self._conn.close()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
-            self._conn.rollback()
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
         else:
-            self._conn.commit()
-        self._conn.close()
+            try:
+                self._conn.commit()
+            except Exception:
+                pass
+        self.close()
 
-def get_connection():
-    if is_postgres():
-        import psycopg2
+_PG_POOL = None
+
+def get_pg_pool():
+    global _PG_POOL
+    if _PG_POOL is None:
+        import psycopg2.pool
         url = DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
-        raw = psycopg2.connect(url, sslmode="require")
-        return PostgresConnectionWrapper(raw)
+        _PG_POOL = psycopg2.pool.ThreadedConnectionPool(
+            minconn=1,
+            maxconn=10,
+            dsn=url,
+            sslmode="require"
+        )
+    return _PG_POOL
+
+def get_connection():
+    if is_postgres():
+        pool = get_pg_pool()
+        raw = pool.getconn()
+        return PostgresConnectionWrapper(raw, pool=pool)
 
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row

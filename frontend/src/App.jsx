@@ -235,7 +235,7 @@ export default function App() {
       }
 
       if (!res.ok) {
-        handleLogout('Session validation failed. Automatically logged off.');
+        // Temporary server 502/503/500 glitch or cold-start: do not immediately log out
         return false;
       }
 
@@ -245,15 +245,14 @@ export default function App() {
         return false;
       }
 
-      if (savedServerId && data.server_instance_id && savedServerId !== data.server_instance_id) {
-        handleLogout('Server restarted (new instance). Automatically logged off.');
-        return false;
+      // Update server instance ID smoothly without kicking user out
+      if (data.server_instance_id && data.server_instance_id !== savedServerId) {
+        sessionStorage.setItem('neg_server_instance_id', data.server_instance_id);
       }
 
       return true;
     } catch {
-      // Server down / connection refused
-      handleLogout('Server connection lost (downtime/restart detected). Automatically logged off.');
+      // Temporary network interruption or server waking up from sleep - do not log out
       return false;
     }
   }, [currentUser, handleLogout]);
@@ -326,10 +325,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.error('Failed fetching NEG data:', err);
-      if (err.name === 'TypeError' || err.message?.includes('fetch')) {
-        handleLogout('Server connection lost (downtime or restart). Automatically logged off.');
-      }
+      console.warn('Temporary background sync error (will retry automatically):', err);
     } finally {
       setIsRefreshing(false);
     }

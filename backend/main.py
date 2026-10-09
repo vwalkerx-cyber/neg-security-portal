@@ -5,16 +5,23 @@ import json
 import re
 import uuid
 import random
+import hmac
+import hashlib
+import logging
 import urllib.request
 import urllib.parse
 import urllib.error
 from typing import List, Literal, Optional
 from datetime import datetime, timezone, date, timedelta
-from fastapi import FastAPI, HTTPException, Query, Response, Depends, Header
+from fastapi import FastAPI, HTTPException, Query, Response, Depends, Header, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import db
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("neg_security")
 
 TIME_REGEX = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$")
 
@@ -39,6 +46,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled server error on {request.method} {request.url}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+        headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*"}
+    )
 
 # Initialize SQLite database on startup
 db.init_db()
@@ -372,9 +388,33 @@ def _evaluate_cert_status(expiry_str: str) -> str:
     except Exception:
         return "Active"
 
+TOKEN_SECRET = os.environ.get("TOKEN_SECRET", "NEG_SEC_SECRET_KEY_2026_TOKEN_AUTH")
+
+def make_auth_token(user_id: str) -> str:
+    sig = hmac.new(TOKEN_SECRET.encode(), user_id.encode(), hashlib.sha256).hexdigest()[:16]
+    token = f"NEG-AUTH-{user_id}-{sig}"
+    ACTIVE_AUTH_TOKENS[token] = user_id
+    return token
+
+def resolve_auth_token(token: str) -> Optional[str]:
+    if not token:
+        return None
+    if token in ACTIVE_AUTH_TOKENS:
+        return ACTIVE_AUTH_TOKENS[token]
+    if token.startswith("NEG-AUTH-"):
+        last_dash = token.rfind("-")
+        if last_dash > 9:
+            user_id = token[9:last_dash]
+            sig = token[last_dash + 1:]
+            expected_sig = hmac.new(TOKEN_SECRET.encode(), user_id.encode(), hashlib.sha256).hexdigest()[:16]
+            if hmac.compare_digest(sig, expected_sig):
+                ACTIVE_AUTH_TOKENS[token] = user_id
+                return user_id
+    return None
+
 def require_authenticated_user(authorization: Optional[str] = Header(default=None)):
     scheme, _, token = (authorization or "").partition(" ")
-    user_id = ACTIVE_AUTH_TOKENS.get(token) if scheme.lower() == "bearer" else None
+    user_id = resolve_auth_token(token) if scheme.lower() == "bearer" else None
     if not user_id:
         raise HTTPException(status_code=401, detail="A valid active security token is required")
     user = db.get_user_by_id(user_id)
@@ -407,8 +447,7 @@ def login(creds: LoginRequest):
     db.update_last_login(user["id"], last_login)
     user["last_login"] = last_login
 
-    token = f"NEG-AUTH-TOKEN-{uuid.uuid4().hex[:16]}"
-    ACTIVE_AUTH_TOKENS[token] = user["id"]
+    token = make_auth_token(user["id"])
     
     return {
         "success": True,
@@ -1000,6 +1039,11 @@ def return_armory_item(data: ArmoryReturnRequest):
     })
     return updated
 
+@app.post("/api/armory/{item_id}/return")
+def return_armory_item_by_path(item_id: str):
+    return return_armory_item(ArmoryReturnRequest(item_id=item_id))
+
+@app.post("/api/armory")
 @app.post("/api/armory/add")
 def add_armory_item(data: ArmoryAddRequest):
     armory_list = db.get_all_armory()
@@ -1028,16 +1072,20 @@ def add_armory_item(data: ArmoryAddRequest):
 def restock_depot_item(data: DepotRestockRequest, user: dict = Depends(require_authenticated_user)):
     if user.get("role") != "ADMIN":
         raise HTTPException(status_code=403, detail="Restricted action: Only administrators can restock or edit depot stockpiles.")
-    if data.mode == "set":
-        new_stock = db.set_depot_stock(data.item_type, data.item, data.quantity)
-    else:
-        new_stock = db.restock_depot(data.item_type, data.item, data.quantity)
-    return {
-        "success": True,
-        "item_type": data.item_type,
-        "item": data.item,
-        "new_stock": new_stock
-    }
+    try:
+        if data.mode == "set":
+            new_stock = db.set_depot_stock(data.item_type, data.item, data.quantity)
+        else:
+            new_stock = db.restock_depot(data.item_type, data.item, data.quantity)
+        return {
+            "success": True,
+            "item_type": data.item_type,
+            "item": data.item,
+            "new_stock": new_stock
+        }
+    except Exception as e:
+        logger.error(f"Error restocking depot stockpile: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update depot reserve: {str(e)}")
 
 
 # -------------------------------------------------------------

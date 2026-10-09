@@ -33,6 +33,11 @@ class PostgresCursorWrapper:
         converted_query = query.replace("?", "%s")
         # Convert COLLATE NOCASE to case-insensitive lower() or ILIKE if encountered
         converted_query = re.sub(r"\bCOLLATE\s+NOCASE\b", "", converted_query, flags=re.IGNORECASE)
+        # Convert INSERT OR IGNORE INTO to INSERT INTO ... ON CONFLICT DO NOTHING for PostgreSQL
+        if re.search(r"\bINSERT\s+OR\s+IGNORE\s+INTO\b", converted_query, re.IGNORECASE):
+            converted_query = re.sub(r"\bINSERT\s+OR\s+IGNORE\s+INTO\b", "INSERT INTO", converted_query, flags=re.IGNORECASE)
+            if "ON CONFLICT" not in converted_query.upper():
+                converted_query += " ON CONFLICT DO NOTHING"
         # Capture generated ID if returning serial is appropriate
         is_insert = converted_query.strip().upper().startswith("INSERT")
         if is_insert and "RETURNING" not in converted_query.upper():
@@ -147,10 +152,52 @@ def get_connection():
     conn.execute("PRAGMA foreign_keys=ON;")
     return conn
 
+DEFAULT_CATALOG_DEPOT_STOCKPILES = [
+    # Ammunition
+    ("Ammunition", "Pistol Ammo", 5000),
+    ("Ammunition", "Shotgun Police Ammo", 2500),
+    ("Ammunition", "9mm Police Ammo", 15000),
+    ("Ammunition", "Rifle Police Ammo", 10000),
+    ("Ammunition", "44mm", 1800),
+    # Armor & Medical
+    ("Armor & Medical", "Police Heavy Armor", 250),
+    ("Armor & Medical", "Body Booster", 300),
+    # Equipment
+    ("Equipment", "Bodycam", 120),
+    ("Equipment", "Badge", 150),
+    ("Equipment", "Handcuff", 100),
+    ("Equipment", "Cuff Keys", 120),
+    ("Equipment", "Ziptie", 800),
+    ("Equipment", "Flush Cutter", 90),
+    ("Equipment", "Gas Mask", 150),
+    # Attachments
+    ("Attachments", "Extended Police Rifle Clip", 120),
+    ("Attachments", "Police Light Suppressor", 80),
+    ("Attachments", "Extended Police SMG Clip", 110),
+    ("Attachments", "Police Heavy Suppressor", 75),
+    ("Attachments", "Extended Police Pistol Clip", 140),
+    ("Attachments", "Police Tactical Flashlight", 160),
+]
+
+def seed_depot_stockpiles(conn):
+    for cat, item, stock in DEFAULT_CATALOG_DEPOT_STOCKPILES:
+        row = conn.execute("SELECT stock FROM depot_stockpiles WHERE item_type = ? AND item = ?", (cat, item)).fetchone()
+        if not row:
+            conn.execute("INSERT INTO depot_stockpiles (item_type, item, stock) VALUES (?, ?, ?)", (cat, item, stock))
+    conn.commit()
+
 def init_db():
     if is_postgres():
         # Postgres tables are created via Supabase migration schema
         print("Connected to Supabase PostgreSQL database.")
+        try:
+            with get_connection() as conn:
+                r = conn.execute("SELECT COUNT(*) as cnt FROM depot_stockpiles").fetchone()
+                if r and r["cnt"] == 0:
+                    print("Seeding initial depot stockpiles in Supabase...")
+                    seed_depot_stockpiles(conn)
+        except Exception as e:
+            print(f"Warning: Could not check/seed depot_stockpiles: {e}")
         auto_sync_inactivity()
         return
 
@@ -590,38 +637,8 @@ def _seed_initial_data(conn):
         VALUES ('USR-001', 'commander', 'NegAdmin2026!', 'NEG-001', 'Nathan Ganji W Romanov', 'Director', 'ADMIN', 'Active', '2026-10-01 08:00', 'System Provisioning', '2026-10-08 00:01')
     """)
 
-    # Depot Stockpiles (Catalog template with 0 stock, ready for admin allocation)
-    depot_items = [
-        # Ammunition
-        ("Ammunition", "Pistol Ammo", 0),
-        ("Ammunition", "Shotgun Police Ammo", 0),
-        ("Ammunition", "9mm Police Ammo", 0),
-        ("Ammunition", "Rifle Police Ammo", 0),
-        ("Ammunition", "44mm", 0),
-        # Armor & Medical
-        ("Armor & Medical", "Police Heavy Armor", 0),
-        ("Armor & Medical", "Body Booster", 0),
-        # Equipment
-        ("Equipment", "Bodycam", 0),
-        ("Equipment", "Badge", 0),
-        ("Equipment", "Handcuff", 0),
-        ("Equipment", "Cuff Keys", 0),
-        ("Equipment", "Ziptie", 0),
-        ("Equipment", "Flush Cutter", 0),
-        ("Equipment", "Gas Mask", 0),
-        # Attachments
-        ("Attachments", "Extended Police Rifle Clip", 0),
-        ("Attachments", "Police Light Suppressor", 0),
-        ("Attachments", "Extended Police SMG Clip", 0),
-        ("Attachments", "Police Heavy Suppressor", 0),
-        ("Attachments", "Extended Police Pistol Clip", 0),
-        ("Attachments", "Police Tactical Flashlight", 0),
-    ]
-    for cat, item, stock in depot_items:
-        cursor.execute("""
-            INSERT OR REPLACE INTO depot_stockpiles (item_type, item, stock)
-            VALUES (?, ?, ?)
-        """, (cat, item, stock))
+    # Depot Stockpiles (Catalog baseline)
+    seed_depot_stockpiles(conn)
 
     conn.commit()
 
@@ -1082,13 +1099,12 @@ def adjust_depot_stock(item_type, item, delta):
     with get_connection() as conn:
         row = conn.execute("SELECT stock FROM depot_stockpiles WHERE item_type = ? AND item = ?", (item_type, item)).fetchone()
         if not row:
-            curr = 500
-            conn.execute("INSERT INTO depot_stockpiles (item_type, item, stock) VALUES (?, ?, ?)", (item_type, item, curr))
+            new_val = max(0, int(delta))
+            conn.execute("INSERT INTO depot_stockpiles (item_type, item, stock) VALUES (?, ?, ?)", (item_type, item, new_val))
         else:
-            curr = row["stock"]
-        
-        new_val = max(0, curr + delta)
-        conn.execute("UPDATE depot_stockpiles SET stock = ? WHERE item_type = ? AND item = ?", (new_val, item_type, item))
+            curr = int(row["stock"])
+            new_val = max(0, curr + int(delta))
+            conn.execute("UPDATE depot_stockpiles SET stock = ? WHERE item_type = ? AND item = ?", (new_val, item_type, item))
         conn.commit()
         return new_val
 
@@ -1098,10 +1114,11 @@ def restock_depot(item_type, item, quantity):
 def set_depot_stock(item_type, item, exact_stock):
     with get_connection() as conn:
         new_val = max(0, int(exact_stock))
-        conn.execute("""
-            INSERT OR REPLACE INTO depot_stockpiles (item_type, item, stock)
-            VALUES (?, ?, ?)
-        """, (item_type, item, new_val))
+        row = conn.execute("SELECT stock FROM depot_stockpiles WHERE item_type = ? AND item = ?", (item_type, item)).fetchone()
+        if not row:
+            conn.execute("INSERT INTO depot_stockpiles (item_type, item, stock) VALUES (?, ?, ?)", (item_type, item, new_val))
+        else:
+            conn.execute("UPDATE depot_stockpiles SET stock = ? WHERE item_type = ? AND item = ?", (new_val, item_type, item))
         conn.commit()
         return new_val
 

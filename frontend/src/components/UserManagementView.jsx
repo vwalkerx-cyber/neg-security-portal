@@ -1018,15 +1018,18 @@ export default function UserManagementView({
                         <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Not Synced</span>
                       )}
                     </td>
-                    <td style={{ padding: '0.85rem 1rem' }}>
+                    <td style={{ padding: '0.85rem 1rem', whiteSpace: 'nowrap' }}>
                       <span style={{
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        padding: '3px 8px',
+                        padding: '4px 10px',
                         borderRadius: '6px',
                         backgroundColor: badge.bg,
                         color: badge.text,
                         border: `1px solid ${badge.border}`,
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.02em',
                       }}>
                         {badge.label}
                       </span>

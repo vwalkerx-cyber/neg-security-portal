@@ -512,11 +512,11 @@ export default function PresenceView({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '26px', marginBottom: '0.4rem' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
-                      Time In *
+                      Time In <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <button
                       type="button"
@@ -532,9 +532,10 @@ export default function PresenceView({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '3px',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      ⚡ Current Time
+                      ⚡ Now
                     </button>
                   </div>
                   <input
@@ -544,6 +545,7 @@ export default function PresenceView({
                     onChange={(e) => setFormData({ ...formData, time_in: e.target.value })}
                     style={{
                       width: '100%',
+                      boxSizing: 'border-box',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
                       backgroundColor: '#1f2937',
@@ -555,11 +557,11 @@ export default function PresenceView({
                   />
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
-                      Time Out (Optional)
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '26px', marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', whiteSpace: 'nowrap' }}>
+                      Time Out
                     </label>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, time_out: getCurrentTime() })}
@@ -574,9 +576,10 @@ export default function PresenceView({
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '3px',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        ⚡ Current Time
+                        ⚡ Now
                       </button>
                       {formData.time_out && (
                         <button
@@ -590,6 +593,7 @@ export default function PresenceView({
                             border: 'none',
                             borderRadius: '4px',
                             cursor: 'pointer',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           Clear
@@ -603,6 +607,7 @@ export default function PresenceView({
                     onChange={(e) => setFormData({ ...formData, time_out: e.target.value })}
                     style={{
                       width: '100%',
+                      boxSizing: 'border-box',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
                       backgroundColor: '#1f2937',

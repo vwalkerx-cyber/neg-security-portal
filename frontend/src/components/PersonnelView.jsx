@@ -450,12 +450,13 @@ export default function PersonnelView({
                 gap: '0.5rem',
                 padding: '0.6rem 1rem',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                color: '#fbbf24',
+                backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                border: '1px solid rgba(217, 119, 6, 0.35)',
+                color: '#f59e0b',
                 fontSize: '0.85rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
               <Network size={15} />
@@ -472,12 +473,13 @@ export default function PersonnelView({
                 gap: '0.5rem',
                 padding: '0.6rem 1rem',
                 borderRadius: '8px',
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
+                backgroundColor: '#111928',
+                border: '1px solid #1c2a42',
                 color: '#cbd5e1',
                 fontSize: '0.85rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
               <Download size={15} />
@@ -494,13 +496,14 @@ export default function PersonnelView({
                 gap: '0.5rem',
                 padding: '0.6rem 1.15rem',
                 borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                backgroundColor: '#2563eb',
                 border: 'none',
                 color: '#ffffff',
                 fontSize: '0.85rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                transition: 'all 0.15s ease',
               }}
             >
               <Plus size={16} />
@@ -517,13 +520,14 @@ export default function PersonnelView({
                 gap: '0.5rem',
                 padding: '0.6rem 1.15rem',
                 borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                backgroundColor: '#2563eb',
                 border: 'none',
                 color: '#ffffff',
                 fontSize: '0.85rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                transition: 'all 0.15s ease',
               }}
             >
               <Edit2 size={16} />
@@ -535,8 +539,8 @@ export default function PersonnelView({
 
       {/* Filter and Search */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '12px',
         padding: '1rem 1.25rem',
         display: 'flex',
@@ -544,6 +548,7 @@ export default function PersonnelView({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
+        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -556,9 +561,9 @@ export default function PersonnelView({
               width: '100%',
               padding: '0.55rem 0.75rem 0.55rem 2.25rem',
               borderRadius: '8px',
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              color: '#f8fafc',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
+              color: '#f1f5f9',
               fontSize: '0.85rem',
               outline: 'none',
             }}
@@ -574,9 +579,9 @@ export default function PersonnelView({
               style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                backgroundColor: '#1f2937',
-                border: '1px solid #374151',
-                color: '#f8fafc',
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
+                color: '#f1f5f9',
                 fontSize: '0.8rem',
                 outline: 'none',
                 cursor: 'pointer'
@@ -602,9 +607,9 @@ export default function PersonnelView({
               style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                backgroundColor: '#1f2937',
-                border: '1px solid #374151',
-                color: statusFilter === 'Active' ? '#34d399' : statusFilter === 'Inactive' ? '#fbbf24' : statusFilter === 'Disbanded' ? '#f87171' : '#f8fafc',
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
+                color: statusFilter === 'Active' ? '#10b981' : statusFilter === 'Inactive' ? '#fbbf24' : statusFilter === 'Disbanded' ? '#ef4444' : '#f1f5f9',
                 fontWeight: statusFilter === 'ALL' ? 400 : 700,
                 fontSize: '0.8rem',
                 outline: 'none',

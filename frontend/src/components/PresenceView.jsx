@@ -194,8 +194,8 @@ export default function PresenceView({
 
       {/* Filter and Search Bar */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '12px',
         padding: '1rem 1.25rem',
         display: 'flex',
@@ -203,6 +203,7 @@ export default function PresenceView({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
+        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -215,9 +216,9 @@ export default function PresenceView({
               width: '100%',
               padding: '0.55rem 0.75rem 0.55rem 2.25rem',
               borderRadius: '8px',
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              color: '#f8fafc',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
+              color: '#f1f5f9',
               fontSize: '0.85rem',
               outline: 'none',
             }}
@@ -227,14 +228,15 @@ export default function PresenceView({
 
       {/* Main Table */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '12px',
         overflow: 'hidden',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
           <thead>
-            <tr style={{ backgroundColor: '#182234', color: '#94a3b8', borderBottom: '1px solid #1f2937', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+            <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               <th style={{ padding: '0.85rem 1rem' }}>Date</th>
               <th style={{ padding: '0.85rem 1rem' }}>Shift</th>
               <th style={{ padding: '0.85rem 1rem' }}>Name</th>
@@ -250,11 +252,11 @@ export default function PresenceView({
           <tbody>
             {filteredRecords.length > 0 ? (
               filteredRecords.map((rec) => (
-                  <tr key={rec.id} style={{ borderBottom: '1px solid #1f2937', transition: 'background-color 0.15s' }}>
+                  <tr key={rec.id} style={{ borderBottom: '1px solid #1c2a42', transition: 'background-color 0.15s' }}>
                     <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontFamily: 'monospace' }}>{rec.date}</td>
                     <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{rec.shift}</td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#f8fafc', fontWeight: 600 }}>{rec.name}</td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontFamily: 'monospace' }}>{rec.badge_id}</td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#f1f5f9', fontWeight: 600 }}>{rec.name}</td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#60a5fa', fontFamily: 'monospace' }}>{rec.badge_id}</td>
                     <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontFamily: 'monospace' }}>{rec.time_in}</td>
                     <td style={{ padding: '0.85rem 1rem', color: rec.time_out ? '#94a3b8' : '#fbbf24', fontFamily: 'monospace' }}>
                       {rec.time_out || (

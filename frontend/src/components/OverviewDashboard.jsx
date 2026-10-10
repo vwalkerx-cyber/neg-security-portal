@@ -113,10 +113,10 @@ export default function OverviewDashboard({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Executive Command Banner */}
+      {/* Executive Command Citadel Banner */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0c121e',
+        border: '1px solid #1c2a42',
         borderRadius: '16px',
         padding: '1.5rem 2rem',
         display: 'flex',
@@ -124,7 +124,8 @@ export default function OverviewDashboard({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1.25rem',
-        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 58, 138, 0.25))',
+        background: 'linear-gradient(135deg, rgba(12, 18, 30, 0.98), rgba(37, 99, 235, 0.12))',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.45)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <img
@@ -135,33 +136,34 @@ export default function OverviewDashboard({
               height: '56px',
               borderRadius: '50%',
               objectFit: 'cover',
-              border: '2px solid rgba(245, 158, 11, 0.5)',
-              boxShadow: '0 0 20px rgba(217, 119, 6, 0.4)',
+              border: '2px solid rgba(217, 119, 6, 0.6)',
+              boxShadow: '0 0 20px rgba(217, 119, 6, 0.35)',
               display: 'block',
             }}
           />
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.015em' }}>
                 National Executive Guard Command Center
               </h2>
               <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '2px 8px',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                padding: '2px 9px',
                 borderRadius: '999px',
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '5px',
+                letterSpacing: '0.04em'
               }}>
                 <span className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
                 DEFCON 4 READY
               </span>
             </div>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.25rem' }}>
               Consolidated real-time operational database for {totalPersonnel} registered personnel.
             </p>
           </div>
@@ -174,15 +176,17 @@ export default function OverviewDashboard({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.6rem 1rem',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
               borderRadius: '8px',
-              backgroundColor: '#0284c7',
+              backgroundColor: '#2563eb',
               color: '#ffffff',
               border: 'none',
               fontSize: '0.85rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer',
+              boxShadow: '0 2px 10px rgba(37, 99, 235, 0.35)',
+              transition: 'all 0.15s ease',
             }}
           >
             <ClipboardCheck size={16} />
@@ -194,15 +198,16 @@ export default function OverviewDashboard({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.6rem 1rem',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
               borderRadius: '8px',
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              color: '#f8fafc',
+              backgroundColor: '#111928',
+              border: '1px solid #1c2a42',
+              color: '#f1f5f9',
               fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             <Car size={16} />
@@ -214,15 +219,16 @@ export default function OverviewDashboard({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.6rem 1rem',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
               borderRadius: '8px',
-              backgroundColor: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.35)',
-              color: '#fbbf24',
+              backgroundColor: 'rgba(217, 119, 6, 0.12)',
+              border: '1px solid rgba(217, 119, 6, 0.35)',
+              color: '#f59e0b',
               fontSize: '0.85rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             <Network size={16} />
@@ -241,8 +247,8 @@ export default function OverviewDashboard({
         {/* Primary Box: Daily Presence */}
         <div
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0f1728',
+            border: '1px solid #1c2a42',
             borderRadius: '16px',
             padding: '1.75rem',
             display: 'flex',
@@ -250,8 +256,8 @@ export default function OverviewDashboard({
             justifyContent: 'space-between',
             position: 'relative',
             overflow: 'hidden',
-            background: 'linear-gradient(145deg, rgba(14, 165, 233, 0.1) 0%, rgba(17, 24, 39, 1) 100%)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+            background: 'linear-gradient(145deg, rgba(37, 99, 235, 0.08) 0%, rgba(15, 23, 40, 1) 100%)',
+            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35)',
             minHeight: '430px',
           }}
         >
@@ -265,9 +271,9 @@ export default function OverviewDashboard({
                   textTransform: 'uppercase',
                   padding: '3px 8px',
                   borderRadius: '6px',
-                  backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                  color: '#38bdf8',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                  color: '#60a5fa',
+                  border: '1px solid rgba(37, 99, 235, 0.35)',
                   letterSpacing: '0.05em',
                 }}>
                   PRIMARY DIRECTIVE
@@ -282,9 +288,9 @@ export default function OverviewDashboard({
                 style={{
                   padding: '8px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                  color: '#38bdf8',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                  color: '#60a5fa',
+                  border: '1px solid rgba(37, 99, 235, 0.3)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -296,7 +302,7 @@ export default function OverviewDashboard({
               </button>
             </div>
 
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.35rem' }}>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '0.35rem' }}>
               Daily Presence & Guard Deployment
             </h3>
             <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4 }}>
@@ -307,7 +313,7 @@ export default function OverviewDashboard({
           {/* Central Major Stat */}
           <div style={{ margin: '1.5rem 0' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem' }}>
-              <span style={{ fontSize: '3rem', fontWeight: 900, color: '#f8fafc', lineHeight: 1 }}>
+              <span style={{ fontSize: '3rem', fontWeight: 900, color: '#f1f5f9', lineHeight: 1 }}>
                 {onDutyCount}
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: 600, color: '#94a3b8' }}>
@@ -318,16 +324,16 @@ export default function OverviewDashboard({
             {/* Shift progress & health bar */}
             <div style={{ marginTop: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#38bdf8', fontWeight: 600 }}>Shift Coverage: {coveragePercent}%</span>
-                <span style={{ color: onDutyCount > 0 ? '#34d399' : '#94a3b8', fontWeight: 500 }}>
+                <span style={{ color: '#60a5fa', fontWeight: 600 }}>Shift Coverage: {coveragePercent}%</span>
+                <span style={{ color: onDutyCount > 0 ? '#10b981' : '#94a3b8', fontWeight: 500 }}>
                   {onDutyCount > 0 ? 'Active Watch Ready' : (totalPersonnel > 0 ? 'All Personnel Standby' : 'No Personnel Registered')}
                 </span>
               </div>
-              <div style={{ width: '100%', height: '8px', backgroundColor: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '8px', backgroundColor: '#090e1a', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{
                   width: `${coveragePercent}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, #0ea5e9, #38bdf8)',
+                  background: 'linear-gradient(90deg, #2563eb, #60a5fa)',
                   borderRadius: '4px',
                   transition: 'width 0.4s ease',
                 }} />
@@ -341,7 +347,7 @@ export default function OverviewDashboard({
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingTop: '1rem',
-            borderTop: '1px solid #1e293b',
+            borderTop: '1px solid #1c2a42',
             fontSize: '0.85rem',
             fontWeight: 600,
           }}>
@@ -351,7 +357,7 @@ export default function OverviewDashboard({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#38bdf8',
+                color: '#60a5fa',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -361,8 +367,8 @@ export default function OverviewDashboard({
                 fontWeight: 600,
                 transition: 'color 0.15s ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#7dd3fc'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#38bdf8'}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#93c5fd'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#60a5fa'}
             >
               <ClipboardCheck size={16} />
               <span>Open Attendance Sheet & Log Shift</span>
@@ -372,10 +378,10 @@ export default function OverviewDashboard({
               type="button"
               onClick={() => setActiveTab('personnel')}
               style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
+                background: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.25)',
                 borderRadius: '6px',
-                color: '#38bdf8',
+                color: '#60a5fa',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -386,12 +392,12 @@ export default function OverviewDashboard({
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.2)';
+                e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
                 e.currentTarget.style.color = '#ffffff';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.1)';
-                e.currentTarget.style.color = '#38bdf8';
+                e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                e.currentTarget.style.color = '#60a5fa';
               }}
             >
               <span>View Roster</span>
@@ -402,16 +408,16 @@ export default function OverviewDashboard({
 
         {/* Right Box: Tactical Operations & Dispatch Comms Chatbox (Beside Daily Presence, Sorted Latest First) */}
         <div style={{
-          backgroundColor: '#111827',
-          border: '1px solid #1f2937',
+          backgroundColor: '#0f1728',
+          border: '1px solid #1c2a42',
           borderRadius: '16px',
           padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           gap: '0.85rem',
-          background: 'linear-gradient(145deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.95))',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+          background: 'linear-gradient(145deg, rgba(15, 23, 40, 0.98), rgba(12, 18, 30, 0.95))',
+          boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35)',
           minHeight: '430px',
         }}>
           {/* Header */}
@@ -421,18 +427,18 @@ export default function OverviewDashboard({
                 width: '36px',
                 height: '36px',
                 borderRadius: '9px',
-                backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                border: '1px solid rgba(37, 99, 235, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#38bdf8'
+                color: '#60a5fa'
               }}>
                 <Radio size={19} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
                     Tactical Comms & Dispatch
                   </h3>
                   <span style={{
@@ -440,9 +446,9 @@ export default function OverviewDashboard({
                     fontWeight: 700,
                     padding: '2px 7px',
                     borderRadius: '999px',
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    color: '#34d399',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px'
@@ -460,12 +466,12 @@ export default function OverviewDashboard({
             <span style={{
               fontSize: '0.72rem',
               color: '#94a3b8',
-              backgroundColor: '#090d14',
+              backgroundColor: '#070a12',
               padding: '3px 8px',
               borderRadius: '6px',
-              border: '1px solid #1e293b'
+              border: '1px solid #1c2a42'
             }}>
-              <strong style={{ color: '#38bdf8' }}>{sortedChatMessages.length}</strong> Logged
+              <strong style={{ color: '#60a5fa' }}>{sortedChatMessages.length}</strong> Logged
             </span>
           </div>
 
@@ -475,10 +481,10 @@ export default function OverviewDashboard({
             alignItems: 'center',
             gap: '0.4rem',
             flexWrap: 'wrap',
-            backgroundColor: '#090d14',
+            backgroundColor: '#070a12',
             padding: '0.45rem 0.65rem',
             borderRadius: '8px',
-            border: '1px solid #1e293b'
+            border: '1px solid #1c2a42'
           }}>
             <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               Quick:
@@ -497,11 +503,11 @@ export default function OverviewDashboard({
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 600,
-                  padding: '2px 6px',
+                  padding: '2px 7px',
                   borderRadius: '5px',
-                  backgroundColor: '#111827',
+                  backgroundColor: '#0c121e',
                   color: '#cbd5e1',
-                  border: '1px solid #334155',
+                  border: '1px solid #1c2a42',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -513,8 +519,8 @@ export default function OverviewDashboard({
 
           {/* Message Feed Display (sorted from latest message) */}
           <div style={{
-            backgroundColor: '#090d14',
-            border: '1px solid #1e293b',
+            backgroundColor: '#070a12',
+            border: '1px solid #1c2a42',
             borderRadius: '10px',
             padding: '0.75rem',
             height: '210px',
@@ -528,29 +534,29 @@ export default function OverviewDashboard({
                 const isMine = m.user_id === currentUser?.id;
                 const canDelete = currentUser?.role === 'ADMIN' || isMine;
                 
-                let typeBg = 'rgba(51, 65, 85, 0.4)';
+                let typeBg = 'rgba(30, 41, 59, 0.4)';
                 let typeColor = '#94a3b8';
-                let typeBorder = 'rgba(100, 116, 139, 0.3)';
+                let typeBorder = 'rgba(71, 85, 105, 0.3)';
                 if (m.message_type === 'Priority') {
-                  typeBg = 'rgba(239, 68, 68, 0.2)';
+                  typeBg = 'rgba(239, 68, 68, 0.15)';
                   typeColor = '#f87171';
-                  typeBorder = 'rgba(239, 68, 68, 0.5)';
+                  typeBorder = 'rgba(239, 68, 68, 0.4)';
                 } else if (m.message_type === 'Alert') {
-                  typeBg = 'rgba(245, 158, 11, 0.2)';
+                  typeBg = 'rgba(217, 119, 6, 0.15)';
                   typeColor = '#fbbf24';
-                  typeBorder = 'rgba(245, 158, 11, 0.5)';
+                  typeBorder = 'rgba(217, 119, 6, 0.4)';
                 } else if (m.message_type === 'SITREP') {
-                  typeBg = 'rgba(2, 132, 199, 0.2)';
-                  typeColor = '#38bdf8';
-                  typeBorder = 'rgba(2, 132, 199, 0.5)';
+                  typeBg = 'rgba(37, 99, 235, 0.15)';
+                  typeColor = '#60a5fa';
+                  typeBorder = 'rgba(37, 99, 235, 0.4)';
                 }
 
                 return (
                   <div
                     key={m.id}
                     style={{
-                      backgroundColor: isMine ? 'rgba(30, 41, 59, 0.5)' : '#0d131f',
-                      border: `1px solid ${isMine ? 'rgba(56, 189, 248, 0.25)' : '#1e293b'}`,
+                      backgroundColor: isMine ? '#152035' : '#0c121e',
+                      border: `1px solid ${isMine ? 'rgba(37, 99, 235, 0.35)' : '#1c2a42'}`,
                       borderRadius: '8px',
                       padding: '0.6rem 0.75rem',
                       display: 'flex',
@@ -566,9 +572,9 @@ export default function OverviewDashboard({
                             fontWeight: 800,
                             padding: '1px 5px',
                             borderRadius: '3px',
-                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                            color: '#38bdf8',
-                            border: '1px solid rgba(56, 189, 248, 0.35)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                            color: '#60a5fa',
+                            border: '1px solid rgba(37, 99, 235, 0.35)',
                           }}>
                             LATEST
                           </span>
@@ -585,14 +591,14 @@ export default function OverviewDashboard({
                         }}>
                           {m.message_type || 'STANDARD'}
                         </span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f1f5f9' }}>
                           {m.sender_name}
                         </span>
                         <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
                           ({m.sender_rank})
                         </span>
                         {m.badge_id && m.badge_id !== '-' && (
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#38bdf8' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#60a5fa' }}>
                             [{m.badge_id}]
                           </span>
                         )}
@@ -602,9 +608,9 @@ export default function OverviewDashboard({
                             fontWeight: 700,
                             padding: '1px 4px',
                             borderRadius: '3px',
-                            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                            backgroundColor: 'rgba(217, 119, 6, 0.15)',
                             color: '#f59e0b',
-                            border: '1px solid rgba(245, 158, 11, 0.3)'
+                            border: '1px solid rgba(217, 119, 6, 0.3)'
                           }}>
                             COMMAND
                           </span>
@@ -682,9 +688,9 @@ export default function OverviewDashboard({
                     fontWeight: 700,
                     padding: '2px 7px',
                     borderRadius: '5px',
-                    backgroundColor: chatType === t ? '#0284c7' : '#090d14',
+                    backgroundColor: chatType === t ? '#2563eb' : '#070a12',
                     color: chatType === t ? '#ffffff' : '#94a3b8',
-                    border: `1px solid ${chatType === t ? '#0284c7' : '#1e293b'}`,
+                    border: `1px solid ${chatType === t ? '#2563eb' : '#1c2a42'}`,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
@@ -703,11 +709,11 @@ export default function OverviewDashboard({
                 maxLength={1000}
                 style={{
                   flex: 1,
-                  backgroundColor: '#090d14',
-                  border: '1px solid #1e293b',
+                  backgroundColor: '#070a12',
+                  border: '1px solid #1c2a42',
                   borderRadius: '7px',
                   padding: '0.55rem 0.85rem',
-                  color: '#f8fafc',
+                  color: '#f1f5f9',
                   fontSize: '0.82rem',
                   outline: 'none',
                 }}
@@ -719,7 +725,7 @@ export default function OverviewDashboard({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  backgroundColor: chatInput.trim() ? '#0284c7' : '#1e293b',
+                  backgroundColor: chatInput.trim() ? '#2563eb' : '#18243c',
                   color: chatInput.trim() ? '#ffffff' : '#64748b',
                   border: 'none',
                   borderRadius: '7px',
@@ -739,18 +745,18 @@ export default function OverviewDashboard({
         </div>
       </div>
 
-      {/* 3 Secondary Operational Directive Pillars: Payroll Obligation, Armory Allocation, Escort Operations */}
+      {/* 4 Secondary Operational Directive Pillars */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: '1.25rem',
       }}>
-        {/* Small Box 1: Payroll Obligation */}
+        {/* Pillar 1: Payroll Obligation */}
         <div
           onClick={() => setActiveTab('payroll')}
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0f1728',
+            border: '1px solid #1c2a42',
             borderRadius: '14px',
             padding: '1.1rem 1.25rem',
             cursor: 'pointer',
@@ -765,7 +771,7 @@ export default function OverviewDashboard({
               padding: '10px',
               borderRadius: '10px',
               backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              color: '#34d399',
+              color: '#10b981',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -776,7 +782,7 @@ export default function OverviewDashboard({
               <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Payroll Obligation
               </span>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#34d399', marginTop: '2px' }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
                 ${Number(payrollTotal).toLocaleString()}
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Weekly salaries & compensation ledger</span>
@@ -787,12 +793,12 @@ export default function OverviewDashboard({
           </div>
         </div>
 
-        {/* Small Box 2: Armory Allocation */}
+        {/* Pillar 2: Armory Allocation */}
         <div
           onClick={() => setActiveTab('armory')}
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0f1728',
+            border: '1px solid #1c2a42',
             borderRadius: '14px',
             padding: '1.1rem 1.25rem',
             cursor: 'pointer',
@@ -806,8 +812,8 @@ export default function OverviewDashboard({
             <div style={{
               padding: '10px',
               borderRadius: '10px',
-              backgroundColor: 'rgba(244, 63, 94, 0.12)',
-              color: '#f43f5e',
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              color: '#ef4444',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -818,7 +824,7 @@ export default function OverviewDashboard({
               <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Armory Allocation
               </span>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f8fafc', marginTop: '2px' }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f1f5f9', marginTop: '2px' }}>
                 {armoryIssuedCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>/ {armoryTotalCount} In Field</span>
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Tactical weapons & central depot reserves</span>
@@ -829,12 +835,12 @@ export default function OverviewDashboard({
           </div>
         </div>
 
-        {/* Small Box 3: Escort Operations */}
+        {/* Pillar 3: Escort Operations */}
         <div
           onClick={() => setActiveTab('escort')}
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0f1728',
+            border: '1px solid #1c2a42',
             borderRadius: '14px',
             padding: '1.1rem 1.25rem',
             cursor: 'pointer',
@@ -848,8 +854,8 @@ export default function OverviewDashboard({
             <div style={{
               padding: '10px',
               borderRadius: '10px',
-              backgroundColor: 'rgba(6, 182, 212, 0.12)',
-              color: '#22d3ee',
+              backgroundColor: 'rgba(37, 99, 235, 0.12)',
+              color: '#60a5fa',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -860,23 +866,23 @@ export default function OverviewDashboard({
               <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Escort Operations
               </span>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#22d3ee', marginTop: '2px' }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#60a5fa', marginTop: '2px' }}>
                 {activeEscortCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Convoys Active</span>
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>VIP close protection & perimeter transit</span>
             </div>
           </div>
-          <div style={{ color: '#06b6d4', display: 'flex', alignItems: 'center' }}>
+          <div style={{ color: '#60a5fa', display: 'flex', alignItems: 'center' }}>
             <ArrowRight size={16} />
           </div>
         </div>
 
-        {/* Small Box 4: Department Vehicle Fleet */}
+        {/* Pillar 4: Department Vehicle Fleet */}
         <div
           onClick={() => setActiveTab('vehicles')}
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0f1728',
+            border: '1px solid #1c2a42',
             borderRadius: '14px',
             padding: '1.1rem 1.25rem',
             cursor: 'pointer',
@@ -890,7 +896,7 @@ export default function OverviewDashboard({
             <div style={{
               padding: '10px',
               borderRadius: '10px',
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              backgroundColor: 'rgba(217, 119, 6, 0.12)',
               color: '#f59e0b',
               display: 'flex',
               alignItems: 'center',
@@ -916,14 +922,15 @@ export default function OverviewDashboard({
 
       {/* Operational Conduct & Demerit Points Record Widget */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '16px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.25rem',
-        background: 'linear-gradient(180deg, rgba(17, 24, 39, 0.95), rgba(15, 23, 42, 0.85))'
+        background: 'linear-gradient(180deg, rgba(15, 23, 40, 0.98), rgba(12, 18, 30, 0.95))',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -931,8 +938,8 @@ export default function OverviewDashboard({
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
+              backgroundColor: 'rgba(217, 119, 6, 0.12)',
+              border: '1px solid rgba(217, 119, 6, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -942,7 +949,7 @@ export default function OverviewDashboard({
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
                   Operational Conduct & Demerit Points Record
                 </h3>
                 <span style={{
@@ -950,9 +957,9 @@ export default function OverviewDashboard({
                   fontWeight: 700,
                   padding: '2px 8px',
                   borderRadius: '999px',
-                  backgroundColor: isAdminView ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isAdminView ? '#38bdf8' : '#34d399',
-                  border: `1px solid ${isAdminView ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+                  backgroundColor: isAdminView ? 'rgba(37, 99, 235, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                  color: isAdminView ? '#60a5fa' : '#10b981',
+                  border: `1px solid ${isAdminView ? 'rgba(37, 99, 235, 0.35)' : 'rgba(16, 185, 129, 0.3)'}`
                 }}>
                   {isAdminView ? 'COMMAND DISCIPLINARY LEDGER' : 'OFFICER CONDUCT DOSSIER'}
                 </span>
@@ -973,9 +980,9 @@ export default function OverviewDashboard({
               gap: '0.45rem',
               padding: '0.5rem 0.95rem',
               borderRadius: '8px',
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              backgroundColor: 'rgba(217, 119, 6, 0.12)',
               color: '#f59e0b',
-              border: '1px solid rgba(245, 158, 11, 0.35)',
+              border: '1px solid rgba(217, 119, 6, 0.35)',
               fontSize: '0.8rem',
               fontWeight: 700,
               cursor: 'pointer',
@@ -996,24 +1003,24 @@ export default function OverviewDashboard({
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '1rem',
             }}>
-              <div style={{ backgroundColor: '#090d14', border: '1px solid #1e293b', borderRadius: '10px', padding: '1rem' }}>
+              <div style={{ backgroundColor: '#070a12', border: '1px solid #1c2a42', borderRadius: '10px', padding: '1rem' }}>
                 <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Personnel Monitored</span>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', marginTop: '2px' }}>{totalMonitored}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f1f5f9', marginTop: '2px' }}>{totalMonitored}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Active force ledger</div>
               </div>
-              <div style={{ backgroundColor: '#090d14', border: '1px solid #1e293b', borderRadius: '10px', padding: '1rem' }}>
-                <span style={{ fontSize: '0.72rem', color: '#34d399', textTransform: 'uppercase', fontWeight: 600 }}>Flawless (0 Pts)</span>
+              <div style={{ backgroundColor: '#070a12', border: '1px solid #1c2a42', borderRadius: '10px', padding: '1rem' }}>
+                <span style={{ fontSize: '0.72rem', color: '#10b981', textTransform: 'uppercase', fontWeight: 600 }}>Flawless (0 Pts)</span>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>{cleanPersonnelCount}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Clean disciplinary record</div>
               </div>
-              <div style={{ backgroundColor: '#090d14', border: '1px solid #1e293b', borderRadius: '10px', padding: '1rem' }}>
+              <div style={{ backgroundColor: '#070a12', border: '1px solid #1c2a42', borderRadius: '10px', padding: '1rem' }}>
                 <span style={{ fontSize: '0.72rem', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 600 }}>Counseling & Warnings</span>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b', marginTop: '2px' }}>{counselingCount + probationCount}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>1 to 20 demerit points</div>
               </div>
-              <div style={{ backgroundColor: '#090d14', border: '1px solid #1e293b', borderRadius: '10px', padding: '1rem' }}>
+              <div style={{ backgroundColor: '#070a12', border: '1px solid #1c2a42', borderRadius: '10px', padding: '1rem' }}>
                 <span style={{ fontSize: '0.72rem', color: '#f87171', textTransform: 'uppercase', fontWeight: 600 }}>Critical / Suspension Risk</span>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f43f5e', marginTop: '2px' }}>{suspensionDismissalCount}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ef4444', marginTop: '2px' }}>{suspensionDismissalCount}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>21+ pts (sanction threshold)</div>
               </div>
             </div>
@@ -1021,8 +1028,8 @@ export default function OverviewDashboard({
             {/* Flagged personnel quick-list */}
             {flaggedPersonnel.length > 0 ? (
               <div style={{
-                backgroundColor: '#090d14',
-                border: '1px solid #1e293b',
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
                 borderRadius: '10px',
                 padding: '0.9rem 1rem',
               }}>
@@ -1040,15 +1047,15 @@ export default function OverviewDashboard({
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '0.6rem 0.8rem',
-                        backgroundColor: '#111827',
+                        backgroundColor: '#0c121e',
                         borderRadius: '8px',
-                        border: '1px solid #1f2937',
+                        border: '1px solid #1c2a42',
                         cursor: 'pointer',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#38bdf8' }}>{p.badge_id || 'ID'}</span>
-                        <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.85rem' }}>{p.name}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#60a5fa' }}>{p.badge_id || 'ID'}</span>
+                        <span style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.85rem' }}>{p.name}</span>
                         <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>({p.rank})</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1064,7 +1071,7 @@ export default function OverviewDashboard({
                           fontWeight: 700,
                           padding: '2px 7px',
                           borderRadius: '4px',
-                          backgroundColor: p.threshold?.badge_bg || 'rgba(245, 158, 11, 0.15)',
+                          backgroundColor: p.threshold?.badge_bg || 'rgba(217, 119, 6, 0.15)',
                           color: p.threshold?.badge_color || '#fbbf24',
                         }}>
                           {p.threshold?.status_label}
@@ -1076,14 +1083,14 @@ export default function OverviewDashboard({
               </div>
             ) : (
               <div style={{
-                backgroundColor: '#090d14',
-                border: '1px solid #1e293b',
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
                 borderRadius: '10px',
                 padding: '0.85rem 1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.6rem',
-                color: '#34d399',
+                color: '#10b981',
                 fontSize: '0.85rem'
               }}>
                 <CheckCircle2 size={18} color="#10b981" />
@@ -1101,8 +1108,8 @@ export default function OverviewDashboard({
           }}>
             {/* Left score panel */}
             <div style={{
-              backgroundColor: '#090d14',
-              border: '1px solid #1e293b',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
               borderRadius: '12px',
               padding: '1.25rem',
               display: 'flex',
@@ -1117,7 +1124,7 @@ export default function OverviewDashboard({
                 <div style={{
                   fontSize: '2.5rem',
                   fontWeight: 900,
-                  color: myActivePoints === 0 ? '#10b981' : myActivePoints <= 10 ? '#f59e0b' : '#f43f5e',
+                  color: myActivePoints === 0 ? '#10b981' : myActivePoints <= 10 ? '#f59e0b' : '#ef4444',
                   lineHeight: 1.1,
                   marginTop: '4px'
                 }}>
@@ -1149,8 +1156,8 @@ export default function OverviewDashboard({
 
             {/* Right progress gauge panel */}
             <div style={{
-              backgroundColor: '#090d14',
-              border: '1px solid #1e293b',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
               borderRadius: '12px',
               padding: '1.25rem',
               display: 'flex',
@@ -1170,7 +1177,7 @@ export default function OverviewDashboard({
               <div style={{
                 height: '10px',
                 width: '100%',
-                backgroundColor: '#1e293b',
+                backgroundColor: '#18243c',
                 borderRadius: '999px',
                 overflow: 'hidden',
                 position: 'relative'
@@ -1178,7 +1185,7 @@ export default function OverviewDashboard({
                 <div style={{
                   height: '100%',
                   width: `${pointsGaugePercent}%`,
-                  backgroundColor: myActivePoints === 0 ? '#10b981' : myActivePoints <= 10 ? '#f59e0b' : '#f43f5e',
+                  backgroundColor: myActivePoints === 0 ? '#10b981' : myActivePoints <= 10 ? '#f59e0b' : '#ef4444',
                   transition: 'width 0.4s ease'
                 }} />
               </div>
@@ -1188,7 +1195,7 @@ export default function OverviewDashboard({
                 <span style={{ color: '#10b981' }}>0 (Clean)</span>
                 <span style={{ color: '#fbbf24' }}>10 (Counseling)</span>
                 <span style={{ color: '#f97316' }}>20 (Probation)</span>
-                <span style={{ color: '#f43f5e' }}>31+ (Dismissal)</span>
+                <span style={{ color: '#ef4444' }}>31+ (Dismissal)</span>
               </div>
             </div>
           </div>
@@ -1203,24 +1210,25 @@ export default function OverviewDashboard({
       }}>
         {/* Left: Active VIP Escorts in Transit */}
         <div style={{
-          backgroundColor: '#111827',
-          border: '1px solid #1f2937',
+          backgroundColor: '#0f1728',
+          border: '1px solid #1c2a42',
           borderRadius: '14px',
           padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Car size={18} color="#06b6d4" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Car size={18} color="#60a5fa" />
               <span>Active VIP Convoy Deployments</span>
             </h3>
             <span style={{
               fontSize: '0.7rem',
               fontWeight: 700,
-              backgroundColor: 'rgba(6, 182, 212, 0.15)',
-              color: '#22d3ee',
+              backgroundColor: 'rgba(37, 99, 235, 0.15)',
+              color: '#60a5fa',
               padding: '2px 8px',
               borderRadius: '999px',
             }}>
@@ -1234,8 +1242,8 @@ export default function OverviewDashboard({
                 <div
                   key={e.id}
                   style={{
-                    backgroundColor: '#090d14',
-                    border: '1px solid #1e293b',
+                    backgroundColor: '#070a12',
+                    border: '1px solid #1c2a42',
                     borderRadius: '10px',
                     padding: '1rem',
                     display: 'flex',
@@ -1245,10 +1253,10 @@ export default function OverviewDashboard({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'monospace', fontWeight: 700 }}>
                         {e.id}
                       </span>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f8fafc' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f1f5f9' }}>
                         {e.principal}
                       </h4>
                     </div>
@@ -1257,8 +1265,8 @@ export default function OverviewDashboard({
                       fontWeight: 700,
                       padding: '2px 7px',
                       borderRadius: '4px',
-                      backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                      color: '#22d3ee',
+                      backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                      color: '#60a5fa',
                     }}>
                       {e.status}
                     </span>
@@ -1269,7 +1277,7 @@ export default function OverviewDashboard({
                     <span>Route: <strong style={{ color: '#cbd5e1' }}>{e.origin}</strong> → <strong style={{ color: '#cbd5e1' }}>{e.destination}</strong></span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #1e293b', paddingTop: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #1c2a42', paddingTop: '0.4rem' }}>
                     <span>Lead: <strong style={{ color: '#94a3b8' }}>{e.lead_agent}</strong></span>
                     <span>{e.vehicle_convoy}</span>
                   </div>
@@ -1280,8 +1288,8 @@ export default function OverviewDashboard({
                 <div
                   key={e.id}
                   style={{
-                    backgroundColor: '#090d14',
-                    border: '1px solid #1e293b',
+                    backgroundColor: '#070a12',
+                    border: '1px solid #1c2a42',
                     borderRadius: '10px',
                     padding: '1rem',
                     display: 'flex',
@@ -1291,10 +1299,10 @@ export default function OverviewDashboard({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'monospace', fontWeight: 700 }}>
                         {e.id}
                       </span>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f8fafc' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f1f5f9' }}>
                         {e.principal}
                       </h4>
                     </div>
@@ -1315,7 +1323,7 @@ export default function OverviewDashboard({
                     <span>Route: <strong style={{ color: '#cbd5e1' }}>{e.origin}</strong> → <strong style={{ color: '#cbd5e1' }}>{e.destination}</strong></span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #1e293b', paddingTop: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #1c2a42', paddingTop: '0.4rem' }}>
                     <span>Lead: <strong style={{ color: '#94a3b8' }}>{e.lead_agent}</strong></span>
                     <span>{e.vehicle_convoy}</span>
                   </div>
@@ -1325,16 +1333,16 @@ export default function OverviewDashboard({
               <div style={{
                 padding: '2.5rem 1.5rem',
                 textAlign: 'center',
-                backgroundColor: '#090d14',
+                backgroundColor: '#070a12',
                 borderRadius: '10px',
-                border: '1px dashed #1e293b',
+                border: '1px dashed #1c2a42',
                 color: '#64748b',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.6rem'
               }}>
-                <Car size={32} color="#334155" />
+                <Car size={32} color="#1c2a42" />
                 <div style={{ fontSize: '0.95rem', color: '#cbd5e1', fontWeight: 600 }}>No Active Convoys in Transit</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '320px' }}>
                   All escort teams and motorcade vehicles are on base standby. Click below to initiate an executive escort.
@@ -1347,9 +1355,9 @@ export default function OverviewDashboard({
                     fontSize: '0.78rem',
                     fontWeight: 600,
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(6, 182, 212, 0.15)',
-                    color: '#22d3ee',
-                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                    color: '#60a5fa',
+                    border: '1px solid rgba(37, 99, 235, 0.3)',
                     cursor: 'pointer'
                   }}
                 >
@@ -1362,17 +1370,18 @@ export default function OverviewDashboard({
 
         {/* Right: Armory Weapons Issued to Field */}
         <div style={{
-          backgroundColor: '#111827',
-          border: '1px solid #1f2937',
+          backgroundColor: '#0f1728',
+          border: '1px solid #1c2a42',
           borderRadius: '14px',
           padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Crosshair size={18} color="#f43f5e" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Crosshair size={18} color="#ef4444" />
               <span>Weapons Issued & Field Custody</span>
             </h3>
             <span style={{
@@ -1393,8 +1402,8 @@ export default function OverviewDashboard({
                 <div
                   key={g.id}
                   style={{
-                    backgroundColor: '#090d14',
-                    border: '1px solid #1e293b',
+                    backgroundColor: '#070a12',
+                    border: '1px solid #1c2a42',
                     borderRadius: '10px',
                     padding: '0.85rem 1rem',
                     display: 'flex',
@@ -1403,11 +1412,11 @@ export default function OverviewDashboard({
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.9rem' }}>
+                    <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.9rem' }}>
                       {g.name}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                      SN: <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>{g.serial_number}</span> • Custody: <strong style={{ color: '#38bdf8' }}>{g.assigned_to}</strong>
+                      SN: <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>{g.serial_number}</span> • Custody: <strong style={{ color: '#60a5fa' }}>{g.assigned_to}</strong>
                     </div>
                   </div>
 
@@ -1432,9 +1441,9 @@ export default function OverviewDashboard({
               <div style={{
                 padding: '2.5rem 1.5rem',
                 textAlign: 'center',
-                backgroundColor: '#090d14',
+                backgroundColor: '#070a12',
                 borderRadius: '10px',
-                border: '1px dashed #1e293b',
+                border: '1px dashed #1c2a42',
                 color: '#64748b',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1442,7 +1451,7 @@ export default function OverviewDashboard({
                 gap: '0.6rem'
               }}>
                 <CheckCircle2 size={32} color="#10b981" />
-                <div style={{ fontSize: '0.95rem', color: '#34d399', fontWeight: 600 }}>Armory Vault 100% Secured</div>
+                <div style={{ fontSize: '0.95rem', color: '#10b981', fontWeight: 600 }}>Armory Vault 100% Secured</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '320px' }}>
                   All {armoryTotalCount} tactical weapons and gear pieces are accounted for inside the secure armory vault.
                 </div>
@@ -1455,7 +1464,7 @@ export default function OverviewDashboard({
                     fontWeight: 600,
                     borderRadius: '6px',
                     backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                    color: '#34d399',
+                    color: '#10b981',
                     border: '1px solid rgba(16, 185, 129, 0.3)',
                     cursor: 'pointer'
                   }}
@@ -1467,16 +1476,16 @@ export default function OverviewDashboard({
               <div style={{
                 padding: '2.5rem 1.5rem',
                 textAlign: 'center',
-                backgroundColor: '#090d14',
+                backgroundColor: '#070a12',
                 borderRadius: '10px',
-                border: '1px dashed #1e293b',
+                border: '1px dashed #1c2a42',
                 color: '#64748b',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.6rem'
               }}>
-                <Crosshair size={32} color="#334155" />
+                <Crosshair size={32} color="#1c2a42" />
                 <div style={{ fontSize: '0.95rem', color: '#cbd5e1', fontWeight: 600 }}>No Armory Equipment Registered</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '320px' }}>
                   The armory database currently has no registered tactical assets or weapons cataloged.
@@ -1489,9 +1498,9 @@ export default function OverviewDashboard({
                     fontSize: '0.78rem',
                     fontWeight: 600,
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(244, 63, 94, 0.15)',
-                    color: '#f43f5e',
-                    border: '1px solid rgba(244, 63, 94, 0.3)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
                     cursor: 'pointer'
                   }}
                 >

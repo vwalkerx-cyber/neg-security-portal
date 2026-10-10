@@ -551,23 +551,23 @@ export default function EscortView({
 
       {/* KPI Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
+        <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', padding: '1.1rem', boxShadow: '0 4px 18px rgba(0, 0, 0, 0.35)' }}>
           <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Active In Transit</span>
-          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#22d3ee', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#60a5fa', marginTop: '0.25rem' }}>
             {activeCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Convoys</span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#06b6d4' }}>Active rolling protection</span>
+          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Active rolling protection</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
+        <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', padding: '1.1rem', boxShadow: '0 4px 18px rgba(0, 0, 0, 0.35)' }}>
           <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Scheduled Missions</span>
-          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#93c5fd', marginTop: '0.25rem' }}>
             {scheduledCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Planned</span>
           </div>
           <span style={{ fontSize: '0.75rem', color: '#60a5fa' }}>Pre-briefed details</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
+        <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', padding: '1.1rem', boxShadow: '0 4px 18px rgba(0, 0, 0, 0.35)' }}>
           <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Operations</span>
           <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#fbbf24', marginTop: '0.25rem' }}>
             {todayCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Details</span>
@@ -575,9 +575,9 @@ export default function EscortView({
           <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>Scheduled for {todayStr}</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
+        <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', padding: '1.1rem', boxShadow: '0 4px 18px rgba(0, 0, 0, 0.35)' }}>
           <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Mission Success Rate</span>
-          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#34d399', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#10b981', marginTop: '0.25rem' }}>
             100%
           </div>
           <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Zero breaches recorded</span>
@@ -586,8 +586,8 @@ export default function EscortView({
 
       {/* Filter & Search */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '12px',
         padding: '1rem 1.25rem',
         display: 'flex',
@@ -595,6 +595,7 @@ export default function EscortView({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
+        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -607,16 +608,16 @@ export default function EscortView({
               width: '100%',
               padding: '0.55rem 0.75rem 0.55rem 2.25rem',
               borderRadius: '8px',
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              color: '#f8fafc',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
+              color: '#f1f5f9',
               fontSize: '0.85rem',
               outline: 'none',
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.35rem', backgroundColor: '#1f2937', padding: '3px', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', gap: '0.35rem', backgroundColor: '#070a12', padding: '3px', borderRadius: '8px', border: '1px solid #1c2a42' }}>
           {['ALL', 'In Transit', 'Scheduled', 'Completed'].map((st) => (
             <button
               key={st}
@@ -625,11 +626,12 @@ export default function EscortView({
                 padding: '4px 10px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: statusFilter === st ? '#374151' : 'transparent',
-                color: statusFilter === st ? '#ffffff' : '#94a3b8',
+                backgroundColor: statusFilter === st ? '#18243c' : 'transparent',
+                color: statusFilter === st ? '#60a5fa' : '#94a3b8',
                 fontSize: '0.75rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
               {st}
@@ -653,14 +655,14 @@ export default function EscortView({
               <div
                 key={m.id}
                 style={{
-                  backgroundColor: '#111827',
-                  border: m.status === 'In Transit' ? '1px solid rgba(6, 182, 212, 0.45)' : '1px solid #1f2937',
+                  backgroundColor: '#0f1728',
+                  border: m.status === 'In Transit' ? '1px solid rgba(37, 99, 235, 0.55)' : '1px solid #1c2a42',
                   borderRadius: '14px',
                   padding: '1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '1rem',
-                  boxShadow: m.status === 'In Transit' ? '0 0 20px rgba(6, 182, 212, 0.1)' : 'none',
+                  boxShadow: m.status === 'In Transit' ? '0 0 24px rgba(37, 99, 235, 0.15)' : '0 4px 18px rgba(0, 0, 0, 0.3)',
                 }}
               >
                 {/* Header */}
@@ -734,18 +736,18 @@ export default function EscortView({
 
                 {/* Route Box */}
                 <div style={{
-                  backgroundColor: '#090d14',
+                  backgroundColor: '#070a12',
                   borderRadius: '10px',
                   padding: '0.85rem',
-                  border: '1px solid #1e293b',
+                  border: '1px solid #1c2a42',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.5rem',
                   fontSize: '0.825rem',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94a3b8' }}>
-                    <MapPin size={14} color="#38bdf8" />
-                    <span>Origin: <strong style={{ color: '#e2e8f0' }}>{m.origin}</strong></span>
+                    <MapPin size={14} color="#60a5fa" />
+                    <span>Origin: <strong style={{ color: '#f1f5f9' }}>{m.origin}</strong></span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: '#94a3b8' }}>
                     <Navigation size={14} color="#10b981" style={{ marginTop: '2px', flexShrink: 0 }} />
@@ -756,9 +758,9 @@ export default function EscortView({
                           {m.destinations.map((dst, i) => (
                             <React.Fragment key={i}>
                               <span style={{
-                                backgroundColor: '#1e293b',
-                                border: '1px solid #334155',
-                                color: '#34d399',
+                                backgroundColor: '#111928',
+                                border: '1px solid #1c2a42',
+                                color: '#60a5fa',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
                                 fontSize: '0.75rem',
@@ -773,7 +775,7 @@ export default function EscortView({
                           ))}
                         </div>
                       ) : (
-                        <strong style={{ color: '#e2e8f0' }}>{m.destination}</strong>
+                        <strong style={{ color: '#f1f5f9' }}>{m.destination}</strong>
                       )}
                     </div>
                   </div>
@@ -783,7 +785,7 @@ export default function EscortView({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.8rem' }}>
                   <div style={{ color: '#94a3b8' }}>
                     Lead Officer: <br />
-                    <strong style={{ color: '#f8fafc' }}>{m.lead_agent}</strong>
+                    <strong style={{ color: '#f1f5f9' }}>{m.lead_agent}</strong>
                   </div>
                   <div style={{ color: '#94a3b8' }}>
                     Convoy Assets: <br />
@@ -793,14 +795,14 @@ export default function EscortView({
 
                 {/* Assigned Officers Detail */}
                 <div style={{
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #1e293b',
+                  backgroundColor: '#070a12',
+                  border: '1px solid #1c2a42',
                   borderRadius: '8px',
                   padding: '0.6rem 0.75rem',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Users size={13} color="#38bdf8" />
+                      <Users size={13} color="#60a5fa" />
                       <span>Assigned Officers ({(m.assigned_personnel && m.assigned_personnel.length > 0 ? m.assigned_personnel : [m.lead_agent]).length}):</span>
                     </span>
                     <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>

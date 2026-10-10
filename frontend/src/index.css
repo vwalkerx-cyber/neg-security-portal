@@ -1,36 +1,41 @@
 :root {
-  --bg-primary: #0b0f19;
-  --bg-secondary: #111827;
-  --bg-card: #111827;
-  --bg-card-hover: #1f2937;
-  --border-subtle: #1e293b;
-  --border-focus: #0ea5e9;
-  --text-main: #f8fafc;
+  /* Option A: Executive Command Citadel System Tokens */
+  --bg-primary: #070a12;
+  --bg-secondary: #0c121e;
+  --bg-card: #0f1728;
+  --bg-card-hover: #152035;
+  --bg-surface-elevated: #18243c;
+  
+  --border-subtle: #1c2a42;
+  --border-medium: #263857;
+  --border-focus: #3b82f6;
+  
+  --text-main: #f1f5f9;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
-  --accent-blue: #0ea5e9;
+  
+  /* Brand Accents */
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
   --accent-cyan: #0284c7;
-  --accent-emerald: #10b981;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #ef4444;
-  --accent-purple: #8b5cf6;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --accent-gold: #d97706;
+  --accent-gold-glow: rgba(217, 119, 6, 0.25);
+  
+  /* Tactical Status Semantics */
+  --status-safe: #10b981;
+  --status-safe-bg: rgba(16, 185, 129, 0.12);
+  --status-safe-border: rgba(16, 185, 129, 0.3);
+  
+  --status-warn: #f59e0b;
+  --status-warn-bg: rgba(245, 158, 11, 0.12);
+  --status-warn-border: rgba(245, 158, 11, 0.3);
+  
+  --status-danger: #ef4444;
+  --status-danger-bg: rgba(239, 68, 68, 0.12);
+  --status-danger-border: rgba(239, 68, 68, 0.3);
 
-  /* Option 1: Modern Dark Mode tokens */
-  --modern-bg: #0b0f19;
-  --modern-surface: #111827;
-  --modern-surface-hover: #1f2937;
-  --modern-border: #1e293b;
-  --modern-brand: #0ea5e9;
-  --modern-accent: #0284c7;
-  --modern-accent-hover: #0369a1;
-  --modern-safe: #10b981;
-  --modern-warn: #f59e0b;
-  --modern-danger: #ef4444;
-  --modern-text-primary: #f8fafc;
-  --modern-text-secondary: #94a3b8;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 * {
@@ -40,17 +45,20 @@
 }
 
 body {
-  background-color: #0b0f19;
+  background-color: var(--bg-primary);
   color: var(--text-main);
   font-family: var(--font-sans);
   min-height: 100vh;
   line-height: 1.5;
   overflow-x: hidden;
-  background-image: linear-gradient(to bottom, #0e1422, #0b0f19);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 70%),
+    linear-gradient(to bottom, #090e1a, #070a12);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+  letter-spacing: -0.011em;
 }
 
 #root {

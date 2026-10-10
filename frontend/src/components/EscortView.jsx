@@ -88,6 +88,64 @@ export default function EscortView({
     ? guardPersonnel
     : guardPersonnel.filter((person) => person.id === currentUser?.personnel_id);
 
+  // Permission Check: Admin, Lead Agent, or Assigned Detail Officer
+  const canModifyMission = (m) => {
+    if (!currentUser || !m) return false;
+    if (currentUser.role === 'ADMIN') return true;
+
+    const myPid = currentUser.personnel_id || currentUser.id;
+    const myName = (currentUser.name || '').toLowerCase().trim();
+    const myBadge = (currentUser.badge_id || '').toLowerCase().trim();
+
+    // Linked personnel entry for current user
+    const myPerson = (personnel || []).find((p) => 
+      (myPid && p.id === myPid) ||
+      (myName && p.name && p.name.toLowerCase().trim() === myName) ||
+      (myBadge && p.badge_id && p.badge_id.toLowerCase().trim() === myBadge)
+    );
+
+    const validIds = new Set([myPid, myPerson?.id].filter(Boolean));
+    const validNames = [myName, myPerson?.name?.toLowerCase().trim()].filter(Boolean);
+
+    // 1. Is Lead Agent?
+    if (m.lead_agent_id && validIds.has(m.lead_agent_id)) return true;
+    if (m.lead_agent) {
+      const leadStr = m.lead_agent.toLowerCase();
+      if (validNames.some((n) => leadStr.includes(n))) return true;
+    }
+
+    // 2. Is Assigned Officer by ID?
+    if (Array.isArray(m.assigned_officer_ids)) {
+      if (m.assigned_officer_ids.some((oid) => validIds.has(oid))) return true;
+    }
+
+    // 3. Is Assigned Officer by Name/String?
+    if (Array.isArray(m.assigned_personnel)) {
+      if (m.assigned_personnel.some((officerStr) => {
+        const str = String(officerStr).toLowerCase();
+        return validNames.some((n) => str.includes(n)) || validIds.has(officerStr);
+      })) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const handleFillTimeNow = (field) => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeNow = `${hours}:${minutes}`;
+    setFormData((prev) => ({
+      ...prev,
+      [field]: timeNow,
+    }));
+    if (onNotify) {
+      onNotify(`Set ${field === 'start_time' ? 'Start Time' : 'Est. Completion Time'} to ${timeNow}`);
+    }
+  };
+
   // Build VIP / Principal list from created/registered users and personnel
   const registeredVips = [];
   const seenVipNames = new Set();
@@ -172,6 +230,10 @@ export default function EscortView({
   };
 
   const handleOpenEditModal = (m) => {
+    if (!canModifyMission(m)) {
+      if (onNotify) onNotify('Access Denied: You can only edit escort missions where you are assigned as lead or escort officer.');
+      return;
+    }
     setIsEditing(true);
     setEditingMissionId(m.id);
 
@@ -332,6 +394,10 @@ export default function EscortView({
       };
 
       if (isEditing && editingMissionId) {
+        const targetMission = missions.find(m => m.id === editingMissionId);
+        if (targetMission && !canModifyMission(targetMission)) {
+          throw new Error('Access Denied: You can only edit escort missions where you are assigned as lead or escort officer.');
+        }
         if (onEditMission) {
           await onEditMission(editingMissionId, payload);
         }
@@ -373,6 +439,11 @@ export default function EscortView({
   };
 
   const handleStatusChange = async (missionId, newStatus) => {
+    const targetMission = missions.find(m => m.id === missionId);
+    if (targetMission && !canModifyMission(targetMission)) {
+      onNotify('Access Denied: You can only change status for escort missions where you are assigned as lead or escort officer.');
+      return;
+    }
     try {
       await onUpdateStatus(missionId, newStatus);
       onNotify(`Mission ${missionId} status updated to ${newStatus.toUpperCase()}`);
@@ -832,63 +903,67 @@ export default function EscortView({
                   </span>
 
                   <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                    {m.status !== 'In Transit' && (
-                      <button
-                        onClick={() => handleStatusChange(m.id, 'In Transit')}
-                        style={{
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          backgroundColor: 'rgba(6, 182, 212, 0.15)',
-                          border: '1px solid rgba(6, 182, 212, 0.35)',
-                          color: '#22d3ee',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Set In Transit
-                      </button>
-                    )}
+                    {canModifyMission(m) && (
+                      <>
+                        {m.status !== 'In Transit' && (
+                          <button
+                            onClick={() => handleStatusChange(m.id, 'In Transit')}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(6, 182, 212, 0.15)',
+                              border: '1px solid rgba(6, 182, 212, 0.35)',
+                              color: '#22d3ee',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Set In Transit
+                          </button>
+                        )}
 
-                    {m.status !== 'Completed' && (
-                      <button
-                        onClick={() => handleStatusChange(m.id, 'Completed')}
-                        style={{
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                          border: '1px solid rgba(16, 185, 129, 0.35)',
-                          color: '#34d399',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Complete
-                      </button>
-                    )}
+                        {m.status !== 'Completed' && (
+                          <button
+                            onClick={() => handleStatusChange(m.id, 'Completed')}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                              border: '1px solid rgba(16, 185, 129, 0.35)',
+                              color: '#34d399',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Complete
+                          </button>
+                        )}
 
-                    {/* Edit Button */}
-                    <button
-                      onClick={() => handleOpenEditModal(m)}
-                      title="Edit Mission Details"
-                      style={{
-                        padding: '4px 9px',
-                        borderRadius: '6px',
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #334155',
-                        color: '#cbd5e1',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <Edit2 size={12} />
-                      <span>Edit</span>
-                    </button>
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => handleOpenEditModal(m)}
+                          title="Edit Mission Details"
+                          style={{
+                            padding: '4px 9px',
+                            borderRadius: '6px',
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
+                            color: '#cbd5e1',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Edit2 size={12} />
+                          <span>Edit</span>
+                        </button>
+                      </>
+                    )}
 
                     {/* Delete Button (Admin Only) */}
                     {currentUser?.role === 'ADMIN' && (
@@ -1129,9 +1204,26 @@ export default function EscortView({
               {/* Date of Escort & Start Time of Escort (Replaces Threat Level) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Date of Escort *
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
+                      Date of Escort *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, escort_date: todayStr }))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      Today
+                    </button>
+                  </div>
                   <input
                     type="date"
                     required
@@ -1151,9 +1243,31 @@ export default function EscortView({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Start Time of Escort *
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
+                      Start Time of Escort *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleFillTimeNow('start_time')}
+                      title="Fill with current local time"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                    >
+                      <Clock size={11} color="#38bdf8" />
+                      <span>Fill Time Now</span>
+                    </button>
+                  </div>
                   <input
                     type="time"
                     required
@@ -1203,9 +1317,31 @@ export default function EscortView({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Est. Completion Time
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
+                      Est. Completion Time
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleFillTimeNow('estimated_completion')}
+                      title="Fill with current local time"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                    >
+                      <Clock size={11} color="#38bdf8" />
+                      <span>Fill Time Now</span>
+                    </button>
+                  </div>
                   <input
                     type="time"
                     value={formData.estimated_completion}

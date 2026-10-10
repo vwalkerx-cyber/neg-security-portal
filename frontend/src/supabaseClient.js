@@ -199,6 +199,24 @@ export const createPersonnel = async (record) => {
 export const updatePersonnel = async (id, record) => {
   const { data, error } = await supabase.from('personnel').update(record).eq('id', id).select().single();
   if (error) throw error;
+
+  // Cascade badge number and name changes to historical presence records
+  if (record.badge_id || record.name) {
+    const presenceUpdate = {};
+    if (record.badge_id) presenceUpdate.badge_id = record.badge_id;
+    if (record.name) presenceUpdate.name = record.name;
+    await supabase.from('presence').update(presenceUpdate).eq('personnel_id', id);
+  }
+
+  // Also sync name, rank, status with users table linked to this personnel
+  const userUpdate = {};
+  if (record.name) userUpdate.name = record.name;
+  if (record.rank) userUpdate.rank = record.rank;
+  if (record.status) userUpdate.status = record.status;
+  if (Object.keys(userUpdate).length > 0) {
+    await supabase.from('users').update(userUpdate).eq('personnel_id', id);
+  }
+
   return data;
 };
 

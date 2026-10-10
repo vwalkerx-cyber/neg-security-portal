@@ -133,8 +133,9 @@ export const registerUser = async (regData) => {
 
 export const verifySession = async (token) => {
   if (!token) return { valid: false };
-  const parts = token.split('-');
-  const userId = parts[2];
+  // Token format: NEG-SUPABASE-<userId>-<timestamp>
+  const match = token.match(/^NEG-SUPABASE-(.*?)-(\d+)$/);
+  const userId = match ? match[1] : null;
   if (!userId) return { valid: true };
 
   const { data: user } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();

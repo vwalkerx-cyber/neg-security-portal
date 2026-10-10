@@ -927,35 +927,117 @@ export default function EscortView({
 
       {/* Modal: Dispatch / Edit Mission */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
-            borderRadius: '14px',
-            width: '100%',
-            maxWidth: '560px',
-            maxHeight: '90vh',
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            zIndex: 100,
+            padding: '1rem',
             overflowY: 'auto',
-            padding: '1.75rem',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
-          }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', marginBottom: '1.25rem' }}>
-              {isEditing ? `Edit Escort Mission — ${editingMissionId}` : 'Dispatch Executive Escort Mission'}
-            </h3>
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: '#111827',
+              border: '1px solid #1f2937',
+              borderRadius: '14px',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: 'calc(100vh - 2rem)',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              margin: 'auto',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header (Fixed / Sticky) */}
+            <div style={{
+              padding: '1rem 1.5rem',
+              borderBottom: '1px solid #1f2937',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: '#111827',
+              flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(6, 182, 212, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  flexShrink: 0,
+                }}>
+                  <Car size={18} color="#06b6d4" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0, lineHeight: 1.2 }}>
+                    {isEditing ? `Edit Escort Mission — ${editingMissionId}` : 'Dispatch Executive Escort Mission'}
+                  </h3>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    {isEditing ? 'Modify mission parameters & personnel' : 'Fill details below to assign escort detail'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                title="Close modal"
+                style={{
+                  background: 'rgba(31, 41, 55, 0.6)',
+                  border: '1px solid #374151',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form 
+              onSubmit={handleSubmit} 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden',
+                flex: 1,
+                minHeight: 0,
+              }}
+            >
+              {/* Scrollable Form Body */}
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                overflowY: 'auto',
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#4b5563 #111827',
+              }}>
               {/* Principal Selection / Custom Input */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
@@ -1157,12 +1239,14 @@ export default function EscortView({
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
                   gap: '0.4rem',
-                  maxHeight: '145px',
+                  maxHeight: '130px',
                   overflowY: 'auto',
+                  overscrollBehavior: 'contain',
                   padding: '0.5rem',
                   backgroundColor: '#0f172a',
                   borderRadius: '8px',
                   border: '1px solid #1e293b',
+                  scrollbarWidth: 'thin',
                 }}>
                   {guardPersonnel.map((p) => {
                     const isLead = p.id === formData.lead_agent_id;
@@ -1506,36 +1590,56 @@ export default function EscortView({
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '0.6rem 1rem',
-                    borderRadius: '8px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    padding: '0.6rem 1.25rem',
-                    borderRadius: '8px',
-                    backgroundColor: '#0284c7',
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 600,
-                    cursor: submitting ? 'wait' : 'pointer',
-                  }}
-                >
-                  {submitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Dispatch Mission')}
-                </button>
+              </div>
+
+              {/* Fixed Sticky Footer */}
+              <div style={{
+                padding: '0.85rem 1.5rem',
+                borderTop: '1px solid #1f2937',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#0d131f',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                  * Required mission parameters
+                </span>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    style={{
+                      padding: '0.55rem 1rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#cbd5e1',
+                      fontSize: '0.825rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    style={{
+                      padding: '0.55rem 1.35rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.825rem',
+                      cursor: submitting ? 'wait' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                    }}
+                  >
+                    {submitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Dispatch Mission')}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

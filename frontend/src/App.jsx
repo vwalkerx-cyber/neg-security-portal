@@ -404,6 +404,17 @@ export default function App() {
     await fetchData();
   };
 
+  const handleEditPayroll = async (id, data) => {
+    await db.updatePayroll(id, data);
+    await fetchData();
+  };
+
+  const handleDeletePayroll = async (id) => {
+    await db.deletePayroll(id);
+    notify('Salary record removed.');
+    await fetchData();
+  };
+
   // Armory handlers
   const handleIssueItem = async (data) => {
     await db.issueArmoryItem(data);
@@ -796,6 +807,8 @@ export default function App() {
               personnel={personnel}
               currentUser={currentUser}
               onAddPayroll={handleAddPayroll}
+              onEditPayroll={handleEditPayroll}
+              onDeletePayroll={handleDeletePayroll}
               onExportCsv={handleExportCsv}
               onNotify={notify}
             />

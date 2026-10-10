@@ -329,6 +329,43 @@ export const addPayroll = async (payrollData) => {
   return data;
 };
 
+export const updatePayroll = async (id, payrollData) => {
+  let officerName = payrollData.name;
+  let officerRank = payrollData.rank;
+
+  if ((!officerName || !officerRank) && payrollData.personnel_id) {
+    const { data: officer } = await supabase
+      .from('personnel')
+      .select('name, rank')
+      .eq('id', payrollData.personnel_id)
+      .maybeSingle();
+    if (officer) {
+      if (!officerName) officerName = officer.name;
+      if (!officerRank) officerRank = officer.rank;
+    }
+  }
+
+  const payload = {
+    salary: Number(payrollData.salary) || 0,
+    salary_date: payrollData.salary_date || getTodayStr(),
+    week_number: Number(payrollData.week_number) || 1,
+    notes: payrollData.notes || ''
+  };
+  if (payrollData.personnel_id) payload.personnel_id = payrollData.personnel_id;
+  if (officerName) payload.name = officerName;
+  if (officerRank) payload.rank = officerRank;
+
+  const { data, error } = await supabase.from('payroll').update(payload).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deletePayroll = async (id) => {
+  const { error } = await supabase.from('payroll').delete().eq('id', id);
+  if (error) throw error;
+  return true;
+};
+
 // Armory & Bulk Depot
 export const fetchArmory = async () => {
   const { data, error } = await supabase.from('armory').select('*').order('id', { ascending: true });

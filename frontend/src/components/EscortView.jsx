@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 import ConfirmModal from './ConfirmModal';
+import EmptyState from './EmptyState';
 
 export default function EscortView({ 
   missions = [], 
@@ -1009,8 +1010,22 @@ export default function EscortView({
             );
           })
         ) : (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', gridColumn: '1 / -1' }}>
-            No escort missions found.
+          <div style={{ gridColumn: '1 / -1', padding: '1rem 0' }}>
+            <EmptyState
+              icon={Navigation}
+              accentColor="#0284c7"
+              title="No Escort Operations Active"
+              description={searchQuery || statusFilter !== 'ALL'
+                ? "No convoy escort missions match your search query or status filter. Try clearing your filters."
+                : "No protective motorcade details currently scheduled or in transit. Dispatch a mission to start live tracking."}
+              actionText="Dispatch Escort Mission"
+              onAction={handleOpenCreateModal}
+              secondaryActionText={searchQuery || statusFilter !== 'ALL' ? "Reset Filters" : undefined}
+              onSecondaryAction={() => {
+                setSearchQuery('');
+                setStatusFilter('ALL');
+              }}
+            />
           </div>
         )}
       </div>

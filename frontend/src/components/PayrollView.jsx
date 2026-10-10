@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DollarSign, Download, Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { canExportPayrollCsv } from '../utils/permissions';
 import ConfirmModal from './ConfirmModal';
+import EmptyState from './EmptyState';
 
 const getToday = () => {
   const today = new Date();
@@ -124,6 +125,22 @@ export default function PayrollView({
   });
 
   const totalSalary = sortedPayroll.reduce((total, record) => total + Number(record.salary || 0), 0);
+
+  // Weekly Summary Breakdown calculation for horizontal bar chart (#9)
+  const weeklySummary = React.useMemo(() => {
+    const map = {};
+    visiblePayroll.forEach((r) => {
+      const wk = Number(r.week_number) || 1;
+      if (!map[wk]) {
+        map[wk] = { week: wk, total: 0, count: 0 };
+      }
+      map[wk].total += Number(r.salary || 0);
+      map[wk].count += 1;
+    });
+    const items = Object.values(map).sort((a, b) => b.week - a.week);
+    const maxTotal = items.reduce((max, i) => Math.max(max, i.total), 0) || 1;
+    return { items, maxTotal };
+  }, [visiblePayroll]);
 
   const handleOpenAdd = () => {
     setEditingRecord(null);
@@ -262,6 +279,119 @@ export default function PayrollView({
           )}
         </div>
       </div>
+
+      {/* Weekly Compensation Breakdown Chart (#9) */}
+      {weeklySummary.items.length > 0 && (
+        <div style={{
+          backgroundColor: '#0f1728',
+          border: '1px solid #1c2a42',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                <span>Weekly Compensation Allocation Breakdown</span>
+              </h3>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                Summary of total salary obligation per fiscal week. Click any week to filter the ledger below.
+              </p>
+            </div>
+            {weekFilter !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => setWeekFilter('ALL')}
+                style={{
+                  padding: '3px 9px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  color: '#38bdf8',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Clear Week Filter (Viewing Week {weekFilter})
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            {weeklySummary.items.map((item) => {
+              const percent = Math.min(100, Math.round((item.total / weeklySummary.maxTotal) * 100));
+              const isSelected = weekFilter === String(item.week);
+
+              return (
+                <div
+                  key={item.week}
+                  onClick={() => setWeekFilter(isSelected ? 'ALL' : String(item.week))}
+                  title={`Click to ${isSelected ? 'clear filter' : `filter by Week ${item.week}`}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.12)' : 'rgba(7, 10, 18, 0.55)',
+                    border: `1px solid ${isSelected ? '#2563eb' : '#1c2a42'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.borderColor = '#263857';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.borderColor = '#1c2a42';
+                  }}
+                >
+                  {/* Week label */}
+                  <div style={{ minWidth: '70px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      color: isSelected ? '#60a5fa' : '#cbd5e1',
+                    }}>
+                      Week {item.week}
+                    </span>
+                  </div>
+
+                  {/* Horizontal Bar */}
+                  <div style={{ flex: 1, height: '14px', backgroundColor: '#090e1a', borderRadius: '7px', overflow: 'hidden', position: 'relative' }}>
+                    <div
+                      style={{
+                        width: `${Math.max(3, percent)}%`,
+                        height: '100%',
+                        borderRadius: '7px',
+                        background: isSelected 
+                          ? 'linear-gradient(90deg, #2563eb, #60a5fa)' 
+                          : 'linear-gradient(90deg, #059669, #10b981)',
+                        transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: isSelected ? '0 0 10px rgba(37, 99, 235, 0.5)' : 'none',
+                      }}
+                    />
+                  </div>
+
+                  {/* Values */}
+                  <div style={{ minWidth: '160px', display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: '0.65rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                      {item.count} record{item.count === 1 ? '' : 's'}
+                    </span>
+                    <strong style={{ fontSize: '0.85rem', color: isSelected ? '#60a5fa' : '#10b981', fontFamily: 'monospace' }}>
+                      ${item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filter, Search, and Sort Toolbar */}
       <div style={{
@@ -473,8 +603,24 @@ export default function PayrollView({
               </tr>
             )) : (
               <tr>
-                <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                  No salary records match the selected criteria.
+                <td colSpan="6" style={{ padding: '2rem 1rem' }}>
+                  <EmptyState
+                    icon={DollarSign}
+                    accentColor="#10b981"
+                    title="No Salary Records Located"
+                    description={searchQuery || rankFilter !== 'ALL' || weekFilter !== 'ALL'
+                      ? "No records match your active search and filter parameters. Try clearing your filters."
+                      : "No compensation disbursement records currently exist in the database."}
+                    actionText={isAdmin ? "Add Salary Record" : undefined}
+                    onAction={isAdmin ? handleOpenAdd : undefined}
+                    secondaryActionText={searchQuery || rankFilter !== 'ALL' || weekFilter !== 'ALL' ? "Reset Filters" : undefined}
+                    onSecondaryAction={() => {
+                      setSearchQuery('');
+                      setRankFilter('ALL');
+                      setWeekFilter('ALL');
+                    }}
+                    compact
+                  />
                 </td>
               </tr>
             )}

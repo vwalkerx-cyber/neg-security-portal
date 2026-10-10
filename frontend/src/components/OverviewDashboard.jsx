@@ -18,9 +18,12 @@ import {
   MessageSquare,
   Sparkles,
   User,
-  Users
+  Users,
+  Activity,
+  ExternalLink
 } from 'lucide-react';
 import { canViewAllInfractions } from '../utils/permissions';
+import EmptyState from './EmptyState';
 
 export default function OverviewDashboard({ 
   stats, 
@@ -41,6 +44,8 @@ export default function OverviewDashboard({
   const [chatInput, setChatInput] = useState('');
   const [chatType, setChatType] = useState('Standard');
   const [isSending, setIsSending] = useState(false);
+  const [feedMode, setFeedMode] = useState('comms'); // 'comms' | 'activity'
+  const [activityFilter, setActivityFilter] = useState('ALL');
   const messagesEndRef = useRef(null);
 
   const isAdminView = canViewAllInfractions(currentUser);
@@ -95,6 +100,92 @@ export default function OverviewDashboard({
     if (timeB !== timeA) return timeB - timeA;
     return (b.id || '').localeCompare(a.id || '');
   });
+
+  // Real-Time Operational Activity Log stream (#13)
+  const activityStream = React.useMemo(() => {
+    const list = [];
+
+    (escort || []).forEach(e => {
+      const isCompleted = e.status === 'Completed';
+      list.push({
+        id: `escort-${e.id}`,
+        type: 'ESCORT',
+        icon: Navigation,
+        accentColor: '#38bdf8',
+        badgeBg: 'rgba(56, 189, 248, 0.12)',
+        badgeBorder: 'rgba(56, 189, 248, 0.35)',
+        title: `Escort Mission: ${e.principal}`,
+        status: e.status || 'Scheduled',
+        statusColor: isCompleted ? '#34d399' : '#38bdf8',
+        detail: `${e.origin || 'Base'} ➔ ${e.destination || 'Secure Perimeter'}`,
+        officer: e.lead_agent ? `Lead: ${e.lead_agent}` : 'Protective Detail',
+        time: e.start_time || 'Active Operation',
+        tab: 'escort'
+      });
+    });
+
+    (presence || []).forEach(p => {
+      const isComplete = Boolean(p.time_out && p.time_out !== '--' && p.time_out.trim() !== '');
+      list.push({
+        id: `presence-${p.id}`,
+        type: 'PRESENCE',
+        icon: ClipboardCheck,
+        accentColor: isComplete ? '#10b981' : '#fbbf24',
+        badgeBg: isComplete ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+        badgeBorder: isComplete ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)',
+        title: `${p.name} — ${p.shift} Shift`,
+        status: isComplete ? 'Completed' : 'On Duty',
+        statusColor: isComplete ? '#10b981' : '#fbbf24',
+        detail: isComplete ? `Signed out at ${p.time_out} (${p.duration_hours || 0} hrs)` : `Signed in at ${p.time_in}`,
+        officer: p.badge_id ? `Badge #${p.badge_id}` : p.name,
+        time: `${p.date} ${p.time_in || ''}`.trim(),
+        tab: 'presence'
+      });
+    });
+
+    (armory || []).filter(a => a.status === 'Issued').forEach(a => {
+      list.push({
+        id: `armory-${a.id}`,
+        type: 'ARMORY',
+        icon: Crosshair,
+        accentColor: '#f87171',
+        badgeBg: 'rgba(239, 68, 68, 0.12)',
+        badgeBorder: 'rgba(239, 68, 68, 0.35)',
+        title: `Equipment Issued: ${a.item || a.name}`,
+        status: 'Issued',
+        statusColor: '#f87171',
+        detail: `Assigned to ${a.name || 'Officer'} • Qty: ${a.quantity || 1}${a.serial_number ? ` • S/N: ${a.serial_number}` : ''}`,
+        officer: a.name || 'Armory Detail',
+        time: a.issue_date || a.restock_date || 'Inventory Log',
+        tab: 'armory'
+      });
+    });
+
+    (payroll || []).forEach(pay => {
+      list.push({
+        id: `payroll-${pay.id}`,
+        type: 'PAYROLL',
+        icon: DollarSign,
+        accentColor: '#34d399',
+        badgeBg: 'rgba(52, 211, 153, 0.12)',
+        badgeBorder: 'rgba(52, 211, 153, 0.35)',
+        title: `Salary Ledger: ${pay.name}`,
+        status: `Week ${pay.week_number || 1}`,
+        statusColor: '#34d399',
+        detail: `Disbursed $${Number(pay.salary || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} for ${pay.rank || 'Officer'}`,
+        officer: pay.name,
+        time: pay.salary_date || 'Payroll Audit',
+        tab: 'payroll'
+      });
+    });
+
+    return list;
+  }, [escort, presence, armory, payroll]);
+
+  const filteredActivities = React.useMemo(() => {
+    if (activityFilter === 'ALL') return activityStream;
+    return activityStream.filter(a => a.type === activityFilter);
+  }, [activityStream, activityFilter]);
 
   // Synchronized counts computed directly from live arrays for 100% accuracy with fallback to stats
   const totalPersonnel = personnel.length > 0 ? personnel.length : (stats?.total_personnel ?? stats?.personnel_count ?? 0);
@@ -436,26 +527,26 @@ export default function OverviewDashboard({
           boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35)',
           minHeight: '430px',
         }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {/* Header with Mode Switcher (#13) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <div style={{
                 width: '36px',
                 height: '36px',
                 borderRadius: '9px',
-                backgroundColor: 'rgba(37, 99, 235, 0.12)',
-                border: '1px solid rgba(37, 99, 235, 0.3)',
+                backgroundColor: feedMode === 'activity' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(37, 99, 235, 0.12)',
+                border: `1px solid ${feedMode === 'activity' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(37, 99, 235, 0.3)'}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#60a5fa'
+                color: feedMode === 'activity' ? '#38bdf8' : '#60a5fa'
               }}>
-                <Radio size={19} />
+                {feedMode === 'activity' ? <Activity size={19} /> : <Radio size={19} />}
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
-                    Tactical Comms & Dispatch
+                    {feedMode === 'activity' ? 'Operational Activity Stream' : 'Tactical Comms & Dispatch'}
                   </h3>
                   <span style={{
                     fontSize: '0.65rem',
@@ -474,24 +565,206 @@ export default function OverviewDashboard({
                   </span>
                 </div>
                 <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                  Real-time SITREP and dispatch feed (sorted latest first)
+                  {feedMode === 'activity' 
+                    ? 'Cross-department event audit stream (Escorts, Shifts, Payouts, Custody)' 
+                    : 'Real-time SITREP and dispatch feed (sorted latest first)'}
                 </p>
               </div>
             </div>
 
-            <span style={{
-              fontSize: '0.72rem',
-              color: '#94a3b8',
-              backgroundColor: '#070a12',
-              padding: '3px 8px',
-              borderRadius: '6px',
-              border: '1px solid #1c2a42'
-            }}>
-              <strong style={{ color: '#60a5fa' }}>{sortedChatMessages.length}</strong> Logged
-            </span>
+            {/* Mode Switcher Buttons */}
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: '#070a12', padding: '3px', borderRadius: '8px', border: '1px solid #1c2a42' }}>
+              <button
+                type="button"
+                onClick={() => setFeedMode('comms')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: feedMode === 'comms' ? '#2563eb' : 'transparent',
+                  color: feedMode === 'comms' ? '#ffffff' : '#94a3b8',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Radio size={13} />
+                <span>Comms ({sortedChatMessages.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedMode('activity')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: feedMode === 'activity' ? '#2563eb' : 'transparent',
+                  color: feedMode === 'activity' ? '#ffffff' : '#94a3b8',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Activity size={13} />
+                <span>Activity ({activityStream.length})</span>
+              </button>
+            </div>
           </div>
 
-          {/* Quick SITREP Chips */}
+          {feedMode === 'activity' ? (
+            /* ACTIVITY STREAM VIEW (#13) */
+            <>
+              {/* Category Filter Pills */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                flexWrap: 'wrap',
+                backgroundColor: '#070a12',
+                padding: '0.45rem 0.65rem',
+                borderRadius: '8px',
+                border: '1px solid #1c2a42'
+              }}>
+                <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginRight: '2px' }}>
+                  SOURCE:
+                </span>
+                {['ALL', 'ESCORT', 'PRESENCE', 'ARMORY', 'PAYROLL'].map((type) => {
+                  const isSelected = activityFilter === type;
+                  const count = type === 'ALL' ? activityStream.length : activityStream.filter(a => a.type === type).length;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setActivityFilter(type)}
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '5px',
+                        backgroundColor: isSelected ? '#1e293b' : '#0c121e',
+                        color: isSelected ? '#60a5fa' : '#94a3b8',
+                        border: `1px solid ${isSelected ? '#3b82f6' : '#1c2a42'}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {type} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Activity Feed Scrollable List */}
+              <div style={{
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
+                borderRadius: '10px',
+                padding: '0.75rem',
+                height: '350px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.55rem',
+              }}>
+                {filteredActivities.length > 0 ? (
+                  filteredActivities.map((act) => {
+                    const IconComponent = act.icon;
+                    return (
+                      <div
+                        key={act.id}
+                        onClick={() => {
+                          if (setActiveTab && act.tab) setActiveTab(act.tab);
+                        }}
+                        title={`Click to navigate to ${act.tab} ledger`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '0.65rem 0.8rem',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(15, 23, 40, 0.7)',
+                          border: '1px solid #1c2a42',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(21, 32, 53, 0.95)';
+                          e.currentTarget.style.borderColor = act.accentColor;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(15, 23, 40, 0.7)';
+                          e.currentTarget.style.borderColor = '#1c2a42';
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          backgroundColor: act.badgeBg,
+                          border: `1px solid ${act.badgeBorder}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: act.accentColor,
+                          flexShrink: 0
+                        }}>
+                          <IconComponent size={16} />
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {act.title}
+                            </span>
+                            <span style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                              color: act.statusColor,
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              flexShrink: 0
+                            }}>
+                              {act.status}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px', lineHeight: 1.35 }}>
+                            {act.detail}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', fontSize: '0.68rem', color: '#64748b' }}>
+                            <span>{act.officer}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#60a5fa', fontWeight: 600 }}>
+                              Open {act.tab} <ExternalLink size={10} />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <EmptyState
+                    icon={Activity}
+                    accentColor="#38bdf8"
+                    title="No Activity Events Logged"
+                    description="No operational entries recorded matching this filter category."
+                    compact
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            /* TACTICAL COMMS VIEW */
+            <>
+              {/* Quick SITREP Chips */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -672,21 +945,13 @@ export default function OverviewDashboard({
                 );
               })
             ) : (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: '#64748b',
-                gap: '0.4rem'
-              }}>
-                <MessageSquare size={26} color="#334155" />
-                <div style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>No transmissions on frequency</div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  Use the dispatch terminal below to broadcast operational updates.
-                </div>
-              </div>
+              <EmptyState
+                icon={Radio}
+                accentColor="#60a5fa"
+                title="No transmissions on frequency"
+                description="Secure channel is quiet. Broadcast operational SITREPs or priority alerts below."
+                compact
+              />
             )}
           </div>
 
@@ -758,6 +1023,8 @@ export default function OverviewDashboard({
               </button>
             </div>
           </form>
+            </>
+          )}
         </div>
       </div>
 

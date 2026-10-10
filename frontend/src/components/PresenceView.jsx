@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 import ConfirmModal from './ConfirmModal';
+import EmptyState from './EmptyState';
 
 const getToday = () => {
   const today = new Date();
@@ -325,8 +326,20 @@ export default function PresenceView({
                 ))
             ) : (
               <tr>
-                <td colSpan="10" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                  No presence records found matching criteria.
+                <td colSpan="10" style={{ padding: '2rem 1rem' }}>
+                  <EmptyState
+                    icon={ClipboardCheck}
+                    accentColor="#38bdf8"
+                    title="No Presence Records Logged"
+                    description={searchQuery 
+                      ? "No active duty or completed shifts match your search criteria. Try modifying your search."
+                      : "No officer shifts have been logged for this period. Use the button below to register attendance."}
+                    actionText="Log Presence Shift"
+                    onAction={handleOpenModal}
+                    secondaryActionText={searchQuery ? "Clear Search" : undefined}
+                    onSecondaryAction={() => setSearchQuery('')}
+                    compact
+                  />
                 </td>
               </tr>
             )}

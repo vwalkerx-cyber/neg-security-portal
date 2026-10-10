@@ -299,7 +299,32 @@ export const fetchPayroll = async () => {
 };
 
 export const addPayroll = async (payrollData) => {
-  const { data, error } = await supabase.from('payroll').insert(payrollData).select().single();
+  let officerName = payrollData.name;
+  let officerRank = payrollData.rank;
+
+  if ((!officerName || !officerRank) && payrollData.personnel_id) {
+    const { data: officer } = await supabase
+      .from('personnel')
+      .select('name, rank')
+      .eq('id', payrollData.personnel_id)
+      .maybeSingle();
+    if (officer) {
+      if (!officerName) officerName = officer.name;
+      if (!officerRank) officerRank = officer.rank;
+    }
+  }
+
+  const payload = {
+    ...payrollData,
+    name: officerName || 'Unknown Officer',
+    rank: officerRank || 'Officer I',
+    salary: Number(payrollData.salary) || 0,
+    salary_date: payrollData.salary_date || getTodayStr(),
+    week_number: Number(payrollData.week_number) || 1,
+    notes: payrollData.notes || ''
+  };
+
+  const { data, error } = await supabase.from('payroll').insert(payload).select().single();
   if (error) throw error;
   return data;
 };

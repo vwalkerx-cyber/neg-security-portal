@@ -84,9 +84,7 @@ export default function EscortView({
   // Guard personnel eligible to be Lead Officer or Escort Detail (EXCLUDES President and Minister)
   const guardPersonnel = personnel.filter(p => !isVipOrPrincipal(p));
 
-  const selectablePersonnel = currentUser?.role === 'ADMIN'
-    ? guardPersonnel
-    : guardPersonnel.filter((person) => person.id === currentUser?.personnel_id);
+  const selectablePersonnel = guardPersonnel;
 
   // Permission Check: Admin, Lead Agent, or Assigned Detail Officer
   const canModifyMission = (m) => {
@@ -192,7 +190,12 @@ export default function EscortView({
     { value: 'Foreign Dignitary Delegation', label: '🌍 Foreign Dignitary Delegation' },
   ];
 
-  const initialLeadId = guardPersonnel[0]?.id || 'NEG-001';
+  const userGuardPerson = (guardPersonnel || []).find((p) =>
+    (currentUser?.personnel_id && p.id === currentUser.personnel_id) ||
+    (currentUser?.name && p.name && p.name.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+    (currentUser?.badge_id && p.badge_id && p.badge_id.toLowerCase().trim() === currentUser.badge_id.toLowerCase().trim())
+  );
+  const initialLeadId = userGuardPerson?.id || guardPersonnel[0]?.id || 'NEG-001';
 
   const defaultFormState = {
     principal: standardVipOptions[0]?.value || 'President',
@@ -219,11 +222,12 @@ export default function EscortView({
     setEditingMissionId(null);
     setIsCustomPrincipal(false);
     setCustomPrincipalName('');
+    const startingLeadId = userGuardPerson?.id || guardPersonnel[0]?.id || 'NEG-001';
     setFormData({
       ...defaultFormState,
       escort_date: todayStr,
-      lead_agent_id: guardPersonnel[0]?.id || 'NEG-001',
-      assigned_officer_ids: [guardPersonnel[0]?.id || 'NEG-001'],
+      lead_agent_id: startingLeadId,
+      assigned_officer_ids: [startingLeadId],
       screenshot: '',
     });
     setShowModal(true);
@@ -1296,7 +1300,6 @@ export default function EscortView({
                   <select
                     value={formData.lead_agent_id}
                     onChange={(e) => handleLeadChange(e.target.value)}
-                    disabled={currentUser?.role !== 'ADMIN'}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.75rem',

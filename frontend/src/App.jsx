@@ -553,6 +553,13 @@ export default function App() {
     notify('Password reset successfully.');
   };
 
+  const handleChangePassword = async (newPassword, currentPassword = null) => {
+    if (!currentUser?.id) throw new Error('No active user session found.');
+    await db.changePassword(currentUser.id, currentPassword, newPassword);
+    notify('Password updated successfully.');
+    return true;
+  };
+
   const handleApproveUser = async (userId) => {
     await db.approveUser(userId);
     notify('Security clearance approved! User profile activated.');
@@ -769,6 +776,8 @@ export default function App() {
           isRefreshing={isRefreshing}
           onExportCurrent={() => handleExportCsv(activeTab === 'overview' ? 'presence' : activeTab)}
           onLogout={handleLogout}
+          onChangePassword={handleChangePassword}
+          onNotify={notify}
           isMobile={isMobile}
           mobileOpen={mobileMenuOpen}
           onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)}

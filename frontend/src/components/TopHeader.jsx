@@ -11,6 +11,11 @@ import {
   Bell,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
+  KeyRound,
+  LogOut,
+  User,
+  Lock,
   X
 } from 'lucide-react';
 import { canExportModuleCsv } from '../utils/permissions';
@@ -23,6 +28,9 @@ export default function TopHeader({
   onRefresh, 
   isRefreshing, 
   onExportCurrent,
+  onLogout,
+  onChangePassword,
+  onNotify,
   isMobile = false,
   onToggleMobileMenu,
   mobileOpen = false,
@@ -31,6 +39,64 @@ export default function TopHeader({
   onNavigateTab
 }) {
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const [showUserDropdown, setShowUserDropdown] = React.useState(false);
+  const [showPasswordModal, setShowPasswordModal] = React.useState(false);
+  const [currentPasswordInput, setCurrentPasswordInput] = React.useState('');
+  const [newPasswordInput, setNewPasswordInput] = React.useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = React.useState('');
+  const [showCurrentPw, setShowCurrentPw] = React.useState(false);
+  const [showNewPw, setShowNewPw] = React.useState(false);
+  const [showConfirmPw, setShowConfirmPw] = React.useState(false);
+  const [passwordError, setPasswordError] = React.useState('');
+  const [passwordSubmitting, setPasswordSubmitting] = React.useState(false);
+
+  const userDropdownRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserDropdown]);
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (!newPasswordInput || newPasswordInput.length < 4) {
+      setPasswordError('New password must be at least 4 characters long.');
+      return;
+    }
+
+    if (newPasswordInput !== confirmPasswordInput) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+
+    setPasswordSubmitting(true);
+    try {
+      if (onChangePassword) {
+        await onChangePassword(newPasswordInput, currentPasswordInput);
+      }
+      setShowPasswordModal(false);
+      setCurrentPasswordInput('');
+      setNewPasswordInput('');
+      setConfirmPasswordInput('');
+      setPasswordError('');
+      if (onNotify) {
+        onNotify('Password updated successfully.');
+      }
+    } catch (err) {
+      setPasswordError(err.message || 'Failed to update password.');
+    } finally {
+      setPasswordSubmitting(false);
+    }
+  };
 
   const tabTitles = {
     overview: 'Command Hub & Operational Directives',
@@ -488,25 +554,449 @@ export default function TopHeader({
           <RefreshCw size={14} className={isRefreshing ? 'pulse-dot' : ''} />
         </button>
 
-        {/* User Badge */}
+        {/* User Badge with Dropdown Menu */}
         {currentUser && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
-            padding: isMobile ? '4px 6px' : '4px 10px',
-            borderRadius: '8px',
-            whiteSpace: 'nowrap',
-          }}>
-            <ShieldCheck size={14} color="#38bdf8" />
-            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
-              {isMobile ? currentUser.rank : `${currentUser.name} (${currentUser.rank})`}
-            </span>
+          <div style={{ position: 'relative' }} ref={userDropdownRef}>
+            <button
+              onClick={() => setShowUserDropdown((prev) => !prev)}
+              title="User Account & Security Settings"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                backgroundColor: showUserDropdown ? '#1e293b' : '#111827',
+                border: showUserDropdown ? '1px solid #38bdf8' : '1px solid #1f2937',
+                padding: isMobile ? '4px 8px' : '5px 12px',
+                borderRadius: '8px',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                color: '#cbd5e1',
+                boxShadow: showUserDropdown ? '0 0 12px rgba(56, 189, 248, 0.25)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}`,
+              }}>
+                <ShieldCheck size={12} color={isAdmin ? '#fbbf24' : '#38bdf8'} />
+              </div>
+              <span style={{ fontSize: '0.74rem', color: '#f1f5f9', fontWeight: 600 }}>
+                {isMobile ? currentUser.rank : `${currentUser.name} (${currentUser.rank})`}
+              </span>
+              <ChevronDown 
+                size={13} 
+                color="#94a3b8" 
+                style={{
+                  transform: showUserDropdown ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s ease',
+                }} 
+              />
+            </button>
+
+            {/* User Dropdown Menu */}
+            {showUserDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '270px',
+                backgroundColor: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: '12px',
+                boxShadow: '0 15px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                zIndex: 100,
+                overflow: 'hidden',
+                animation: 'fadeIn 0.15s ease',
+              }}>
+                {/* User Info Header */}
+                <div style={{
+                  padding: '1rem',
+                  borderBottom: '1px solid #1f2937',
+                  backgroundColor: '#090d14',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.15)' : 'rgba(2, 132, 199, 0.15)',
+                      border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.35)' : 'rgba(2, 132, 199, 0.35)'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <User size={16} color={isAdmin ? '#fbbf24' : '#38bdf8'} />
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {currentUser.name}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                        @{currentUser.username || 'user'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                      color: isAdmin ? '#fbbf24' : '#38bdf8',
+                      border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}`,
+                      textTransform: 'uppercase',
+                    }}>
+                      {currentUser.role || 'OFFICER'}
+                    </span>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      color: '#cbd5e1',
+                      backgroundColor: '#1e293b',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid #334155',
+                    }}>
+                      {currentUser.rank}
+                    </span>
+                    {currentUser.badge_id && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        color: '#94a3b8',
+                        fontFamily: 'monospace',
+                      }}>
+                        [{currentUser.badge_id}]
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dropdown Options */}
+                <div style={{ padding: '0.4rem' }}>
+                  {/* Edit Password Button */}
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      setShowPasswordModal(true);
+                      setPasswordError('');
+                      setCurrentPasswordInput('');
+                      setNewPasswordInput('');
+                      setConfirmPasswordInput('');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.75rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: '#f8fafc',
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      textAlign: 'left',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <KeyRound size={15} color="#38bdf8" />
+                    <div>
+                      <div style={{ color: '#f8fafc', fontWeight: 600 }}>Edit Password</div>
+                      <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Change your login credentials</div>
+                    </div>
+                  </button>
+
+                  {/* Sign Out / Logout */}
+                  {onLogout && (
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        onLogout('User initiated logout.');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.75rem',
+                        marginTop: '2px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: '#f87171',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        textAlign: 'left',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <LogOut size={15} color="#f87171" />
+                      <div>
+                        <div style={{ color: '#f87171', fontWeight: 600 }}>Sign Out</div>
+                        <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Terminate security session</div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Modal: Change Password */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: '#111827',
+            border: '1px solid #1f2937',
+            borderRadius: '14px',
+            width: '100%',
+            maxWidth: '420px',
+            padding: '1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <KeyRound size={20} color="#38bdf8" />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  Edit Login Password
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPasswordModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 1.25rem 0' }}>
+              Update login credentials for <strong style={{ color: '#e2e8f0' }}>{currentUser?.name}</strong> (@{currentUser?.username}).
+            </p>
+
+            {passwordError && (
+              <div style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '8px',
+                padding: '0.65rem 0.85rem',
+                color: '#f87171',
+                fontSize: '0.8rem',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}>
+                <AlertTriangle size={15} color="#f87171" style={{ flexShrink: 0 }} />
+                <span>{passwordError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Current Password */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Current Password (Optional if newly provisioned)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showCurrentPw ? 'text' : 'password'}
+                    placeholder="Enter current password..."
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 2.5rem 0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPw(!showCurrentPw)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showCurrentPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  New Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    required
+                    placeholder="Enter new password (min. 4 characters)..."
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 2.5rem 0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPw(!showNewPw)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm New Password */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Confirm New Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPw ? 'text' : 'password'}
+                    required
+                    placeholder="Re-type new password..."
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 2.5rem 0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPw(!showConfirmPw)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showConfirmPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordSubmitting}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: passwordSubmitting ? 'wait' : 'pointer',
+                  }}
+                >
+                  {passwordSubmitting ? 'Updating...' : 'Save Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -1209,6 +1209,36 @@ export const resetPassword = async (userId, newPassword) => {
   return data;
 };
 
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  if (!newPassword || newPassword.length < 4) {
+    throw new Error('New password must be at least 4 characters long.');
+  }
+
+  // If current password provided, verify it first
+  if (currentPassword) {
+    const { data: user, error: fetchErr } = await supabase
+      .from('users')
+      .select('id, password')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (user && user.password && user.password !== currentPassword) {
+      throw new Error('Current password is incorrect.');
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .update({ password: newPassword })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 export const approveUser = async (userId) => {
   const { data: user, error: uErr } = await supabase.from('users').update({ status: 'Active' }).eq('id', userId).select().single();
   if (uErr) throw uErr;

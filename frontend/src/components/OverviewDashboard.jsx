@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { canViewAllInfractions } from '../utils/permissions';
 import EmptyState from './EmptyState';
+import CountUp from './CountUp';
 
 export default function OverviewDashboard({ 
   stats, 
@@ -421,10 +422,10 @@ export default function OverviewDashboard({
           <div style={{ margin: '1.5rem 0' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem' }}>
               <span style={{ fontSize: '3rem', fontWeight: 900, color: '#f1f5f9', lineHeight: 1 }}>
-                {onDutyCount}
+                <CountUp value={onDutyCount} duration={800} />
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: 600, color: '#94a3b8' }}>
-                / {totalPersonnel} Personnel On Duty
+                / <CountUp value={totalPersonnel} duration={800} /> Personnel On Duty
               </span>
             </div>
 
@@ -1066,7 +1067,7 @@ export default function OverviewDashboard({
                 Payroll Obligation
               </span>
               <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
-                ${Number(payrollTotal).toLocaleString()}
+                $<CountUp value={Number(payrollTotal)} duration={800} formatter={(val) => Math.round(val).toLocaleString()} />
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Weekly salaries & compensation ledger</span>
             </div>
@@ -1108,7 +1109,7 @@ export default function OverviewDashboard({
                 Armory Allocation
               </span>
               <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f1f5f9', marginTop: '2px' }}>
-                {armoryIssuedCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>/ {armoryTotalCount} In Field</span>
+                <CountUp value={armoryIssuedCount} duration={800} /> <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>/ <CountUp value={armoryTotalCount} duration={800} /> In Field</span>
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Tactical weapons & central depot reserves</span>
             </div>
@@ -1150,7 +1151,7 @@ export default function OverviewDashboard({
                 Escort Operations
               </span>
               <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#60a5fa', marginTop: '2px' }}>
-                {activeEscortCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Convoys Active</span>
+                <CountUp value={activeEscortCount} duration={800} /> <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Convoys Active</span>
               </div>
               <span style={{ fontSize: '0.72rem', color: '#64748b' }}>VIP close protection & perimeter transit</span>
             </div>

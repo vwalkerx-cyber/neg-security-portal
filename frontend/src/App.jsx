@@ -14,7 +14,7 @@ import InfractionPointsView from './components/InfractionPointsView';
 import ResignationProposalsView from './components/ResignationProposalsView';
 import UserManagementView from './components/UserManagementView';
 import LoginView from './components/LoginView';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, LogOut } from 'lucide-react';
 import { getRankSeniority, canExportGeneralCsv, canExportPayrollCsv, canAccessLetters } from './utils/permissions';
 import * as db from './supabaseClient';
 
@@ -107,6 +107,8 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [timeoutCountdown, setTimeoutCountdown] = useState(60);
 
   // Responsive mobile state detection (< 1024px)
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
@@ -340,14 +342,65 @@ export default function App() {
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
+      // Realtime subscription via Supabase Channels (Improvement #21)
+      const unsubscribeRealtime = db.subscribeToRealtimeChanges((table) => {
+        // Fast refresh when any operational table updates in Supabase
+        fetchData();
+      });
+
       return () => {
         isMounted = false;
         clearInterval(sessionInterval);
         clearInterval(dataInterval);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+        unsubscribeRealtime?.();
       };
     }
   }, [currentUser, verifySession, fetchData]);
+
+  // Session Timeout / Idle Auto-Logout (Improvement #1)
+  // Auto-logout after 20 minutes of inactivity with a 60-second warning dialog
+  useEffect(() => {
+    if (!currentUser) {
+      setShowTimeoutWarning(false);
+      return;
+    }
+
+    const IDLE_LIMIT_MS = 20 * 60 * 1000; // 20 minutes
+    const WARNING_TIME_MS = 60 * 1000;    // 1 minute warning
+    let lastActivity = Date.now();
+
+    const resetActivity = () => {
+      lastActivity = Date.now();
+      if (showTimeoutWarning) {
+        setShowTimeoutWarning(false);
+      }
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+    activityEvents.forEach((ev) => window.addEventListener(ev, resetActivity, { passive: true }));
+
+    const idleChecker = setInterval(() => {
+      const elapsed = Date.now() - lastActivity;
+      const timeLeft = IDLE_LIMIT_MS - elapsed;
+
+      if (timeLeft <= 0) {
+        clearInterval(idleChecker);
+        setShowTimeoutWarning(false);
+        handleLogout('Session expired due to 20 minutes of inactivity. Please re-authenticate.');
+      } else if (timeLeft <= WARNING_TIME_MS) {
+        setShowTimeoutWarning(true);
+        setTimeoutCountdown(Math.max(1, Math.ceil(timeLeft / 1000)));
+      } else {
+        setShowTimeoutWarning(false);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(idleChecker);
+      activityEvents.forEach((ev) => window.removeEventListener(ev, resetActivity));
+    };
+  }, [currentUser, showTimeoutWarning, handleLogout]);
 
   // Route protection for Disciplinary & Official Letters
   useEffect(() => {
@@ -355,6 +408,39 @@ export default function App() {
       setActiveTab('overview');
     }
   }, [activeTab, currentUser]);
+
+  // Keyboard Shortcut Navigation: Alt + 1..9 (Improvement #2)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const SHORTCUT_MAP = {
+      '1': 'overview',      // Alt+1: Command Hub
+      '2': 'presence',      // Alt+2: Presence Record
+      '3': 'payroll',       // Alt+3: Payroll
+      '4': 'armory',        // Alt+4: Armory Allocation
+      '5': 'escort',        // Alt+5: Escort Missions
+      '6': 'training',      // Alt+6: Training & Certs
+      '7': 'infractions',   // Alt+7: Infraction Points
+      '8': 'personnel',     // Alt+8: Personnel Roster
+      '9': 'hierarchy',     // Alt+9: Org Hierarchy
+    };
+
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is actively typing in an input, textarea, or select
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(activeTag)) return;
+
+      if (e.altKey && SHORTCUT_MAP[e.key]) {
+        e.preventDefault();
+        const targetTab = SHORTCUT_MAP[e.key];
+        setActiveTab(targetTab);
+        notify(`Switched to ${targetTab.toUpperCase()} via Alt+${e.key}`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentUser, setActiveTab]);
 
   const parseErrorMessage = async (res, fallback) => {
     try {
@@ -765,6 +851,107 @@ export default function App() {
         </div>
       )}
 
+      {/* Session Inactivity Timeout Warning Modal (Improvement #1) */}
+      {showTimeoutWarning && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: '#0c121e',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: '14px',
+            padding: '1.75rem',
+            maxWidth: '440px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(239, 68, 68, 0.2)',
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem auto',
+            }}>
+              <Clock size={24} color="#f87171" />
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.5rem' }}>
+              Security Clearance Idle Timeout
+            </h3>
+            <p style={{ fontSize: '0.825rem', color: '#94a3b8', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+              Your session has been inactive. For tactical security, you will be automatically logged out in:
+            </p>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 900,
+              fontFamily: 'monospace',
+              color: '#f87171',
+              backgroundColor: '#070a12',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: '1px solid #1c2a42',
+              marginBottom: '1.25rem',
+            }}>
+              00:{String(timeoutCountdown).padStart(2, '0')}
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => handleLogout('Manual logout from idle dialog.')}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  color: '#f87171',
+                  fontWeight: 600,
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+              >
+                <LogOut size={14} />
+                <span>Log Out Now</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTimeoutWarning(false)}
+                style={{
+                  flex: 1.2,
+                  padding: '0.65rem',
+                  borderRadius: '8px',
+                  backgroundColor: '#2563eb',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                }}
+              >
+                Continue Working
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left Sidebar (Move tabs to left side with Expand / Minimalize / Hide) */}
       {(isMobile || sidebarMode !== 'hidden') && (
         <Sidebar
@@ -909,6 +1096,8 @@ export default function App() {
           {activeTab === 'personnel' && (
             <PersonnelView
               personnel={personnel}
+              presence={presence}
+              infractionsData={infractionsData}
               currentUser={currentUser}
               onAddPersonnel={handleAddPersonnel}
               onEditPersonnel={handleEditPersonnel}

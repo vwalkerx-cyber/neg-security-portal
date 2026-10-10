@@ -17,7 +17,8 @@ import {
   User,
   Lock,
   Clock,
-  X
+  X,
+  Command
 } from 'lucide-react';
 import { canExportModuleCsv } from '../utils/permissions';
 
@@ -403,6 +404,29 @@ export default function TopHeader({
             </span>
           )}
         </div>
+
+        {/* Keyboard Shortcut Quick Hint (Improvement #2) */}
+        {!isMobile && (
+          <div
+            title="Keyboard Hotkeys: Alt+1 (Hub), Alt+2 (Presence), Alt+3 (Payroll), Alt+4 (Armory), Alt+5 (Escort), Alt+6 (Training), Alt+7 (Infractions), Alt+8 (Roster), Alt+9 (Hierarchy)"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(30, 41, 59, 0.45)',
+              border: '1px solid #1c2a42',
+              fontSize: '0.67rem',
+              color: '#94a3b8',
+              cursor: 'help',
+              userSelect: 'none',
+            }}
+          >
+            <Command size={11} color="#60a5fa" />
+            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>Alt + 1–9</span>
+          </div>
+        )}
 
         {/* Anomaly Notification Bell & Drawer */}
         <div style={{ position: 'relative' }}>

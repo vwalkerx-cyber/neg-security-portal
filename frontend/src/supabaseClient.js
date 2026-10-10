@@ -1305,3 +1305,38 @@ export const rejectUser = async (userId, shouldDelete = true) => {
     return true;
   }
 };
+
+// =========================================================================
+// REALTIME SUBSCRIPTIONS
+// =========================================================================
+
+export const subscribeToRealtimeChanges = (onDataChanged) => {
+  const channel = supabase
+    .channel('neg-portal-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, () => {
+      onDataChanged?.('presence');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'escort_missions' }, () => {
+      onDataChanged?.('escort');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'personnel' }, () => {
+      onDataChanged?.('personnel');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'payroll' }, () => {
+      onDataChanged?.('payroll');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'armory' }, () => {
+      onDataChanged?.('armory');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'infractions' }, () => {
+      onDataChanged?.('infractions');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
+      onDataChanged?.('chat_messages');
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};

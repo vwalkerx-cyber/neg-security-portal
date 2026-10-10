@@ -28,7 +28,12 @@ import {
   ShieldX,
   Filter,
   Lock,
-  Phone
+  Phone,
+  Copy,
+  Check,
+  ExternalLink,
+  User,
+  Flame
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 import ConfirmModal from './ConfirmModal';
@@ -63,6 +68,8 @@ export const DEPARTMENT_VEHICLES = [
 
 export default function PersonnelView({ 
   personnel = [], 
+  presence = [],
+  infractionsData = { summaries: [] },
   currentUser,
   onAddPersonnel, 
   onEditPersonnel,
@@ -76,6 +83,8 @@ export default function PersonnelView({
 
   const [showModal, setShowModal] = useState(false);
   const [editingPersonnel, setEditingPersonnel] = useState(null);
+  const [activeDossier, setActiveDossier] = useState(null); // Improvement #11: Slide-out profile
+  const [copiedPhoneId, setCopiedPhoneId] = useState(null); // Improvement #14: Quick copy state
   const [searchQuery, setSearchQuery] = useState('');
   const [divisionFilter, setDivisionFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -159,6 +168,7 @@ export default function PersonnelView({
     id_card_image: '',
     driving_license_image: '',
     expungement_letter_image: '',
+    photo: '',
     plate_riot_van: '',
     plate_patrol_motorcycle: '',
     plate_g500: '',
@@ -178,6 +188,7 @@ export default function PersonnelView({
       join_date: new Date().toISOString().split('T')[0],
       license_certificate: '',
       phone_number: '',
+      photo: '',
       status: 'Active',
       id_card_number: '',
       id_card_expiry: '',
@@ -211,6 +222,7 @@ export default function PersonnelView({
       join_date: p.join_date || '',
       license_certificate: p.license_certificate || '',
       phone_number: p.phone_number || '',
+      photo: p.photo || '',
       status: p.status || 'Active',
       id_card_number: p.id_card_number || '',
       id_card_expiry: p.id_card_expiry || '',
@@ -717,31 +729,103 @@ export default function PersonnelView({
                   style={{ 
                     cursor: 'pointer', 
                     display: 'flex', 
-                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    gap: '0.75rem',
                     flex: 1, 
                     userSelect: 'none',
                     marginRight: '0.5rem'
                   }}
                   title={isMinimized ? 'Click to expand officer card' : 'Click to minimize officer card'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    <StatusIconComponent size={15} color={theme.stripColor} style={{ flexShrink: 0 }} />
-                    <h3 style={{ 
-                      fontSize: isMinimized ? '0.98rem' : '1.05rem', 
-                      fontWeight: 700, 
-                      color: p.status === 'Disbanded' ? '#94a3b8' : '#f8fafc',
-                      textDecoration: p.status === 'Disbanded' ? 'line-through' : 'none'
-                    }}>
-                      {p.name}
-                    </h3>
-                    {isMinimized && (
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
-                        ({p.division || 'Unassigned'})
-                      </span>
+                  {/* Officer Portrait Avatar (Improvement #11) */}
+                  <div style={{
+                    width: isMinimized ? '34px' : '42px',
+                    height: isMinimized ? '34px' : '42px',
+                    borderRadius: '50%',
+                    backgroundColor: '#111928',
+                    border: `2px solid ${theme.stripColor}`,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
+                  }}>
+                    {p.photo ? (
+                      <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <User size={isMinimized ? 16 : 20} color="#64748b" />
                     )}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: theme.subtext, fontWeight: 600, marginTop: '2px' }}>
-                    {p.rank} • <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>{p.badge_id}</span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      <StatusIconComponent size={14} color={theme.stripColor} style={{ flexShrink: 0 }} />
+                      <h3 style={{ 
+                        fontSize: isMinimized ? '0.95rem' : '1.02rem', 
+                        fontWeight: 700, 
+                        color: p.status === 'Disbanded' ? '#94a3b8' : '#f8fafc',
+                        textDecoration: p.status === 'Disbanded' ? 'line-through' : 'none'
+                      }}>
+                        {p.name}
+                      </h3>
+                      {isMinimized && (
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                          ({p.division || 'Unassigned'})
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: theme.subtext, fontWeight: 600, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span>{p.rank} • <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>{p.badge_id}</span></span>
+                      
+                      {/* Infraction Standing Indicator Badge (Improvement #12) */}
+                      {(() => {
+                        const sum = (infractionsData?.summaries || []).find(s => 
+                          (s.personnel_id && s.personnel_id === p.id) ||
+                          (s.name && p.name && s.name.toLowerCase().trim() === p.name.toLowerCase().trim())
+                        );
+                        const pts = sum?.active_points ?? 0;
+                        let badgeBg = 'rgba(16, 185, 129, 0.15)';
+                        let badgeColor = '#34d399';
+                        let badgeBorder = 'rgba(16, 185, 129, 0.35)';
+                        let label = 'Clean';
+
+                        if (pts > 20) {
+                          badgeBg = 'rgba(239, 68, 68, 0.18)';
+                          badgeColor = '#f87171';
+                          badgeBorder = 'rgba(239, 68, 68, 0.4)';
+                          label = `${pts} pts (Severe)`;
+                        } else if (pts > 10) {
+                          badgeBg = 'rgba(245, 158, 11, 0.18)';
+                          badgeColor = '#fbbf24';
+                          badgeBorder = 'rgba(245, 158, 11, 0.4)';
+                          label = `${pts} pts (Probation)`;
+                        } else if (pts > 0) {
+                          badgeBg = 'rgba(56, 189, 248, 0.15)';
+                          badgeColor = '#38bdf8';
+                          badgeBorder = 'rgba(56, 189, 248, 0.35)';
+                          label = `${pts} pts`;
+                        }
+
+                        return (
+                          <span style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '999px',
+                            backgroundColor: badgeBg,
+                            color: badgeColor,
+                            border: `1px solid ${badgeBorder}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}>
+                            <Flame size={10} />
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
 
@@ -762,8 +846,34 @@ export default function PersonnelView({
                     {p.status}
                   </span>
 
-                  {(isAdmin || isOwnRecord(p)) && (
-                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                    {/* View Dossier Slide-out Button (Improvement #11) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveDossier(p);
+                      }}
+                      title="Inspect Officer Tactical Dossier"
+                      style={{
+                        background: 'rgba(37, 99, 235, 0.15)',
+                        border: '1px solid rgba(37, 99, 235, 0.35)',
+                        borderRadius: '6px',
+                        color: '#60a5fa',
+                        cursor: 'pointer',
+                        padding: '2px 6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <User size={13} />
+                      <span>Dossier</span>
+                    </button>
+
+                    {(isAdmin || isOwnRecord(p)) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -787,6 +897,7 @@ export default function PersonnelView({
                         <Edit2 size={13} />
                         {!isAdmin && isOwnRecord(p) && <span>Edit</span>}
                       </button>
+                    )}
                       {isAdmin && (
                         <button
                           onClick={(e) => {
@@ -808,7 +919,6 @@ export default function PersonnelView({
                         </button>
                       )}
                     </div>
-                  )}
 
                   {/* Minimize / Expand Toggle Button */}
                   <button
@@ -855,17 +965,69 @@ export default function PersonnelView({
                     <Award size={12} color="#f59e0b" style={{marginTop: '2px'}} />
                     <span>License/Cert: <strong style={{ color: '#fbbf24' }}>{p.license_certificate}</strong></span>
                   </div>
-                  <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Phone size={12} color="#38bdf8" />
-                    <span>Phone: {isAdmin || isOwnRecord(p) ? (
-                      <strong style={{ color: '#38bdf8', fontFamily: 'monospace' }}>
-                        {p.phone_number || '—'}
-                      </strong>
+                  <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Phone size={12} color="#38bdf8" />
+                      <span>Phone:</span>
+                    </div>
+                    {isAdmin || isOwnRecord(p) ? (
+                      p.phone_number ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <a
+                            href={`tel:${p.phone_number.replace(/[^0-9+]/g, '')}`}
+                            title="Call this officer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              color: '#38bdf8',
+                              fontFamily: 'monospace',
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}
+                          >
+                            <span>{p.phone_number}</span>
+                            <ExternalLink size={10} color="#38bdf8" />
+                          </a>
+
+                          {/* 1-Click Copy Phone Action (Improvement #14) */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(p.phone_number);
+                              setCopiedPhoneId(p.id);
+                              if (onNotify) onNotify(`Phone number copied for ${p.name}`);
+                              setTimeout(() => setCopiedPhoneId(null), 2500);
+                            }}
+                            title="Copy phone number to clipboard"
+                            style={{
+                              background: copiedPhoneId === p.id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(30, 41, 59, 0.6)',
+                              border: `1px solid ${copiedPhoneId === p.id ? '#10b981' : '#334155'}`,
+                              borderRadius: '4px',
+                              color: copiedPhoneId === p.id ? '#34d399' : '#cbd5e1',
+                              cursor: 'pointer',
+                              padding: '2px 5px',
+                              fontSize: '0.68rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {copiedPhoneId === p.id ? <Check size={10} /> : <Copy size={10} />}
+                            <span>{copiedPhoneId === p.id ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>—</span>
+                      )
                     ) : (
                       <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.74rem' }}>
                         •••••••• (Confidential)
                       </span>
-                    )}</span>
+                    )}
                   </div>
 
                   {/* Credentials & Clearances Section */}
@@ -1217,6 +1379,76 @@ export default function PersonnelView({
                     cursor: !isAdmin ? 'not-allowed' : 'text',
                   }}
                 />
+              </div>
+
+              {/* Officer Profile Photo / Avatar (Improvement #11) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Officer Portrait / Profile Avatar
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '50%',
+                    backgroundColor: '#111928',
+                    border: '2px solid #2563eb',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {formData.photo ? (
+                      <img src={formData.photo} alt="Officer Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <User size={26} color="#64748b" />
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                    <label style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                      border: '1px solid rgba(37, 99, 235, 0.35)',
+                      color: '#60a5fa',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}>
+                      <Upload size={13} />
+                      <span>{formData.photo ? 'Change Photo' : 'Upload Officer Photo'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileUpload('photo', e)}
+                      />
+                    </label>
+                    {formData.photo && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, photo: '' }))}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#f87171',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          padding: '4px 6px',
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  Displays as official portrait across personnel roster and commander briefings.
+                </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -2045,6 +2277,323 @@ export default function PersonnelView({
                   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tactical Officer Dossier Slide-Out Panel (Improvement #11) */}
+      {activeDossier && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 9998,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '540px',
+            height: '100%',
+            backgroundColor: '#0c121e',
+            borderLeft: '1px solid #1c2a42',
+            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+          }}>
+            {/* Dossier Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #1c2a42',
+              backgroundColor: '#090e1a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={18} color="#38bdf8" />
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+                    TACTICAL OFFICER DOSSIER
+                  </h3>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Security Clearance Record • NEG Official
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDossier(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '6px',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Dossier Body */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1 }}>
+              {/* Profile Card Summary */}
+              <div style={{
+                backgroundColor: '#0f1728',
+                border: '1px solid #1c2a42',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+              }}>
+                <div style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  backgroundColor: '#111928',
+                  border: '2px solid #2563eb',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)'
+                }}>
+                  {activeDossier.photo ? (
+                    <img src={activeDossier.photo} alt={activeDossier.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={36} color="#64748b" />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+                    {activeDossier.name}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#38bdf8', fontWeight: 600, marginTop: '2px' }}>
+                    {activeDossier.rank} • <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>{activeDossier.badge_id}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      backgroundColor: activeDossier.status === 'Active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: activeDossier.status === 'Active' ? '#34d399' : '#f87171',
+                      border: `1px solid ${activeDossier.status === 'Active' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                    }}>
+                      {activeDossier.status}
+                    </span>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      backgroundColor: '#18243c',
+                      color: '#94a3b8',
+                      border: '1px solid #1c2a42',
+                    }}>
+                      {activeDossier.division || 'Unassigned'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Disciplinary & Conduct Standing (Improvement #12) */}
+              <div style={{
+                backgroundColor: '#0f1728',
+                border: '1px solid #1c2a42',
+                borderRadius: '12px',
+                padding: '1.15rem',
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Flame size={14} />
+                  <span>Demerit Points & Conduct Standing</span>
+                </div>
+                {(() => {
+                  const summary = (infractionsData?.summaries || []).find(s => 
+                    (s.personnel_id && s.personnel_id === activeDossier.id) ||
+                    (s.name && activeDossier.name && s.name.toLowerCase().trim() === activeDossier.name.toLowerCase().trim())
+                  );
+                  const activePts = summary?.active_points ?? 0;
+                  const lifetimePts = summary?.lifetime_points ?? 0;
+                  const forgivenPts = summary?.forgiven_points ?? 0;
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                        <div style={{ backgroundColor: '#090e1a', padding: '0.6rem', borderRadius: '8px', border: '1px solid #1c2a42' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Active Points</span>
+                          <span style={{ fontSize: '1.25rem', fontWeight: 900, color: activePts > 15 ? '#f87171' : activePts > 0 ? '#fbbf24' : '#34d399' }}>
+                            {activePts}
+                          </span>
+                        </div>
+                        <div style={{ backgroundColor: '#090e1a', padding: '0.6rem', borderRadius: '8px', border: '1px solid #1c2a42' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Lifetime</span>
+                          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9' }}>
+                            {lifetimePts}
+                          </span>
+                        </div>
+                        <div style={{ backgroundColor: '#090e1a', padding: '0.6rem', borderRadius: '8px', border: '1px solid #1c2a42' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Forgiven</span>
+                          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399' }}>
+                            {forgivenPts}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                        Status: <strong style={{ color: activePts === 0 ? '#34d399' : activePts > 20 ? '#f87171' : '#fbbf24' }}>
+                          {activePts === 0 ? 'Exemplary Disciplinary Record' : activePts > 20 ? 'Action Required: High Risk' : 'Under Active Operational Monitoring'}
+                        </strong>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Contact & Tactical Communications */}
+              <div style={{
+                backgroundColor: '#0f1728',
+                border: '1px solid #1c2a42',
+                borderRadius: '12px',
+                padding: '1.15rem',
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Phone size={14} />
+                  <span>Comms & Contact Channels</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94a3b8' }}>Official Phone:</span>
+                    {isAdmin || isOwnRecord(activeDossier) ? (
+                      activeDossier.phone_number ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <a
+                            href={`tel:${activeDossier.phone_number.replace(/[^0-9+]/g, '')}`}
+                            style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700, textDecoration: 'none' }}
+                          >
+                            {activeDossier.phone_number}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(activeDossier.phone_number);
+                              if (onNotify) onNotify(`Phone copied: ${activeDossier.phone_number}`);
+                            }}
+                            style={{
+                              background: 'rgba(30, 41, 59, 0.8)',
+                              border: '1px solid #334155',
+                              borderRadius: '4px',
+                              color: '#cbd5e1',
+                              cursor: 'pointer',
+                              padding: '2px 5px',
+                              fontSize: '0.68rem',
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>Not recorded</span>
+                      )
+                    ) : (
+                      <span style={{ color: '#64748b', fontStyle: 'italic' }}>•••••••• (Command Only)</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94a3b8' }}>Join Date:</span>
+                    <span style={{ color: '#f1f5f9', fontWeight: 600 }}>{activeDossier.join_date || '—'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94a3b8' }}>Certification:</span>
+                    <span style={{ color: '#fbbf24', fontWeight: 600 }}>{activeDossier.license_certificate || 'Standard Guard License'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Department Vehicles Allocated */}
+              <div style={{
+                backgroundColor: '#0f1728',
+                border: '1px solid #1c2a42',
+                borderRadius: '12px',
+                padding: '1.15rem',
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Car size={14} />
+                  <span>Fleet Vehicle Allocations</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
+                  {DEPARTMENT_VEHICLES.map((v) => {
+                    const plate = activeDossier[v.key];
+                    return (
+                      <div key={v.key} style={{ backgroundColor: '#090e1a', padding: '0.55rem', borderRadius: '6px', border: '1px solid #1c2a42' }}>
+                        <span style={{ fontSize: '0.67rem', color: v.color, fontWeight: 700, display: 'block' }}>{v.short}</span>
+                        <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: plate ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
+                          {plate || 'None'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons in Dossier Footer */}
+              <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                {(isAdmin || isOwnRecord(activeDossier)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = activeDossier;
+                      setActiveDossier(null);
+                      openEditModal(target);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '0.65rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#2563eb',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.825rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Edit2 size={14} />
+                    <span>Edit Profile & Credentials</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActiveDossier(null)}
+                  style={{
+                    padding: '0.65rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #334155',
+                    color: '#f8fafc',
+                    fontWeight: 600,
+                    fontSize: '0.825rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close Dossier
+                </button>
+              </div>
             </div>
           </div>
         </div>

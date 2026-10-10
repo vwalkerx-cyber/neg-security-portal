@@ -279,7 +279,18 @@ export default function PersonnelView({
     }
   };
 
+  // Separate Guard Roster vs. VIP / Principal Dignitaries
+  const isVipRank = (rank) => rank === 'President' || rank === 'Ministry of Defense and Human Rights';
+
   const filteredPersonnel = personnel.filter((p) => {
+    // If divisionFilter is 'VIP', show only VIP/Principals
+    if (divisionFilter === 'VIP_PRINCIPALS') {
+      if (!isVipRank(p.rank) && p.division !== 'VIP/Principal') return false;
+    } else if (divisionFilter !== 'ALL_INCLUDING_VIP') {
+      // By default in Guard Roster, President and Ministry are VIP/Principal, not in standard officer roster
+      if (isVipRank(p.rank) || p.division === 'VIP/Principal') return false;
+    }
+
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = 
       !searchQuery ||
@@ -297,7 +308,7 @@ export default function PersonnelView({
       (p.plate_ioniq_4 && p.plate_ioniq_4.toLowerCase().includes(q)) ||
       (p.plate_presidential_limo && p.plate_presidential_limo.toLowerCase().includes(q));
 
-    const matchesDivision = divisionFilter === 'ALL' || (p.division || 'Unassigned') === divisionFilter;
+    const matchesDivision = divisionFilter === 'ALL' || divisionFilter === 'ALL_INCLUDING_VIP' || divisionFilter === 'VIP_PRINCIPALS' || (p.division || 'Unassigned') === divisionFilter;
     const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
     return matchesSearch && matchesDivision && matchesStatus;
   });
@@ -522,7 +533,9 @@ export default function PersonnelView({
                 cursor: 'pointer'
               }}
             >
-              <option value="ALL">All Divisions</option>
+              <option value="ALL">Guard Force (Active Divisions)</option>
+              <option value="VIP_PRINCIPALS" style={{ color: '#fbbf24', fontWeight: 600 }}>👑 VIP / Principals & Dignitaries</option>
+              <option value="ALL_INCLUDING_VIP">All Roster & VIPs</option>
               <option value="Protective Detail Division">Protective Detail Division (PDD)</option>
               <option value="Special Operation Division">Special Operation Division (SOD)</option>
               <option value="Technical Security Division">Technical Security Division (TSD)</option>

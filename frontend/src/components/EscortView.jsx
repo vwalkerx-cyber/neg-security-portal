@@ -24,9 +24,19 @@ export default function EscortView({
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [isCustomPrincipal, setIsCustomPrincipal] = useState(false);
+  const [customPrincipalName, setCustomPrincipalName] = useState('');
+
+  // Identify VIP / Principal personnel
+  const vipPersonnel = personnel.filter(p => 
+    p.rank === 'President' || 
+    p.rank === 'Ministry of Defense and Human Rights' ||
+    p.division === 'VIP/Principal' ||
+    p.division === 'VIP Principal'
+  );
 
   const [formData, setFormData] = useState({
-    principal: '',
+    principal: 'President',
     threat_level: 'High (Level 3)',
     mission_type: 'Motorcade Escort & Perimeter Shield',
     origin: 'Executive Air Base Wing 4',
@@ -106,8 +116,10 @@ export default function EscortView({
       });
       setShowModal(false);
       onNotify(`Escort mission dispatched for ${formData.principal} with ${allOfficers.length} assigned officer(s).`);
+      setIsCustomPrincipal(false);
+      setCustomPrincipalName('');
       setFormData({
-        principal: '',
+        principal: 'President',
         threat_level: 'High (Level 3)',
         mission_type: 'Motorcade Escort & Perimeter Shield',
         origin: 'Executive Air Base Wing 4',
@@ -586,27 +598,97 @@ export default function EscortView({
             </h3>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Principal Selection / Custom Input */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                  Principal / Dignitary / VIP Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Secretary General of Defense"
-                  value={formData.principal}
-                  onChange={(e) => setFormData({ ...formData, principal: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.75rem',
-                    borderRadius: '8px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    color: '#f8fafc',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                  }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
+                    Principal / Dignitary / VIP Name *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomPrincipal(!isCustomPrincipal);
+                      if (!isCustomPrincipal) {
+                        setCustomPrincipalName('');
+                        setFormData({ ...formData, principal: '' });
+                      } else {
+                        setFormData({ ...formData, principal: 'President' });
+                      }
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#38bdf8',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    {isCustomPrincipal ? '← Select from VIP/Principal List' : '+ Enter Custom Principal'}
+                  </button>
+                </div>
+
+                {!isCustomPrincipal ? (
+                  <select
+                    value={formData.principal}
+                    onChange={(e) => {
+                      if (e.target.value === '__CUSTOM__') {
+                        setIsCustomPrincipal(true);
+                        setCustomPrincipalName('');
+                        setFormData({ ...formData, principal: '' });
+                      } else {
+                        setFormData({ ...formData, principal: e.target.value });
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="President">President of the Republic (Supreme Principal)</option>
+                    <option value="Ministry of Defense and Human Rights">Ministry of Defense and Human Rights (VIP Principal)</option>
+                    {vipPersonnel.map(vip => (
+                      <option key={vip.id} value={`${vip.name} (${vip.rank})`}>
+                        {vip.name} — {vip.rank}
+                      </option>
+                    ))}
+                    <option value="Executive Diplomatic Envoy">Executive Diplomatic Envoy</option>
+                    <option value="Secretary General of Defense">Secretary General of Defense</option>
+                    <option value="Foreign Dignitary Delegation">Foreign Dignitary Delegation</option>
+                    <option value="__CUSTOM__">✍️ Custom Principal (Enter Name Below)...</option>
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="Enter custom principal name or organization..."
+                    value={customPrincipalName}
+                    onChange={(e) => {
+                      setCustomPrincipalName(e.target.value);
+                      setFormData({ ...formData, principal: e.target.value });
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #0284c7',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

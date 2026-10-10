@@ -602,8 +602,35 @@ export const fetchTraining = async () => {
 
 export const addTraining = async (trainingData) => {
   const { data: allCerts } = await supabase.from('training_certifications').select('id');
-  const newId = `TRN-${String((allCerts?.length || 0) + 1).padStart(3, '0')}`;
-  const record = { ...trainingData, id: newId };
+  const count = (allCerts?.length || 0) + 1;
+  const newId = `TRN-${String(count).padStart(3, '0')}`;
+  const year = new Date().getFullYear();
+
+  // Resolve officer name from personnel if not supplied
+  let officerName = trainingData.name;
+  if (!officerName && trainingData.personnel_id) {
+    const { data: p } = await supabase.from('personnel').select('name').eq('id', trainingData.personnel_id).maybeSingle();
+    officerName = p?.name || 'Officer';
+  }
+
+  // Auto-generate cert_number if missing
+  const certNumber = trainingData.cert_number || `NEG-CERT-${year}-${String(count).padStart(3, '0')}`;
+
+  const record = {
+    id: newId,
+    cert_number: certNumber,
+    personnel_id: trainingData.personnel_id,
+    name: officerName || 'Officer',
+    course_title: trainingData.course_title,
+    category: trainingData.category || 'Close Protection',
+    issuing_authority: trainingData.issuing_authority || 'NEG Tactical Training Wing',
+    issue_date: trainingData.issue_date || getTodayStr(),
+    expiry_date: trainingData.expiry_date || getTodayStr(),
+    proficiency_score: trainingData.proficiency_score || 'Qualified (Grade C)',
+    status: trainingData.status || 'Active',
+    notes: trainingData.notes || '',
+  };
+
   const { data, error } = await supabase.from('training_certifications').insert(record).select().single();
   if (error) throw error;
   return data;
@@ -653,8 +680,50 @@ export const fetchDisciplinaryLetters = async () => {
 
 export const createDisciplinaryLetter = async (letterData) => {
   const { data: allLetters } = await supabase.from('disciplinary_letters').select('id');
-  const newId = `DIS-${String((allLetters?.length || 0) + 1).padStart(3, '0')}`;
-  const record = { ...letterData, id: newId, created_at: getNowIso() };
+  const count = (allLetters?.length || 0) + 1;
+  const newId = `DIS-${String(count).padStart(3, '0')}`;
+  const year = new Date().getFullYear();
+
+  // Resolve officer details from personnel
+  let recipientName = letterData.recipient_name;
+  let rank = letterData.rank;
+  let badgeId = letterData.badge_id;
+
+  if ((!recipientName || !rank || !badgeId) && letterData.personnel_id) {
+    const { data: p } = await supabase
+      .from('personnel')
+      .select('name, rank, badge_id')
+      .eq('id', letterData.personnel_id)
+      .maybeSingle();
+    if (p) {
+      if (!recipientName) recipientName = p.name;
+      if (!rank) rank = p.rank;
+      if (!badgeId) badgeId = p.badge_id;
+    }
+  }
+
+  const letterNumber = letterData.letter_number || `NEG/DIS/WARN-1/${year}/${String(count).padStart(3, '0')}`;
+
+  const record = {
+    id: newId,
+    letter_number: letterNumber,
+    letter_type: letterData.letter_type || 'First Written Warning',
+    personnel_id: letterData.personnel_id,
+    recipient_name: recipientName || 'Unknown Personnel',
+    badge_id: badgeId || '-',
+    rank: rank || 'Officer',
+    issue_date: letterData.issue_date || getTodayStr(),
+    effective_date: letterData.effective_date || getTodayStr(),
+    violation_category: letterData.violation_category || 'Breach of Security Protocol',
+    severity: letterData.severity || 'Moderate',
+    incident_summary: letterData.incident_summary || 'Formal disciplinary reprimand registered.',
+    sanctions: letterData.sanctions || 'Formal Written Warning & Mandatory Protocol Recertification',
+    authorized_by: letterData.authorized_by || 'Directorate Command',
+    status: letterData.status || 'Active',
+    notes: letterData.notes || '',
+    created_at: getNowIso()
+  };
+
   const { data, error } = await supabase.from('disciplinary_letters').insert(record).select().single();
   if (error) throw error;
   return data;
@@ -674,15 +743,131 @@ export const deleteLetter = async (id) => {
   return true;
 };
 
+// Official SS-SOP-ETH-001 Catalog Matrix
+export const STANDARD_INFRACTION_CATALOG = [
+  // Category I: Minor (1-3 Points)
+  { code: 'I-01', category: 'Category I', title: 'Uniform & Grooming Irregularity', points: 1, default_decay_days: 90, description: 'Wrinkled suit, non-compliant necktie, missing formal leather shoes, dirty tactical uniform, or non-authorized accessories.' },
+  { code: 'I-02', category: 'Category I', title: 'Minor Shift Tardiness', points: 1, default_decay_days: 90, description: 'Reporting between 5 and 15 minutes late to pre-deployment briefings or post handovers without prior authorization.' },
+  { code: 'I-03', category: 'Category I', title: 'Administrative Logging Failure', points: 1, default_decay_days: 90, description: 'Failure to log session check-in, check-out, or escort count in the Central Duty Attendance System within two hours.' },
+  { code: 'I-04', category: 'Category I', title: 'Tactical Radio Protocol Laxity', points: 2, default_decay_days: 90, description: 'Using excessive banter, personal conversations, unauthorized slang, or unapproved communication channels during active transit.' },
+  { code: 'I-05', category: 'Category I', title: 'Equipment Neglect', points: 3, default_decay_days: 90, description: 'Deploying without completed firearm function checks, missing extra magazine, depleted radio battery, or failure to inspect vehicle fluid/fuel levels.' },
+  
+  // Category II: Moderate (4-8 Points)
+  { code: 'II-01', category: 'Category II', title: 'Unauthorized Absence / Post Abandonment (Ring 3)', points: 4, default_decay_days: 180, description: 'Leaving an outer perimeter post, gate barrier, or sentry station unattended for over 15 minutes without arranged relief.' },
+  { code: 'II-02', category: 'Category II', title: 'Unprofessional Civilian Conduct', points: 5, default_decay_days: 180, description: 'Engaging in heated verbal altercations, displaying rude conduct, or exhibiting abusive demeanor toward the public while in uniform.' },
+  { code: 'II-03', category: 'Category II', title: 'Motorcade Spacing / Convoy Driving Breach', points: 5, default_decay_days: 180, description: 'Careless driving, exceeding assigned convoy speeds, tailgating closer than tactical safety limits, or allowing civilian vehicles into the motorcade gap.' },
+  { code: 'II-04', category: 'Category II', title: 'Negligent Discharge (No Injury/Property Damage)', points: 6, default_decay_days: 180, description: 'Accidental weapon discharge during clearing barrel procedures or unholstering that does not result in personal injury or severe property damage.' },
+  { code: 'II-05', category: 'Category II', title: 'Failure to Report Security Anomaly', points: 6, default_decay_days: 180, description: 'Neglecting to report suspicious persons, perimeter tampering, unverified vehicles, or route obstacles observed during advance surveys.' },
+  { code: 'II-06', category: 'Category II', title: 'Minor Insubordination', points: 8, default_decay_days: 180, description: 'Hesitating, arguing, or delaying the execution of non-tactical administrative directives issued by supervisory non-commissioned officers.' },
+  
+  // Category III: Severe (9-14 Points)
+  { code: 'III-01', category: 'Category III', title: 'Tactical Insubordination', points: 10, default_decay_days: 365, description: 'Blatant refusal or willful defiance of a direct tactical command issued by the Detail Leader (COMMAND ONE) during an active mission.' },
+  { code: 'III-02', category: 'Category III', title: 'Unauthorized Release of Departmental Documents', points: 10, default_decay_days: 365, description: 'Sharing non-classified administrative memos, duty rosters, or internal guidelines with outside individuals without clearance.' },
+  { code: 'III-03', category: 'Category III', title: 'Abandonment of Ring 1 Close Protection Post', points: 12, default_decay_days: 365, description: 'Vacating immediate personal protective coverage around the Protectee without direct orders from the Detail Leader.' },
+  { code: 'III-04', category: 'Category III', title: 'Impairment on Duty / Alcohol & Substance Abuse', points: 12, default_decay_days: 365, description: 'Reporting for active shift or carrying department weapons with detectable blood alcohol content or under the influence of narcotics.' },
+  { code: 'III-05', category: 'Category III', title: 'Unjustified Escalation & Force Violation', points: 12, default_decay_days: 365, description: 'Drawing a firearm, discharging a Taser, or utilizing physical violence against a subject outside the authorized Rules of Engagement continuum.' },
+  { code: 'III-06', category: 'Category III', title: 'Negligent Weapon Discharge Resulting in Injury', points: 14, default_decay_days: 365, description: 'Accidental discharge causing personal bodily injury, requiring immediate suspension and mandatory formal court of inquiry.' },
+  
+  // Category IV: Critical Breaches / Gross Misconduct (15+ Points / Immediate Expulsion)
+  { code: 'IV-01', category: 'Category IV', title: 'Treason, Espionage, and Hostile Collusion', points: 15, default_decay_days: 0, description: 'Communicating with, aiding, or providing intelligence to hostile factions, criminals, or enemy organizations.' },
+  { code: 'IV-02', category: 'Category IV', title: 'Compromising Live Itineraries / Secret Routes', points: 15, default_decay_days: 0, description: 'Intentionally or recklessly disclosing real-time motorcade routes, departure timestamps, radio ciphers, or safehouse coordinates.' },
+  { code: 'IV-03', category: 'Category IV', title: 'Cowardice and Abandonment of Protectee Under Fire', points: 15, default_decay_days: 0, description: 'Fleeing, hiding, or abandoning the Protectee during an active armed ambush or assassination attempt instead of executing Shield and Extract drills.' },
+  { code: 'IV-04', category: 'Category IV', title: 'Unlawful Lethal Force', points: 15, default_decay_days: 0, description: 'Intentionally discharging a weapon resulting in the unjustified death or severe maiming of an unarmed non-combatant.' },
+  { code: 'IV-05', category: 'Category IV', title: 'Mutiny or Armed Threat Against Superior Officers', points: 15, default_decay_days: 0, description: 'Drawing weapons, inciting revolt, or threatening bodily harm against the Director, Deputy Director, or supervisory commanders.' },
+  
+  // Merit Offsets (Good-Conduct Deductions)
+  { code: 'M-01', category: 'Merit Deduction', title: 'Tactical Commendation', points: -3, default_decay_days: 0, description: 'Demonstrating extraordinary defensive courage, taking fire to shield a Protectee, or neutralizing an active ambush (-3 to -5 pts).' },
+  { code: 'M-02', category: 'Merit Deduction', title: 'Voluntary Extra Deployments', points: -2, default_decay_days: 0, description: 'Completing twenty (20) voluntary, unblemished high-risk night shift escorts (-2 pts).' }
+];
+
+export const getInfractionThresholdInfo = (activePoints) => {
+  const points = Math.max(0, activePoints || 0);
+  if (points <= 2) {
+    return {
+      tier: 0,
+      status_label: 'Clean / Monitored',
+      badge_color: '#10b981',
+      badge_bg: 'rgba(16, 185, 129, 0.15)',
+      sanction_summary: 'Standard operational standing. Under routine supervisory monitoring.',
+      recommended_letter: null,
+    };
+  } else if (points <= 5) {
+    return {
+      tier: 1,
+      status_label: 'Formal Counseling',
+      badge_color: '#0ea5e9',
+      badge_bg: 'rgba(14, 165, 233, 0.15)',
+      sanction_summary: 'Formal Supervisory Counseling Record. 40 hours remedial static gate sentry duty (Ring 3).',
+      recommended_letter: 'Counseling Record',
+    };
+  } else if (points <= 9) {
+    return {
+      tier: 2,
+      status_label: 'Warning Notice 1 (Probation)',
+      badge_color: '#f59e0b',
+      badge_bg: 'rgba(245, 158, 11, 0.15)',
+      sanction_summary: 'Disciplinary Warning Notice Level 1 (DWN-01). 14-day operational probation & disqualified from Ring 1 / CHARIOT.',
+      recommended_letter: 'First Written Warning',
+    };
+  } else if (points <= 14) {
+    return {
+      tier: 3,
+      status_label: 'Warning Notice 2 (Suspension)',
+      badge_color: '#f97316',
+      badge_bg: 'rgba(249, 115, 22, 0.15)',
+      sanction_summary: 'Disciplinary Warning Notice Level 2 (DWN-02). 30-day suspension without deployment & qualification demotion.',
+      recommended_letter: 'Second Written Warning',
+    };
+  } else {
+    return {
+      tier: 4,
+      status_label: 'Expulsion Recommended',
+      badge_color: '#ef4444',
+      badge_bg: 'rgba(239, 68, 68, 0.15)',
+      sanction_summary: 'Gross Misconduct / Critical Demerit Accumulation. Immediate security clearance revocation & honorable/dishonorable discharge decree.',
+      recommended_letter: 'Dismissal / Termination Letter',
+    };
+  }
+};
+
 // Infractions
 export const fetchInfractions = async () => {
-  const { data, error } = await supabase.from('infractions').select('*').order('id', { ascending: false });
-  if (error) throw error;
+  const [infRes, pRes] = await Promise.all([
+    supabase.from('infractions').select('*').order('id', { ascending: false }),
+    supabase.from('personnel').select('id, name, badge_id, rank, status, division')
+  ]);
+
+  const infractions = infRes.data || [];
+  const personnelList = pRes.data || [];
+
+  // Compute summary for every officer
+  const summaries = personnelList.map(p => {
+    const officerInfs = infractions.filter(inf => inf.personnel_id === p.id);
+    const activeInfs = officerInfs.filter(inf => inf.status === 'Active');
+    const activePoints = Math.max(0, activeInfs.reduce((acc, curr) => acc + (parseInt(curr.points, 10) || 0), 0));
+    const decayedCount = officerInfs.filter(inf => inf.status === 'Decayed').length;
+
+    return {
+      personnel_id: p.id,
+      name: p.name,
+      badge_id: p.badge_id || '-',
+      rank: p.rank || 'Officer',
+      status: p.status || 'Active',
+      division: p.division || 'Unassigned',
+      active_points: activePoints,
+      total_records: officerInfs.length,
+      active_records_count: activeInfs.length,
+      decayed_records_count: decayedCount,
+      threshold_info: getInfractionThresholdInfo(activePoints)
+    };
+  });
+
   return {
     is_admin_view: true,
-    infractions: data || [],
-    summaries: [],
-    catalog: []
+    infractions,
+    summaries,
+    my_summary: summaries[0] || null,
+    catalog: STANDARD_INFRACTION_CATALOG
   };
 };
 
@@ -748,13 +933,71 @@ export const fetchResignations = async () => {
 export const submitResignationProposal = async (data) => {
   const { data: allRes } = await supabase.from('resignation_proposals').select('id');
   const num = (allRes?.length || 0) + 1;
+  const year = new Date().getFullYear();
+
+  // Resolve officer info from personnel table if needed
+  let officerName = data.officer_name;
+  let badgeId = data.badge_id;
+  let rank = data.rank;
+  let division = data.division;
+  let userId = data.user_id;
+  let username = data.username;
+
+  if (data.personnel_id) {
+    const { data: p } = await supabase
+      .from('personnel')
+      .select('name, badge_id, rank, division')
+      .eq('id', data.personnel_id)
+      .maybeSingle();
+    if (p) {
+      if (!officerName) officerName = p.name;
+      if (!badgeId) badgeId = p.badge_id;
+      if (!rank) rank = p.rank;
+      if (!division) division = p.division;
+    }
+
+    // Resolve matching user account
+    if (!userId || !username) {
+      const { data: u } = await supabase
+        .from('users')
+        .select('id, username')
+        .eq('personnel_id', data.personnel_id)
+        .maybeSingle();
+      if (u) {
+        if (!userId) userId = u.id;
+        if (!username) username = u.username;
+      }
+    }
+  }
+
+  // Fallback defaults for not-null constraints
+  if (!userId) userId = 'USR-SYSTEM';
+  if (!username) username = officerName ? officerName.toLowerCase().replace(/\s+/g, '.') : 'officer';
+
+  // Compose comprehensive resignation reason & statement
+  const fullReason = [
+    data.reason_category ? `[${data.reason_category}]` : '',
+    data.reason_details || data.reason || 'Personal separation request',
+    data.handover_notes ? `Equipment Handover: ${data.handover_notes}` : ''
+  ].filter(Boolean).join(' - ');
+
   const record = {
-    ...data,
     id: `RES-${String(num).padStart(3, '0')}`,
-    proposal_number: `NEG/RES/2026/${String(num).padStart(3, '0')}`,
-    created_at: getNowIso(),
-    status: 'Pending'
+    proposal_number: data.proposal_number || `NEG/RES/${year}/${String(num).padStart(3, '0')}`,
+    user_id: userId,
+    username: username,
+    personnel_id: data.personnel_id,
+    officer_name: officerName || 'Officer',
+    badge_id: badgeId || '-',
+    rank: rank || 'Officer',
+    division: division || 'Protective Detail Division',
+    reason: fullReason,
+    statement: fullReason,
+    effective_date: data.effective_date || getTodayStr(),
+    status: 'Pending',
+    created_at: getNowIso()
   };
+
   const { data: inserted, error } = await supabase.from('resignation_proposals').insert(record).select().single();
   if (error) throw error;
   return inserted;

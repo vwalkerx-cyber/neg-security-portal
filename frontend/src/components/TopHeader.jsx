@@ -197,9 +197,9 @@ export default function TopHeader({
         }
       };
 
-      checkDoc('National ID (KTP)', p.id_card_expiry, p.id_card_number);
-      checkDoc('Tactical Driver License (SIM)', p.driving_license_expiry, p.driving_license_number);
-      checkDoc('Police Clearance (Expungement / SKCK)', p.expungement_letter_expiry, p.expungement_letter_number);
+      checkDoc('National Identification Card', p.id_card_expiry, p.id_card_number);
+      checkDoc('Driver License', p.driving_license_expiry, p.driving_license_number);
+      checkDoc('DOJ Expungement Certificate', p.expungement_letter_expiry, p.expungement_letter_number);
     });
 
     return list;

@@ -74,9 +74,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     username: '',
     password: '',
     name: '',
-    badge_id: '',
     rank: 'Officer I',
-    division: 'Protection Details',
     join_date: new Date().toISOString().split('T')[0],
     license_certificate: 'Standard Guard License',
     discord_username: '',
@@ -90,11 +88,6 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     expungement_letter_number: '',
     expungement_letter_expiry: '',
     expungement_letter_image: '',
-    plate_riot_van: '',
-    plate_patrol_motorcycle: '',
-    plate_g500: '',
-    plate_ioniq_4: '',
-    plate_presidential_limo: '',
   });
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [registeredSuccess, setRegisteredSuccess] = useState(null);
@@ -583,20 +576,6 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.3rem' }}>
-                    Badge Call-sign / ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. NEG-045 or VANCE-1"
-                    value={regData.badge_id}
-                    onChange={(e) => setRegData({ ...regData, badge_id: e.target.value })}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.825rem', outline: 'none' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.3rem' }}>
                     Portal Login Username *
                   </label>
                   <input
@@ -634,32 +613,28 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.3rem' }}>
-                    Applied Military Rank
+                    Applied Rank
                   </label>
-                  <select
-                    value={regData.rank}
-                    onChange={(e) => setRegData({ ...regData, rank: e.target.value })}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.825rem', outline: 'none' }}
-                  >
-                    {RANKS.map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.3rem' }}>
-                    Assigned Operational Division
-                  </label>
-                  <select
-                    value={regData.division}
-                    onChange={(e) => setRegData({ ...regData, division: e.target.value })}
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.825rem', outline: 'none' }}
-                  >
-                    {DIVISIONS.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    readOnly
+                    value="Officer I"
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '6px',
+                      backgroundColor: '#18202f',
+                      border: '1px solid #334155',
+                      color: '#38bdf8',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                      outline: 'none',
+                      cursor: 'not-allowed',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                    Recruit rank standard. Badge call-sign & operational division are assigned by High Command prior to clearance approval.
+                  </span>
                 </div>
               </div>
             </div>
@@ -682,7 +657,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>3 Clearances Required</span>
               </div>
 
-              {/* DOC 1: National Identity Card (KTP) */}
+              {/* DOC 1: National Identification Card */}
               <div style={{
                 backgroundColor: '#0e172e',
                 border: '1px solid #1e293b',
@@ -706,7 +681,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       DOC-01
                     </span>
                     <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
-                      National Identity Card (KTP)
+                      National Identification Card
                     </span>
                   </div>
                   {regData.id_card_image ? (
@@ -728,7 +703,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.25rem' }}>
-                      ID Card Number (NIK)
+                      Identification Number
                     </label>
                     <input
                       type="text"
@@ -787,7 +762,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <img
                             src={regData.id_card_image}
-                            alt="KTP Preview"
+                            alt="Identity Card Preview"
                             style={{ width: '35px', height: '35px', borderRadius: '5px', objectFit: 'cover', border: '1px solid #334155' }}
                           />
                           <button
@@ -805,7 +780,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 </div>
               </div>
 
-              {/* DOC 2: Driver's License (SIM) */}
+              {/* DOC 2: Driver's License */}
               <div style={{
                 backgroundColor: '#0e172e',
                 border: '1px solid #1e293b',
@@ -829,7 +804,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       DOC-02
                     </span>
                     <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
-                      Tactical Driver's License (SIM)
+                      Driver's License
                     </span>
                   </div>
                   {regData.driving_license_image ? (
@@ -855,7 +830,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. SIM-A 9283-7482-1928"
+                      placeholder="e.g. DL-9283-7482-1928"
                       value={regData.driving_license_number}
                       onChange={(e) => setRegData({ ...regData, driving_license_number: e.target.value })}
                       style={{ width: '100%', padding: '0.5rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.8rem', outline: 'none' }}
@@ -910,7 +885,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <img
                             src={regData.driving_license_image}
-                            alt="SIM Preview"
+                            alt="Driver's License Preview"
                             style={{ width: '35px', height: '35px', borderRadius: '5px', objectFit: 'cover', border: '1px solid #334155' }}
                           />
                           <button
@@ -928,7 +903,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 </div>
               </div>
 
-              {/* DOC 3: SKCK / Expungement Letter */}
+              {/* DOC 3: Department of Justice Expungement Certificate */}
               <div style={{
                 backgroundColor: '#0e172e',
                 border: '1px solid #1e293b',
@@ -952,7 +927,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       DOC-03
                     </span>
                     <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
-                      SKCK / Police Record Expungement Clearance
+                      Department of Justice Expungement Certificate
                     </span>
                   </div>
                   {regData.expungement_letter_image ? (
@@ -974,11 +949,11 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.25rem' }}>
-                      Certificate / Letter Number
+                      DOJ Certificate / Docket Number
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. SKCK/YANMIN/2026/0912"
+                      placeholder="e.g. DOJ-EXP-2026/0912"
                       value={regData.expungement_letter_number}
                       onChange={(e) => setRegData({ ...regData, expungement_letter_number: e.target.value })}
                       style={{ width: '100%', padding: '0.5rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.8rem', outline: 'none' }}
@@ -1033,7 +1008,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <img
                             src={regData.expungement_letter_image}
-                            alt="SKCK Preview"
+                            alt="DOJ Expungement Certificate Preview"
                             style={{ width: '35px', height: '35px', borderRadius: '5px', objectFit: 'cover', border: '1px solid #334155' }}
                           />
                           <button
@@ -1047,93 +1022,6 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 3: DEPARTMENT VEHICLE ALLOCATION LICENSE PLATES */}
-            <div style={{
-              backgroundColor: '#0b1329',
-              border: '1px solid #1e293b',
-              borderRadius: '10px',
-              padding: '1.1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.9rem',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b', paddingBottom: '0.5rem' }}>
-                <div style={{ fontSize: '0.825rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Car size={16} />
-                  <span>3. Department Vehicle Allocation License Plates</span>
-                </div>
-                <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>Optional Fleet Assignments</span>
-              </div>
-
-              {/* Group A: Tactical & Recon Patrol Vehicles (3 columns) */}
-              <div>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Tactical Patrol & Response Fleet
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '3px' }}>Armored Riot Van</label>
-                    <input
-                      type="text"
-                      placeholder="Plate e.g. RV-01"
-                      value={regData.plate_riot_van}
-                      onChange={(e) => setRegData({ ...regData, plate_riot_van: e.target.value.toUpperCase() })}
-                      style={{ width: '100%', padding: '0.48rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.78rem', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '3px' }}>Patrol Motorcycle</label>
-                    <input
-                      type="text"
-                      placeholder="Plate e.g. PM-02"
-                      value={regData.plate_patrol_motorcycle}
-                      onChange={(e) => setRegData({ ...regData, plate_patrol_motorcycle: e.target.value.toUpperCase() })}
-                      style={{ width: '100%', padding: '0.48rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.78rem', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '3px' }}>G500 Tactical SUV</label>
-                    <input
-                      type="text"
-                      placeholder="Plate e.g. G-501"
-                      value={regData.plate_g500}
-                      onChange={(e) => setRegData({ ...regData, plate_g500: e.target.value.toUpperCase() })}
-                      style={{ width: '100%', padding: '0.48rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.78rem', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Group B: Executive & VIP Transport Fleet (2 columns) */}
-              <div>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Executive & Dignitary Convoy Fleet
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '3px' }}>Hyundai IONIQ 4</label>
-                    <input
-                      type="text"
-                      placeholder="Plate e.g. IQ-04"
-                      value={regData.plate_ioniq_4}
-                      onChange={(e) => setRegData({ ...regData, plate_ioniq_4: e.target.value.toUpperCase() })}
-                      style={{ width: '100%', padding: '0.48rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.78rem', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '3px' }}>Presidential Limo</label>
-                    <input
-                      type="text"
-                      placeholder="Plate e.g. LIMO-1"
-                      value={regData.plate_presidential_limo}
-                      onChange={(e) => setRegData({ ...regData, plate_presidential_limo: e.target.value.toUpperCase() })}
-                      style={{ width: '100%', padding: '0.48rem 0.65rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.78rem', fontFamily: 'monospace' }}
-                    />
                   </div>
                 </div>
               </div>

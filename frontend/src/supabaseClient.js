@@ -79,12 +79,12 @@ export const registerUser = async (regData) => {
   const personnelRecord = {
     id: personnelId,
     name: regData.name,
-    badge_id: regData.badge_id || `NEG-B-${userNum}`,
-    rank: regData.rank || 'Officer I',
+    badge_id: regData.badge_id || 'PENDING',
+    rank: 'Officer I',
     join_date: regData.join_date || getTodayStr(),
     license_certificate: regData.license_certificate || 'Standard Guard License',
     status: 'Pending',
-    division: regData.division || 'Unassigned',
+    division: 'Unassigned',
     id_card_number: regData.id_card_number || '',
     id_card_expiry: regData.id_card_expiry || '',
     id_card_image: regData.id_card_image || '',
@@ -94,11 +94,11 @@ export const registerUser = async (regData) => {
     expungement_letter_number: regData.expungement_letter_number || '',
     expungement_letter_expiry: regData.expungement_letter_expiry || '',
     expungement_letter_image: regData.expungement_letter_image || '',
-    plate_riot_van: regData.plate_riot_van || '',
-    plate_patrol_motorcycle: regData.plate_patrol_motorcycle || '',
-    plate_g500: regData.plate_g500 || '',
-    plate_ioniq_4: regData.plate_ioniq_4 || '',
-    plate_presidential_limo: regData.plate_presidential_limo || '',
+    plate_riot_van: '',
+    plate_patrol_motorcycle: '',
+    plate_g500: '',
+    plate_ioniq_4: '',
+    plate_presidential_limo: '',
   };
 
   const { error: pErr } = await supabase.from('personnel').insert(personnelRecord);
@@ -1269,11 +1269,18 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   return data;
 };
 
-export const approveUser = async (userId) => {
+export const approveUser = async (userId, assignmentData = {}) => {
   const { data: user, error: uErr } = await supabase.from('users').update({ status: 'Active' }).eq('id', userId).select().single();
   if (uErr) throw uErr;
   if (user?.personnel_id) {
-    await supabase.from('personnel').update({ status: 'Active' }).eq('id', user.personnel_id);
+    const personnelPatch = { status: 'Active' };
+    if (assignmentData.badge_id) {
+      personnelPatch.badge_id = assignmentData.badge_id;
+    }
+    if (assignmentData.division) {
+      personnelPatch.division = assignmentData.division;
+    }
+    await supabase.from('personnel').update(personnelPatch).eq('id', user.personnel_id);
   }
   return user;
 };

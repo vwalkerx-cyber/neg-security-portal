@@ -560,9 +560,9 @@ export default function App() {
     return true;
   };
 
-  const handleApproveUser = async (userId) => {
-    await db.approveUser(userId);
-    notify('Security clearance approved! User profile activated.');
+  const handleApproveUser = async (userId, assignmentData) => {
+    await db.approveUser(userId, assignmentData);
+    notify('Security clearance approved! User profile and operational assignment activated.');
     await fetchData();
   };
 
@@ -977,6 +977,7 @@ export default function App() {
           {activeTab === 'users' && currentUser?.role === 'ADMIN' && (
             <UserManagementView
               users={users}
+              personnel={personnel}
               reinstatements={reinstatements}
               currentUser={currentUser}
               onCreateUser={handleCreateUser}

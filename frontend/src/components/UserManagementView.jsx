@@ -29,6 +29,7 @@ function DiscordIcon({ size = 16, color = "#5865F2" }) {
 
 export default function UserManagementView({ 
   users = [], 
+  personnel = [],
   reinstatements = [],
   currentUser,
   onCreateUser, 
@@ -61,6 +62,14 @@ export default function UserManagementView({
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
 
+  // Approval Modal State (Assign Badge Call-sign and Operational Division before approval)
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedUserForApproval, setSelectedUserForApproval] = useState(null);
+  const [approvalFormData, setApprovalFormData] = useState({
+    badge_id: '',
+    division: 'Protective Detail Division',
+  });
+
   // Create user form state
   const [formData, setFormData] = useState(() => ({
     name: '',
@@ -83,16 +92,46 @@ export default function UserManagementView({
 
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
-  const handleApprove = async (userId, username) => {
-    setActionBusyId(userId);
+  const handleOpenApproveModal = (user) => {
+    const existingP = personnel.find((p) => p.id === user.personnel_id);
+    const initialBadge = (existingP?.badge_id && existingP.badge_id !== 'PENDING' && existingP.badge_id !== '-')
+      ? existingP.badge_id
+      : `NEG-OF-${String(Math.floor(10 + Math.random() * 89))}`;
+    const initialDivision = (existingP?.division && existingP.division !== 'Unassigned')
+      ? existingP.division
+      : 'Protective Detail Division';
+
+    setSelectedUserForApproval(user);
+    setApprovalFormData({
+      badge_id: initialBadge,
+      division: initialDivision,
+    });
+    setShowApprovalModal(true);
+  };
+
+  const handleConfirmApprove = async (e) => {
+    e.preventDefault();
+    if (!selectedUserForApproval) return;
+    if (!approvalFormData.badge_id.trim()) {
+      onNotify('Badge Call-sign is required prior to clearance approval.');
+      return;
+    }
+
+    const targetUser = selectedUserForApproval;
+    setActionBusyId(targetUser.id);
     try {
       if (onApproveUser) {
-        await onApproveUser(userId);
+        await onApproveUser(targetUser.id, {
+          badge_id: approvalFormData.badge_id.trim(),
+          division: approvalFormData.division,
+        });
       } else {
-        const res = await fetch(`${API_BASE}/api/auth/users/${userId}/approve`, { method: 'POST' });
+        const res = await fetch(`${API_BASE}/api/auth/users/${targetUser.id}/approve`, { method: 'POST' });
         if (!res.ok) throw new Error('Failed to approve');
       }
-      onNotify(`Security clearance for ${username} approved! Account is now Active.`);
+      onNotify(`Security clearance for ${targetUser.username} approved with Badge ${approvalFormData.badge_id.trim()} in ${approvalFormData.division}!`);
+      setShowApprovalModal(false);
+      setSelectedUserForApproval(null);
     } catch (err) {
       onNotify(`Approval error: ${err.message}`);
     } finally {
@@ -500,7 +539,7 @@ export default function UserManagementView({
                 <div style={{ display: 'flex', gap: '0.6rem', marginTop: 'auto' }}>
                   <button
                     disabled={actionBusyId === pu.id}
-                    onClick={() => handleApprove(pu.id, pu.username)}
+                    onClick={() => handleOpenApproveModal(pu)}
                     style={{
                       flex: 1,
                       display: 'flex',
@@ -519,7 +558,7 @@ export default function UserManagementView({
                     }}
                   >
                     <Check size={14} />
-                    <span>Approve Clearance</span>
+                    <span>Assign & Approve</span>
                   </button>
                   <button
                     disabled={actionBusyId === pu.id}
@@ -1069,8 +1108,8 @@ export default function UserManagementView({
                           <>
                             <button
                               disabled={actionBusyId === u.id}
-                              onClick={() => handleApprove(u.id, u.username)}
-                              title="Approve Clearance"
+                              onClick={() => handleOpenApproveModal(u)}
+                              title="Assign Badge & Operational Division then Approve"
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1086,7 +1125,7 @@ export default function UserManagementView({
                               }}
                             >
                               <Check size={12} />
-                              <span>Approve</span>
+                              <span>Assign & Approve</span>
                             </button>
                             <button
                               disabled={actionBusyId === u.id}
@@ -2120,6 +2159,162 @@ export default function UserManagementView({
                   }}
                 >
                   {submittingReinstatement ? 'Processing...' : `Confirm ${reinstatementDecision === 'Approved' ? 'Approval' : 'Rejection'}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Admin Clearance Assignment & Approval */}
+      {showApprovalModal && selectedUserForApproval && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '14px',
+            width: '100%',
+            maxWidth: '520px',
+            padding: '1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '8px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                <Check size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  Assign Operational Profile & Approve Clearance
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                  Assign an official Badge Call-sign and Operational Division prior to activating this officer.
+                </span>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: '#070b14',
+              border: '1px solid #1e293b',
+              borderRadius: '8px',
+              padding: '0.75rem 0.9rem',
+              margin: '0.85rem 0 1.25rem 0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              fontSize: '0.8rem',
+            }}>
+              <div><span style={{ color: '#64748b' }}>Recruit Legal Name:</span> <strong style={{ color: '#f8fafc' }}>{selectedUserForApproval.name}</strong></div>
+              <div><span style={{ color: '#64748b' }}>Portal Username:</span> <span style={{ fontFamily: 'monospace', color: '#38bdf8' }}>{selectedUserForApproval.username}</span></div>
+              <div><span style={{ color: '#64748b' }}>Clearance Rank:</span> <strong style={{ color: '#fbbf24' }}>Officer I</strong> (Recruit Baseline)</div>
+            </div>
+
+            <form onSubmit={handleConfirmApprove} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Assign Badge Call-sign / Identifier *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. NEG-OF-24 or VANCE-1"
+                  value={approvalFormData.badge_id}
+                  onChange={(e) => setApprovalFormData({ ...approvalFormData, badge_id: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #334155',
+                    color: '#f8fafc',
+                    fontSize: '0.85rem',
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    outline: 'none',
+                  }}
+                />
+                <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '3px', display: 'block' }}>
+                  Official call-sign issued on behalf of Department High Command.
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Assign Operational Division *
+                </label>
+                <select
+                  value={approvalFormData.division}
+                  onChange={(e) => setApprovalFormData({ ...approvalFormData, division: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #334155',
+                    color: '#f8fafc',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="Protective Detail Division">Protective Detail Division (PDD)</option>
+                  <option value="Special Operation Division">Special Operation Division (SOD)</option>
+                  <option value="Technical Security Division">Technical Security Division (TSD)</option>
+                  <option value="Executive Protocol Task Force">Executive Protocol Task Force (EPTF)</option>
+                  <option value="High Command & Directorate">High Command & Directorate</option>
+                  <option value="Unassigned">Unassigned</option>
+                </select>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '3px', display: 'block' }}>
+                  Initial deployment unit assigned to this officer.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowApprovalModal(false); setSelectedUserForApproval(null); }}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #334155',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionBusyId === selectedUserForApproval.id}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#10b981',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: actionBusyId === selectedUserForApproval.id ? 'wait' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Check size={14} />
+                  <span>{actionBusyId === selectedUserForApproval.id ? 'Approving Clearance...' : 'Confirm Assignment & Activate'}</span>
                 </button>
               </div>
             </form>

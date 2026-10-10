@@ -984,11 +984,11 @@ export default function PersonnelView({
                           </div>
                         </div>
 
-                        {/* Expungement Letter */}
+                        {/* DOJ Expungement Certificate */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <FileCheck size={12} color="#a855f7" />
-                            <span>Expungement:</span>
+                            <span>DOJ Expungement:</span>
                           </span>
                           <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontFamily: 'monospace', color: p.expungement_letter_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
@@ -1606,16 +1606,16 @@ export default function PersonnelView({
                   </div>
                 </div>
 
-                {/* Expungement Letter with Screenshot Upload */}
+                {/* DOJ Expungement Certificate with Screenshot Upload */}
                 <div style={{ backgroundColor: '#090d14', padding: '0.75rem', borderRadius: '8px', border: '1px solid #1e293b' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem', marginBottom: '0.65rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.3rem' }}>
-                        Expungement Letter Ref #
+                        DOJ Expungement Certificate #
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. EXP-LEGAL-2025/112"
+                        placeholder="e.g. DOJ-EXP-2026/0912"
                         value={formData.expungement_letter_number}
                         onChange={(e) => setFormData({ ...formData, expungement_letter_number: e.target.value })}
                         style={{

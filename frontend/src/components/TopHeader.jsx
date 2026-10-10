@@ -203,8 +203,8 @@ export default function TopHeader({
   return (
     <header style={{
       height: '64px',
-      borderBottom: '1px solid #17232d',
-      backgroundColor: 'rgba(8, 12, 16, 0.94)',
+      borderBottom: '1px solid #e2e8f0',
+      backgroundColor: 'rgba(255, 255, 255, 0.96)',
       backdropFilter: 'blur(12px)',
       position: 'sticky',
       top: 0,
@@ -214,6 +214,7 @@ export default function TopHeader({
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: isMobile ? '0.5rem' : '1rem',
+      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
     }}>
       {/* Left: Sidebar Switcher (Desktop) / Hamburger (Mobile) & Tab Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.65rem' : '1rem', overflow: 'hidden' }}>
@@ -231,9 +232,9 @@ export default function TopHeader({
               height: '38px',
               minWidth: '38px',
               borderRadius: '8px',
-              border: '1px solid rgba(0, 229, 255, 0.4)',
-              backgroundColor: mobileOpen ? '#00e5ff' : 'rgba(0, 229, 255, 0.12)',
-              color: mobileOpen ? '#05080a' : '#00e5ff',
+              border: '1px solid #cbd5e1',
+              backgroundColor: mobileOpen ? '#1d4ed8' : '#f8fafc',
+              color: mobileOpen ? '#ffffff' : '#1d4ed8',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
@@ -245,8 +246,8 @@ export default function TopHeader({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#0c1217',
-            border: '1px solid #17232d',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '2px',
             gap: '2px',
@@ -261,8 +262,9 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'expanded' ? '#141e26' : 'transparent',
-                color: sidebarMode === 'expanded' ? '#00e5ff' : '#708a9c',
+                backgroundColor: sidebarMode === 'expanded' ? '#ffffff' : 'transparent',
+                color: sidebarMode === 'expanded' ? '#1d4ed8' : '#64748b',
+                boxShadow: sidebarMode === 'expanded' ? '0 1px 2px rgba(15, 23, 42, 0.08)' : 'none',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -282,8 +284,9 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'minimal' ? '#141e26' : 'transparent',
-                color: sidebarMode === 'minimal' ? '#00e5ff' : '#708a9c',
+                backgroundColor: sidebarMode === 'minimal' ? '#ffffff' : 'transparent',
+                color: sidebarMode === 'minimal' ? '#1d4ed8' : '#64748b',
+                boxShadow: sidebarMode === 'minimal' ? '0 1px 2px rgba(15, 23, 42, 0.08)' : 'none',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -303,8 +306,8 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'hidden' ? '#ff2e63' : 'transparent',
-                color: sidebarMode === 'hidden' ? '#ffffff' : '#708a9c',
+                backgroundColor: sidebarMode === 'hidden' ? '#dc2626' : 'transparent',
+                color: sidebarMode === 'hidden' ? '#ffffff' : '#64748b',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -318,11 +321,11 @@ export default function TopHeader({
 
         {/* Current Active Section Heading */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-          <div style={{ width: '6px', height: '6px', minWidth: '6px', borderRadius: '50%', backgroundColor: '#00ff9d', boxShadow: '0 0 8px #00ff9d' }} />
+          <div style={{ width: '6px', height: '6px', minWidth: '6px', borderRadius: '50%', backgroundColor: '#1d4ed8', boxShadow: '0 0 6px rgba(29, 78, 216, 0.4)' }} />
           <h1 style={{
             fontSize: isMobile ? '0.88rem' : '0.95rem',
             fontWeight: 700,
-            color: '#e6f1f8',
+            color: '#0f172a',
             margin: 0,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -345,9 +348,9 @@ export default function TopHeader({
               position: 'relative',
               padding: '0.45rem',
               borderRadius: '8px',
-              backgroundColor: allAnomalies.length > 0 ? 'rgba(255, 46, 99, 0.14)' : '#0c1217',
-              border: `1px solid ${allAnomalies.length > 0 ? 'rgba(255, 46, 99, 0.45)' : '#17232d'}`,
-              color: allAnomalies.length > 0 ? '#ff2e63' : '#708a9c',
+              backgroundColor: allAnomalies.length > 0 ? '#fef2f2' : '#f8fafc',
+              border: `1px solid ${allAnomalies.length > 0 ? '#fecaca' : '#e2e8f0'}`,
+              color: allAnomalies.length > 0 ? '#dc2626' : '#64748b',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -361,7 +364,7 @@ export default function TopHeader({
                 position: 'absolute',
                 top: '-4px',
                 right: '-4px',
-                backgroundColor: '#ff2e63',
+                backgroundColor: '#dc2626',
                 color: '#ffffff',
                 fontSize: '0.62rem',
                 fontWeight: 800,
@@ -372,7 +375,7 @@ export default function TopHeader({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '0 3px',
-                boxShadow: '0 0 8px rgba(255, 46, 99, 0.6)'
+                boxShadow: '0 1px 3px rgba(220, 38, 38, 0.4)'
               }}>
                 {allAnomalies.length}
               </span>
@@ -386,10 +389,10 @@ export default function TopHeader({
               top: '42px',
               right: 0,
               width: isMobile ? '290px' : '360px',
-              backgroundColor: '#0c1217',
-              border: '1px solid #17232d',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderRadius: '12px',
-              boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.4)',
+              boxShadow: '0 15px 35px -5px rgba(15, 23, 42, 0.15), 0 0 1px rgba(15, 23, 42, 0.1)',
               zIndex: 100,
               overflow: 'hidden',
               display: 'flex',
@@ -398,15 +401,15 @@ export default function TopHeader({
             }}>
               <div style={{
                 padding: '0.75rem 1rem',
-                borderBottom: '1px solid #17232d',
-                backgroundColor: '#05080a',
+                borderBottom: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertTriangle size={15} color={allAnomalies.length > 0 ? '#ffb800' : '#00ff9d'} />
-                  <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#e6f1f8' }}>
+                  <AlertTriangle size={15} color={allAnomalies.length > 0 ? '#d97706' : '#059669'} />
+                  <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#0f172a' }}>
                     Operational Anomalies ({allAnomalies.length})
                   </span>
                 </div>
@@ -416,7 +419,7 @@ export default function TopHeader({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#94a3b8',
+                    color: '#64748b',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center'
@@ -434,9 +437,9 @@ export default function TopHeader({
                 gap: '0.5rem'
               }}>
                 {allAnomalies.length === 0 ? (
-                  <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                    <ShieldCheck size={28} color="#10b981" style={{ margin: '0 auto 0.5rem auto' }} />
-                    <p style={{ margin: 0, fontWeight: 600, color: '#e2e8f0' }}>All Operational Data Synchronized</p>
+                  <div style={{ padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+                    <ShieldCheck size={28} color="#059669" style={{ margin: '0 auto 0.5rem auto' }} />
+                    <p style={{ margin: 0, fontWeight: 600, color: '#0f172a' }}>All Operational Data Synchronized</p>
                     <p style={{ margin: '4px 0 0 0', fontSize: '0.74rem' }}>No incomplete shift attendance or expiring identification documents detected.</p>
                   </div>
                 ) : (
@@ -452,8 +455,8 @@ export default function TopHeader({
                           }
                         }}
                         style={{
-                          backgroundColor: isDanger ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-                          border: `1px solid ${isDanger ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                          backgroundColor: isDanger ? '#fef2f2' : '#fffbeb',
+                          border: `1px solid ${isDanger ? '#fecaca' : '#fde68a'}`,
                           borderRadius: '8px',
                           padding: '0.65rem 0.8rem',
                           cursor: 'pointer',
@@ -467,7 +470,7 @@ export default function TopHeader({
                           <span style={{
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            color: isDanger ? '#f87171' : '#fbbf24',
+                            color: isDanger ? '#dc2626' : '#b45309',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
@@ -477,7 +480,7 @@ export default function TopHeader({
                           </span>
                           <span style={{
                             fontSize: '0.65rem',
-                            color: '#38bdf8',
+                            color: '#1d4ed8',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '2px',
@@ -486,7 +489,7 @@ export default function TopHeader({
                             View <ChevronRight size={11} />
                           </span>
                         </div>
-                        <p style={{ fontSize: '0.73rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
+                        <p style={{ fontSize: '0.73rem', color: '#334155', margin: 0, lineHeight: 1.35 }}>
                           {item.detail}
                         </p>
                       </div>
@@ -498,8 +501,8 @@ export default function TopHeader({
               {allAnomalies.length > 0 && (
                 <div style={{
                   padding: '0.5rem 0.75rem',
-                  borderTop: '1px solid #1f2937',
-                  backgroundColor: '#090d14',
+                  borderTop: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
                   fontSize: '0.7rem',
                   color: '#64748b',
                   textAlign: 'center'
@@ -522,12 +525,13 @@ export default function TopHeader({
               gap: '0.4rem',
               padding: isMobile ? '0.45rem' : '0.45rem 0.75rem',
               borderRadius: '8px',
-              backgroundColor: '#064e3b',
-              border: '1px solid #059669',
-              color: '#6ee7b7',
+              backgroundColor: '#059669',
+              border: '1px solid #047857',
+              color: '#ffffff',
               fontSize: '0.75rem',
               fontWeight: 600,
               cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(5, 150, 105, 0.2)'
             }}
           >
             <FileSpreadsheet size={14} />
@@ -542,9 +546,9 @@ export default function TopHeader({
           style={{
             padding: '0.45rem',
             borderRadius: '8px',
-            backgroundColor: '#0c1217',
-            border: '1px solid #17232d',
-            color: '#708a9c',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            color: '#64748b',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -564,14 +568,14 @@ export default function TopHeader({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                backgroundColor: showUserDropdown ? '#141e26' : '#0c1217',
-                border: showUserDropdown ? '1px solid #00e5ff' : '1px solid #17232d',
+                backgroundColor: showUserDropdown ? '#f1f5f9' : '#ffffff',
+                border: showUserDropdown ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
                 padding: isMobile ? '4px 8px' : '5px 12px',
                 borderRadius: '8px',
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
-                color: '#e6f1f8',
-                boxShadow: showUserDropdown ? '0 0 14px rgba(0, 229, 255, 0.25)' : 'none',
+                color: '#0f172a',
+                boxShadow: showUserDropdown ? '0 1px 4px rgba(29, 78, 216, 0.15)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
@@ -579,20 +583,20 @@ export default function TopHeader({
                 width: '20px',
                 height: '20px',
                 borderRadius: '50%',
-                backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.18)' : 'rgba(0, 229, 255, 0.18)',
+                backgroundColor: isAdmin ? 'rgba(217, 119, 6, 0.12)' : 'rgba(29, 78, 216, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.4)' : 'rgba(0, 229, 255, 0.4)'}`,
+                border: `1px solid ${isAdmin ? 'rgba(217, 119, 6, 0.3)' : 'rgba(29, 78, 216, 0.25)'}`,
               }}>
-                <ShieldCheck size={12} color={isAdmin ? '#ffb800' : '#00e5ff'} />
+                <ShieldCheck size={12} color={isAdmin ? '#d97706' : '#1d4ed8'} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: '#e6f1f8', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.74rem', color: '#0f172a', fontWeight: 600 }}>
                 {isMobile ? currentUser.rank : `${currentUser.name} (${currentUser.rank})`}
               </span>
               <ChevronDown 
                 size={13} 
-                color="#708a9c" 
+                color="#64748b" 
                 style={{
                   transform: showUserDropdown ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.2s ease',
@@ -607,10 +611,10 @@ export default function TopHeader({
                 top: 'calc(100% + 8px)',
                 right: 0,
                 width: '270px',
-                backgroundColor: '#0c1217',
-                border: '1px solid #17232d',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
                 borderRadius: '12px',
-                boxShadow: '0 15px 30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 229, 255, 0.1)',
+                boxShadow: '0 15px 30px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.05)',
                 zIndex: 100,
                 overflow: 'hidden',
                 animation: 'fadeIn 0.15s ease',
@@ -618,27 +622,27 @@ export default function TopHeader({
                 {/* User Info Header */}
                 <div style={{
                   padding: '1rem',
-                  borderBottom: '1px solid #17232d',
-                  backgroundColor: '#05080a',
+                  borderBottom: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
                     <div style={{
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.15)' : 'rgba(0, 229, 255, 0.15)',
-                      border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.35)' : 'rgba(0, 229, 255, 0.35)'}`,
+                      backgroundColor: isAdmin ? 'rgba(217, 119, 6, 0.12)' : 'rgba(29, 78, 216, 0.1)',
+                      border: `1px solid ${isAdmin ? 'rgba(217, 119, 6, 0.3)' : 'rgba(29, 78, 216, 0.25)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      <User size={16} color={isAdmin ? '#ffb800' : '#00e5ff'} />
+                      <User size={16} color={isAdmin ? '#d97706' : '#1d4ed8'} />
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#e6f1f8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {currentUser.name}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: '#708a9c' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
                         @{currentUser.username || 'user'}
                       </div>
                     </div>
@@ -650,27 +654,27 @@ export default function TopHeader({
                       fontWeight: 700,
                       padding: '2px 6px',
                       borderRadius: '4px',
-                      backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.18)' : 'rgba(0, 229, 255, 0.18)',
-                      color: isAdmin ? '#ffb800' : '#00e5ff',
-                      border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.4)' : 'rgba(0, 229, 255, 0.4)'}`,
+                      backgroundColor: isAdmin ? '#fef3c7' : '#dbeafe',
+                      color: isAdmin ? '#92400e' : '#1e40af',
+                      border: `1px solid ${isAdmin ? '#fde68a' : '#bfdbfe'}`,
                       textTransform: 'uppercase',
                     }}>
                       {currentUser.role || 'OFFICER'}
                     </span>
                     <span style={{
                       fontSize: '0.65rem',
-                      color: '#e6f1f8',
-                      backgroundColor: '#141e26',
+                      color: '#0f172a',
+                      backgroundColor: '#f1f5f9',
                       padding: '2px 6px',
                       borderRadius: '4px',
-                      border: '1px solid #17232d',
+                      border: '1px solid #e2e8f0',
                     }}>
                       {currentUser.rank}
                     </span>
                     {currentUser.badge_id && (
                       <span style={{
                         fontSize: '0.65rem',
-                        color: '#708a9c',
+                        color: '#64748b',
                         fontFamily: 'monospace',
                       }}>
                         [{currentUser.badge_id}]
@@ -697,7 +701,7 @@ export default function TopHeader({
                       borderRadius: '8px',
                       border: 'none',
                       backgroundColor: 'transparent',
-                      color: '#f8fafc',
+                      color: '#0f172a',
                       fontSize: '0.8rem',
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -707,12 +711,12 @@ export default function TopHeader({
                       textAlign: 'left',
                       transition: 'background 0.15s ease',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
-                    <KeyRound size={15} color="#38bdf8" />
+                    <KeyRound size={15} color="#1d4ed8" />
                     <div>
-                      <div style={{ color: '#f8fafc', fontWeight: 600 }}>Edit Password</div>
+                      <div style={{ color: '#0f172a', fontWeight: 600 }}>Edit Password</div>
                       <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Change your login credentials</div>
                     </div>
                   </button>
@@ -731,7 +735,7 @@ export default function TopHeader({
                         borderRadius: '8px',
                         border: 'none',
                         backgroundColor: 'transparent',
-                        color: '#f87171',
+                        color: '#dc2626',
                         fontSize: '0.8rem',
                         fontWeight: 500,
                         cursor: 'pointer',
@@ -741,12 +745,12 @@ export default function TopHeader({
                         textAlign: 'left',
                         transition: 'background 0.15s ease',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <LogOut size={15} color="#f87171" />
+                      <LogOut size={15} color="#dc2626" />
                       <div>
-                        <div style={{ color: '#f87171', fontWeight: 600 }}>Sign Out</div>
+                        <div style={{ color: '#dc2626', fontWeight: 600 }}>Sign Out</div>
                         <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Terminate security session</div>
                       </div>
                     </button>
@@ -766,7 +770,7 @@ export default function TopHeader({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -775,18 +779,18 @@ export default function TopHeader({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '14px',
             width: '100%',
             maxWidth: '420px',
             padding: '1.75rem',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <KeyRound size={20} color="#38bdf8" />
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                <KeyRound size={20} color="#1d4ed8" />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                   Edit Login Password
                 </h3>
               </div>
@@ -796,7 +800,7 @@ export default function TopHeader({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: '#64748b',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -806,24 +810,24 @@ export default function TopHeader({
               </button>
             </div>
 
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 1.25rem 0' }}>
-              Update login credentials for <strong style={{ color: '#e2e8f0' }}>{currentUser?.name}</strong> (@{currentUser?.username}).
+            <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 1.25rem 0' }}>
+              Update login credentials for <strong style={{ color: '#0f172a' }}>{currentUser?.name}</strong> (@{currentUser?.username}).
             </p>
 
             {passwordError && (
               <div style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
                 borderRadius: '8px',
                 padding: '0.65rem 0.85rem',
-                color: '#f87171',
+                color: '#dc2626',
                 fontSize: '0.8rem',
                 marginBottom: '1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                <AlertTriangle size={15} color="#f87171" style={{ flexShrink: 0 }} />
+                <AlertTriangle size={15} color="#dc2626" style={{ flexShrink: 0 }} />
                 <span>{passwordError}</span>
               </div>
             )}
@@ -831,7 +835,7 @@ export default function TopHeader({
             <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Current Password */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.35rem' }}>
                   Current Password (Optional if newly provisioned)
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -844,9 +848,9 @@ export default function TopHeader({
                       width: '100%',
                       padding: '0.6rem 2.5rem 0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
                       fontSize: '0.85rem',
                       outline: 'none',
                     }}
@@ -861,7 +865,7 @@ export default function TopHeader({
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
+                      color: '#64748b',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -874,7 +878,7 @@ export default function TopHeader({
 
               {/* New Password */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.35rem' }}>
                   New Password *
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -888,9 +892,9 @@ export default function TopHeader({
                       width: '100%',
                       padding: '0.6rem 2.5rem 0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
                       fontSize: '0.85rem',
                       outline: 'none',
                     }}
@@ -905,7 +909,7 @@ export default function TopHeader({
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
+                      color: '#64748b',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -918,7 +922,7 @@ export default function TopHeader({
 
               {/* Confirm New Password */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.35rem' }}>
                   Confirm New Password *
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -932,9 +936,9 @@ export default function TopHeader({
                       width: '100%',
                       padding: '0.6rem 2.5rem 0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
                       fontSize: '0.85rem',
                       outline: 'none',
                     }}
@@ -949,7 +953,7 @@ export default function TopHeader({
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
+                      color: '#64748b',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -967,9 +971,9 @@ export default function TopHeader({
                   style={{
                     padding: '0.6rem 1rem',
                     borderRadius: '8px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    color: '#94a3b8',
+                    backgroundColor: '#f1f5f9',
+                    border: '1px solid #e2e8f0',
+                    color: '#64748b',
                     cursor: 'pointer',
                     fontSize: '0.85rem',
                   }}
@@ -982,12 +986,13 @@ export default function TopHeader({
                   style={{
                     padding: '0.6rem 1.25rem',
                     borderRadius: '8px',
-                    backgroundColor: '#0284c7',
+                    backgroundColor: '#1d4ed8',
                     color: '#ffffff',
                     border: 'none',
                     fontWeight: 600,
                     fontSize: '0.85rem',
                     cursor: passwordSubmitting ? 'wait' : 'pointer',
+                    boxShadow: '0 1px 3px rgba(29, 78, 216, 0.3)'
                   }}
                 >
                   {passwordSubmitting ? 'Updating...' : 'Save Password'}

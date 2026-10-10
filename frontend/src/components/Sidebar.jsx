@@ -97,9 +97,8 @@ export default function Sidebar({
       <aside style={{
         width: isMobile ? '280px' : (showMinimal ? '70px' : '250px'),
         minWidth: isMobile ? '280px' : (showMinimal ? '70px' : '250px'),
-        backgroundColor: 'rgba(12, 18, 23, 0.96)',
-        backdropFilter: 'blur(16px)',
-        borderRight: '1px solid #17232d',
+        backgroundColor: '#ffffff',
+        borderRight: '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -113,14 +112,14 @@ export default function Sidebar({
         transition: isMobile 
           ? 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' 
           : 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: isMobile && mobileOpen ? '0 0 35px rgba(0, 0, 0, 0.85)' : 'none',
+        boxShadow: isMobile && mobileOpen ? '0 0 35px rgba(15, 23, 42, 0.25)' : '2px 0 12px rgba(15, 23, 42, 0.03)',
         overflowX: 'hidden',
       }}>
       {/* Top Branding & Mode Controls */}
       <div>
         <div style={{
           height: '70px',
-          borderBottom: '1px solid #17232d',
+          borderBottom: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: showMinimal ? 'center' : 'space-between',
@@ -138,8 +137,8 @@ export default function Sidebar({
                 minWidth: '38px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '1.5px solid rgba(0, 255, 157, 0.5)',
-                boxShadow: '0 0 14px rgba(0, 255, 157, 0.35)',
+                border: '1.5px solid #1d4ed8',
+                boxShadow: '0 0 10px rgba(29, 78, 216, 0.2)',
                 cursor: 'pointer',
               }}
               onClick={() => {
@@ -152,7 +151,7 @@ export default function Sidebar({
             {!showMinimal && (
               <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.88rem', letterSpacing: '0.02em', color: '#e6f1f8' }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.88rem', letterSpacing: '0.02em', color: '#0f172a' }}>
                     N.E.G.
                   </span>
                   <span style={{
@@ -161,14 +160,14 @@ export default function Sidebar({
                     textTransform: 'uppercase',
                     padding: '1px 5px',
                     borderRadius: '4px',
-                    backgroundColor: 'rgba(255, 46, 99, 0.18)',
-                    color: '#ff2e63',
-                    border: '1px solid rgba(255, 46, 99, 0.4)',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    color: '#dc2626',
+                    border: '1px solid rgba(220, 38, 38, 0.25)',
                   }}>
                     SECURITY
                   </span>
                 </div>
-                <div style={{ fontSize: '0.68rem', color: '#708a9c' }}>Operations Portal</div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Operations Portal</div>
               </div>
             )}
           </div>
@@ -179,11 +178,11 @@ export default function Sidebar({
               onClick={onCloseMobile}
               title="Close navigation menu"
               style={{
-                background: '#141e26',
-                border: '1px solid #17232d',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
                 borderRadius: '6px',
                 padding: '6px',
-                color: '#708a9c',
+                color: '#64748b',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -199,11 +198,11 @@ export default function Sidebar({
                   onClick={toggleMinimal}
                   title="Minimize sidebar (icon only)"
                   style={{
-                    background: '#141e26',
-                    border: '1px solid #17232d',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     borderRadius: '6px',
                     padding: '5px',
-                    color: '#708a9c',
+                    color: '#64748b',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -216,11 +215,11 @@ export default function Sidebar({
                   onClick={hideSidebar}
                   title="Hide sidebar"
                   style={{
-                    background: '#141e26',
-                    border: '1px solid #17232d',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     borderRadius: '6px',
                     padding: '5px',
-                    color: '#708a9c',
+                    color: '#64748b',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -259,9 +258,9 @@ export default function Sidebar({
                   gap: '0.75rem',
                   padding: showMinimal ? '0.75rem 0' : '0.65rem 0.85rem',
                   borderRadius: '8px',
-                  border: isActive ? '1px solid rgba(0, 229, 255, 0.45)' : '1px solid transparent',
-                  backgroundColor: isActive ? 'rgba(0, 229, 255, 0.12)' : 'transparent',
-                  color: isActive ? '#00e5ff' : '#708a9c',
+                  border: isActive ? '1px solid rgba(29, 78, 216, 0.3)' : '1px solid transparent',
+                  backgroundColor: isActive ? 'rgba(29, 78, 216, 0.08)' : 'transparent',
+                  color: isActive ? '#1d4ed8' : '#64748b',
                   fontSize: '0.85rem',
                   fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
@@ -271,7 +270,7 @@ export default function Sidebar({
                   position: 'relative',
                 }}
               >
-                <Icon size={18} color={isActive ? '#00e5ff' : '#708a9c'} />
+                <Icon size={18} color={isActive ? '#1d4ed8' : '#64748b'} />
                 {!showMinimal && (
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, textAlign: 'left' }}>
                     {item.label}
@@ -279,14 +278,14 @@ export default function Sidebar({
                 )}
                 {item.badge && !showMinimal && (
                   <span style={{
-                    backgroundColor: '#ffb800',
-                    color: '#05080a',
+                    backgroundColor: '#d97706',
+                    color: '#ffffff',
                     fontSize: '0.65rem',
                     fontWeight: 700,
                     padding: '1px 6px',
                     borderRadius: '10px',
                     lineHeight: '1.2',
-                    boxShadow: '0 0 8px rgba(255, 184, 0, 0.4)',
+                    boxShadow: '0 0 8px rgba(217, 119, 6, 0.3)',
                   }}>
                     {item.badge}
                   </span>
@@ -299,8 +298,8 @@ export default function Sidebar({
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: '#ffb800',
-                    boxShadow: '0 0 6px #ffb800',
+                    backgroundColor: '#d97706',
+                    boxShadow: '0 0 6px #d97706',
                   }} />
                 )}
                 {isActive && (
@@ -311,7 +310,7 @@ export default function Sidebar({
                     bottom: '20%',
                     width: '3px',
                     borderRadius: '0 4px 4px 0',
-                    backgroundColor: '#00e5ff',
+                    backgroundColor: '#1d4ed8',
                   }} />
                 )}
               </button>
@@ -322,7 +321,7 @@ export default function Sidebar({
 
       {/* Bottom Footer Section (User info, Expand/Collapse & Logout) */}
       <div style={{
-        borderTop: '1px solid #17232d',
+        borderTop: '1px solid #e2e8f0',
         padding: showMinimal ? '0.75rem 0.5rem' : '1rem',
         display: 'flex',
         flexDirection: 'column',
@@ -357,8 +356,8 @@ export default function Sidebar({
             alignItems: 'center',
             justifyContent: showMinimal ? 'center' : 'flex-start',
             gap: '0.6rem',
-            backgroundColor: '#0c1217',
-            border: '1px solid #17232d',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
             padding: showMinimal ? '6px' : '8px 10px',
             borderRadius: '8px',
           }}
@@ -369,23 +368,23 @@ export default function Sidebar({
               height: '28px',
               minWidth: '28px',
               borderRadius: '6px',
-              backgroundColor: isAdmin ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 255, 157, 0.15)',
+              backgroundColor: isAdmin ? 'rgba(217, 119, 6, 0.1)' : 'rgba(29, 78, 216, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: isAdmin ? '#00e5ff' : '#00ff9d',
-              border: `1px solid ${isAdmin ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 255, 157, 0.3)'}`
+              color: isAdmin ? '#d97706' : '#1d4ed8',
+              border: `1px solid ${isAdmin ? 'rgba(217, 119, 6, 0.3)' : 'rgba(29, 78, 216, 0.25)'}`
             }}>
               <UserCheck size={14} />
             </div>
 
             {!showMinimal && (
               <div style={{ lineHeight: 1.15, overflow: 'hidden' }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e6f1f8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {currentUser.name}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '0.65rem', color: isAdmin ? '#00e5ff' : '#708a9c' }}>
+                  <span style={{ fontSize: '0.65rem', color: isAdmin ? '#1d4ed8' : '#64748b' }}>
                     {currentUser.rank}
                   </span>
                   {currentUser.status && (
@@ -394,8 +393,8 @@ export default function Sidebar({
                       fontWeight: 700,
                       padding: '1px 5px',
                       borderRadius: '4px',
-                      backgroundColor: currentUser.status === 'Active' ? 'rgba(0, 255, 157, 0.18)' : currentUser.status === 'Inactive' ? 'rgba(255, 184, 0, 0.18)' : 'rgba(255, 46, 99, 0.18)',
-                      color: currentUser.status === 'Active' ? '#00ff9d' : currentUser.status === 'Inactive' ? '#ffb800' : '#ff2e63'
+                      backgroundColor: currentUser.status === 'Active' ? 'rgba(5, 150, 105, 0.1)' : currentUser.status === 'Inactive' ? 'rgba(217, 119, 6, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+                      color: currentUser.status === 'Active' ? '#059669' : currentUser.status === 'Inactive' ? '#d97706' : '#dc2626'
                     }}>
                       {currentUser.status}
                     </span>
@@ -420,9 +419,9 @@ export default function Sidebar({
             gap: '0.5rem',
             padding: showMinimal ? '0.5rem 0' : '0.5rem 0.75rem',
             borderRadius: '6px',
-            backgroundColor: 'rgba(255, 46, 99, 0.12)',
-            border: '1px solid rgba(255, 46, 99, 0.28)',
-            color: '#ff2e63',
+            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            border: '1px solid rgba(220, 38, 38, 0.25)',
+            color: '#dc2626',
             fontSize: '0.78rem',
             fontWeight: 600,
             cursor: 'pointer',

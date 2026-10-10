@@ -129,7 +129,7 @@ export default function PayrollView({
   // Weekly Summary Breakdown calculation for horizontal bar chart (#9)
   const weeklySummary = React.useMemo(() => {
     const map = {};
-    visiblePayroll.forEach((r) => {
+    accessiblePayroll.forEach((r) => {
       const wk = Number(r.week_number) || 1;
       if (!map[wk]) {
         map[wk] = { week: wk, total: 0, count: 0 };
@@ -140,7 +140,7 @@ export default function PayrollView({
     const items = Object.values(map).sort((a, b) => b.week - a.week);
     const maxTotal = items.reduce((max, i) => Math.max(max, i.total), 0) || 1;
     return { items, maxTotal };
-  }, [visiblePayroll]);
+  }, [accessiblePayroll]);
 
   const handleOpenAdd = () => {
     setEditingRecord(null);

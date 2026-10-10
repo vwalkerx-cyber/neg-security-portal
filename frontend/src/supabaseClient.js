@@ -222,7 +222,37 @@ export const fetchPresence = async () => {
 };
 
 export const logPresence = async (presenceData) => {
-  const { data, error } = await supabase.from('presence').insert(presenceData).select().single();
+  let officerName = presenceData.name;
+  let badgeId = presenceData.badge_id;
+
+  if ((!officerName || !badgeId) && presenceData.personnel_id) {
+    const { data: officer } = await supabase
+      .from('personnel')
+      .select('name, badge_id')
+      .eq('id', presenceData.personnel_id)
+      .maybeSingle();
+    if (officer) {
+      if (!officerName) officerName = officer.name;
+      if (!badgeId) badgeId = officer.badge_id || '-';
+    }
+  }
+
+  let shift = presenceData.shift;
+  if (!shift && presenceData.time_in) {
+    const hour = parseInt(presenceData.time_in.split(':')[0], 10);
+    shift = (!isNaN(hour) && (hour >= 18 || hour < 6)) ? 'Night' : 'Day';
+  }
+
+  const payload = {
+    ...presenceData,
+    name: officerName || 'Unknown Officer',
+    badge_id: badgeId || '-',
+    shift: shift || 'Day',
+    escort_count: presenceData.escort_count || 0,
+    notes: presenceData.notes || ''
+  };
+
+  const { data, error } = await supabase.from('presence').insert(payload).select().single();
   if (error) throw error;
   if (presenceData.personnel_id) {
     await supabase.from('personnel').update({ status: 'Active' }).eq('id', presenceData.personnel_id).eq('status', 'Inactive');

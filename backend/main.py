@@ -1151,6 +1151,24 @@ def update_escort_status(id: str, data: EscortStatusUpdate):
     updated = db.update_escort_mission_status(id, data.status, data.notes)
     return {"success": True, "mission": updated}
 
+@app.put("/api/escort/{id}")
+def update_escort_mission_endpoint(id: str, data: dict):
+    mission = db.get_escort_mission_by_id(id)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Escort mission not found")
+    updated = db.update_escort_mission(id, data)
+    return {"success": True, "mission": updated}
+
+@app.delete("/api/escort/{id}")
+def delete_escort_mission_endpoint(id: str, user: dict = Depends(require_authenticated_user)):
+    if user.get("role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only administrators can delete escort missions.")
+    mission = db.get_escort_mission_by_id(id)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Escort mission not found")
+    db.delete_escort_mission(id)
+    return {"success": True, "deleted_id": id}
+
 # -------------------------------------------------------------
 # Department Vehicles Fleet & Ownership Endpoints
 # -------------------------------------------------------------

@@ -8,51 +8,215 @@ import {
   MapPin, 
   Users, 
   Trash2,
-  Clock 
+  Clock,
+  Calendar,
+  Edit2
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 
 export default function EscortView({ 
   missions = [], 
   personnel = [], 
+  users = [],
   currentUser,
   onCreateMission, 
+  onEditMission,
+  onDeleteMission,
   onUpdateStatus,
   onExportCsv,
   onNotify 
 }) {
   const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingMissionId, setEditingMissionId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isCustomPrincipal, setIsCustomPrincipal] = useState(false);
   const [customPrincipalName, setCustomPrincipalName] = useState('');
 
-  // Identify VIP / Principal personnel
-  const vipPersonnel = personnel.filter(p => 
-    p.rank === 'President' || 
-    p.rank === 'Ministry of Defense and Human Rights' ||
-    p.division === 'VIP/Principal' ||
-    p.division === 'VIP Principal'
-  );
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const [formData, setFormData] = useState({
-    principal: 'President',
-    threat_level: 'High (Level 3)',
+  // Helper to parse date and time from mission start_time
+  const parseSchedule = (m) => {
+    const raw = m?.start_time || '';
+    let escortDate = '';
+    let escortTime = '';
+    if (raw.includes(' ')) {
+      const parts = raw.split(' ');
+      escortDate = parts[0];
+      escortTime = parts.slice(1).join(' ');
+    } else if (raw.includes('-')) {
+      escortDate = raw;
+      escortTime = '09:00';
+    } else if (raw.includes(':')) {
+      escortDate = todayStr;
+      escortTime = raw;
+    } else {
+      escortDate = todayStr;
+      escortTime = raw || '09:00';
+    }
+    return {
+      date: escortDate || todayStr,
+      time: escortTime || '09:00'
+    };
+  };
+
+  // Check if an individual holds a VIP / Principal rank or division
+  const isVipOrPrincipal = (p) => {
+    const rank = (p?.rank || '').trim().toLowerCase();
+    const div = (p?.division || '').trim().toLowerCase();
+    return (
+      rank === 'president' ||
+      rank.includes('president') ||
+      rank === 'ministry of defense and human rights' ||
+      rank.includes('ministry of defense') ||
+      rank.includes('minister') ||
+      div === 'vip/principal' ||
+      div === 'vip principal'
+    );
+  };
+
+  // Guard personnel eligible to be Lead Officer or Escort Detail (EXCLUDES President and Minister)
+  const guardPersonnel = personnel.filter(p => !isVipOrPrincipal(p));
+
+  const selectablePersonnel = currentUser?.role === 'ADMIN'
+    ? guardPersonnel
+    : guardPersonnel.filter((person) => person.id === currentUser?.personnel_id);
+
+  // Build VIP / Principal list from created/registered users and personnel
+  const registeredVips = [];
+  const seenVipNames = new Set();
+
+  // 1. From personnel
+  (personnel || []).forEach(p => {
+    if (isVipOrPrincipal(p) && !seenVipNames.has(p.name)) {
+      seenVipNames.add(p.name);
+      registeredVips.push({
+        id: p.id,
+        name: p.name,
+        rank: p.rank,
+        value: `${p.name} (${p.rank})`,
+        label: `${p.rank.toLowerCase().includes('president') ? '👑' : '🏛️'} ${p.name} — ${p.rank}`
+      });
+    }
+  });
+
+  // 2. From users
+  (users || []).forEach(u => {
+    if (u?.name && !seenVipNames.has(u.name)) {
+      const uRank = (u.rank || '').trim().toLowerCase();
+      if (uRank.includes('president') || uRank.includes('minister') || uRank.includes('ministry of defense')) {
+        seenVipNames.add(u.name);
+        registeredVips.push({
+          id: u.id,
+          name: u.name,
+          rank: u.rank,
+          value: `${u.name} (${u.rank})`,
+          label: `${uRank.includes('president') ? '👑' : '🏛️'} ${u.name} — ${u.rank}`
+        });
+      }
+    }
+  });
+
+  const hasPresident = registeredVips.some(v => v.rank?.toLowerCase().includes('president'));
+  const hasMinister = registeredVips.some(v => v.rank?.toLowerCase().includes('defense') || v.rank?.toLowerCase().includes('minister'));
+
+  const standardVipOptions = [
+    ...registeredVips,
+    ...(!hasPresident ? [{ value: 'President of the Republic', label: '👑 President of the Republic (Supreme Principal)' }] : []),
+    ...(!hasMinister ? [{ value: 'Ministry of Defense and Human Rights', label: '🏛️ Ministry of Defense and Human Rights (VIP Principal)' }] : []),
+    { value: 'Executive Diplomatic Envoy', label: '🌐 Executive Diplomatic Envoy' },
+    { value: 'Foreign Dignitary Delegation', label: '🌍 Foreign Dignitary Delegation' },
+  ];
+
+  const initialLeadId = guardPersonnel[0]?.id || 'NEG-001';
+
+  const defaultFormState = {
+    principal: standardVipOptions[0]?.value || 'President',
+    escort_date: todayStr,
+    start_time: '09:00',
+    estimated_completion: '16:00',
+    threat_level: 'Standard Protection',
     mission_type: 'Motorcade Escort & Perimeter Shield',
     origin: 'Executive Air Base Wing 4',
     destinations: ['Diplomatic Enclave'],
-    lead_agent_id: currentUser?.personnel_id || personnel[0]?.id || 'NEG-001',
-    assigned_officer_ids: [currentUser?.personnel_id || personnel[0]?.id || 'NEG-001'],
+    lead_agent_id: initialLeadId,
+    assigned_officer_ids: [initialLeadId],
     vehicle_convoy: 'Armored SUV x2, Police Outrider x2',
-    start_time: '2026-10-08 09:00',
-    estimated_completion: '2026-10-08 16:00',
     notes: 'Advance security reconnaissance completed.',
-  });
+    status: 'Scheduled',
+  };
 
+  const [formData, setFormData] = useState(defaultFormState);
   const [submitting, setSubmitting] = useState(false);
-  const selectablePersonnel = currentUser?.role === 'ADMIN'
-    ? personnel
-    : personnel.filter((person) => person.id === currentUser?.personnel_id);
+
+  const handleOpenCreateModal = () => {
+    setIsEditing(false);
+    setEditingMissionId(null);
+    setIsCustomPrincipal(false);
+    setCustomPrincipalName('');
+    setFormData({
+      ...defaultFormState,
+      escort_date: todayStr,
+      lead_agent_id: guardPersonnel[0]?.id || 'NEG-001',
+      assigned_officer_ids: [guardPersonnel[0]?.id || 'NEG-001'],
+    });
+    setShowModal(true);
+  };
+
+  const handleOpenEditModal = (m) => {
+    setIsEditing(true);
+    setEditingMissionId(m.id);
+
+    const schedule = parseSchedule(m);
+
+    // Check if principal is one of standard options
+    const isStandard = standardVipOptions.some(opt => opt.value === m.principal);
+    if (!isStandard) {
+      setIsCustomPrincipal(true);
+      setCustomPrincipalName(m.principal || '');
+    } else {
+      setIsCustomPrincipal(false);
+      setCustomPrincipalName('');
+    }
+
+    // Destinations
+    let dests = ['Diplomatic Enclave'];
+    if (m.destinations && m.destinations.length > 0) {
+      dests = m.destinations;
+    } else if (m.destination) {
+      dests = m.destination.split(' → ').map(s => s.trim()).filter(Boolean);
+    }
+
+    // Lead Officer and Assigned
+    const leadId = m.lead_agent_id || guardPersonnel[0]?.id || 'NEG-001';
+    let assignedIds = [leadId];
+    if (m.assigned_personnel && m.assigned_personnel.length > 0) {
+      // Map names to ids where possible
+      assignedIds = m.assigned_personnel.map(nameOrId => {
+        const found = guardPersonnel.find(p => p.id === nameOrId || p.name === nameOrId || `${p.name} (${p.rank})` === nameOrId);
+        return found ? found.id : nameOrId;
+      });
+    }
+
+    setFormData({
+      principal: m.principal || standardVipOptions[0]?.value || 'President',
+      escort_date: schedule.date,
+      start_time: schedule.time,
+      estimated_completion: m.estimated_completion || '16:00',
+      threat_level: m.threat_level || 'Standard Protection',
+      mission_type: m.mission_type || 'Motorcade Escort & Perimeter Shield',
+      origin: m.origin || 'Executive Air Base Wing 4',
+      destinations: dests.length > 0 ? dests : ['Diplomatic Enclave'],
+      lead_agent_id: leadId,
+      assigned_officer_ids: Array.from(new Set([leadId, ...assignedIds])),
+      vehicle_convoy: m.vehicle_convoy || 'Armored SUV x2, Police Outrider x2',
+      notes: m.notes || '',
+      status: m.status || 'Scheduled',
+    });
+
+    setShowModal(true);
+  };
 
   const handleLeadChange = (newLeadId) => {
     const updatedIds = Array.from(new Set([newLeadId, ...(formData.assigned_officer_ids || [])]));
@@ -106,35 +270,73 @@ export default function EscortView({
         throw new Error('Please specify at least one valid destination');
       }
 
-      const allOfficers = Array.from(new Set([formData.lead_agent_id, ...(formData.assigned_officer_ids || [])]));
+      const allOfficerIds = Array.from(new Set([formData.lead_agent_id, ...(formData.assigned_officer_ids || [])]));
+      const leadPerson = guardPersonnel.find(p => p.id === formData.lead_agent_id);
+      const leadAgentName = leadPerson ? `${leadPerson.name} (${leadPerson.rank})` : 'Lead Agent';
 
-      await onCreateMission({
+      const assignedOfficerNames = allOfficerIds.map(oid => {
+        const found = guardPersonnel.find(p => p.id === oid);
+        return found ? `${found.name} (${found.rank})` : oid;
+      });
+
+      const chosenPrincipal = isCustomPrincipal 
+        ? (customPrincipalName.trim() || 'Custom Principal')
+        : (formData.principal || standardVipOptions[0]?.value || 'President');
+
+      // Combine Date and Start Time for storage
+      const combinedStartTime = `${formData.escort_date || todayStr} ${formData.start_time || '09:00'}`.trim();
+
+      const payload = {
         ...formData,
-        assigned_officer_ids: allOfficers,
+        principal: chosenPrincipal,
+        start_time: combinedStartTime,
+        threat_level: formData.threat_level || 'Standard Protection',
+        lead_agent: leadAgentName,
+        lead_agent_id: formData.lead_agent_id,
+        assigned_officer_ids: allOfficerIds,
+        assigned_personnel: assignedOfficerNames,
         destinations: validDestinations,
         destination: validDestinations.join(' → '),
-      });
+      };
+
+      if (isEditing && editingMissionId) {
+        if (onEditMission) {
+          await onEditMission(editingMissionId, payload);
+        }
+        onNotify(`Escort mission ${editingMissionId} updated successfully.`);
+      } else {
+        await onCreateMission(payload);
+        onNotify(`Escort mission dispatched for ${chosenPrincipal} with ${allOfficerIds.length} assigned officer(s).`);
+      }
+
       setShowModal(false);
-      onNotify(`Escort mission dispatched for ${formData.principal} with ${allOfficers.length} assigned officer(s).`);
+      setIsEditing(false);
+      setEditingMissionId(null);
       setIsCustomPrincipal(false);
       setCustomPrincipalName('');
-      setFormData({
-        principal: 'President',
-        threat_level: 'High (Level 3)',
-        mission_type: 'Motorcade Escort & Perimeter Shield',
-        origin: 'Executive Air Base Wing 4',
-        destinations: ['Diplomatic Enclave'],
-        lead_agent_id: currentUser?.personnel_id || personnel[0]?.id || 'NEG-001',
-        assigned_officer_ids: [currentUser?.personnel_id || personnel[0]?.id || 'NEG-001'],
-        vehicle_convoy: 'Armored SUV x2, Police Outrider x2',
-        start_time: '2026-10-08 09:00',
-        estimated_completion: '2026-10-08 16:00',
-        notes: '',
-      });
+      setFormData(defaultFormState);
     } catch (err) {
-      onNotify('Failed to dispatch escort mission: ' + err.message);
+      onNotify('Operation Failed: ' + err.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (missionId, principalName) => {
+    if (currentUser?.role !== 'ADMIN') {
+      onNotify('Access Denied: Only administrators can delete escort missions.');
+      return;
+    }
+    const confirmed = window.confirm(`Are you sure you want to permanently delete escort mission ${missionId} (${principalName})? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      if (onDeleteMission) {
+        await onDeleteMission(missionId);
+      }
+      onNotify(`Escort mission ${missionId} deleted successfully.`);
+    } catch (err) {
+      onNotify('Failed to delete mission: ' + err.message);
     }
   };
 
@@ -151,26 +353,21 @@ export default function EscortView({
     const matchesStatus = statusFilter === 'ALL' || m.status.toUpperCase() === statusFilter.toUpperCase();
     const matchesSearch = 
       !searchQuery ||
-      m.principal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.lead_agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.id.toLowerCase().includes(searchQuery.toLowerCase());
+      (m.principal || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.lead_agent || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.destination || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.start_time || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.id || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   // KPI Calculations
   const activeCount = missions.filter(m => m.status === 'In Transit').length;
   const scheduledCount = missions.filter(m => m.status === 'Scheduled').length;
-  const highThreatCount = missions.filter(m => m.threat_level.includes('High')).length;
-
-  const getThreatBadge = (threat) => {
-    if (threat.includes('High') || threat.includes('Critical')) {
-      return { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', border: 'rgba(239, 68, 68, 0.3)' };
-    } else if (threat.includes('Medium')) {
-      return { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.3)' };
-    }
-    return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.3)' };
-  };
+  const todayCount = missions.filter(m => {
+    const s = parseSchedule(m);
+    return s.date === todayStr;
+  }).length;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -195,7 +392,7 @@ export default function EscortView({
             <span>VIP Convoy & Executive Escort Operations</span>
           </h2>
           <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-            Dignitary protection details, convoy routing, threat level assessments, and real-time transit tracking.
+            Dignitary protection details, convoy routing, departure scheduling, and real-time transit tracking.
           </p>
         </div>
 
@@ -223,7 +420,7 @@ export default function EscortView({
           )}
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenCreateModal}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -264,11 +461,11 @@ export default function EscortView({
         </div>
 
         <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>High-Threat Principals</span>
-          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#f87171', marginTop: '0.25rem' }}>
-            {highThreatCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Details</span>
+          <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Operations</span>
+          <div style={{ fontSize: '1.65rem', fontWeight: 700, color: '#fbbf24', marginTop: '0.25rem' }}>
+            {todayCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>Details</span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>Elevated counter-assault units</span>
+          <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>Scheduled for {todayStr}</span>
         </div>
 
         <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '1.1rem' }}>
@@ -296,7 +493,7 @@ export default function EscortView({
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Search missions by VIP principal, lead agent, destination..."
+            placeholder="Search missions by VIP principal, lead officer, destination, date..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -342,8 +539,8 @@ export default function EscortView({
       }}>
         {filteredMissions.length > 0 ? (
           filteredMissions.map((m) => {
-            const threatBadge = getThreatBadge(m.threat_level);
             const statusBadge = getStatusBadge(m.status);
+            const schedule = parseSchedule(m);
 
             return (
               <div
@@ -390,6 +587,7 @@ export default function EscortView({
                       {m.status}
                     </span>
 
+                    {/* Date of Escort */}
                     <span style={{
                       fontSize: '0.7rem',
                       fontWeight: 600,
@@ -403,8 +601,26 @@ export default function EscortView({
                       alignItems: 'center',
                       gap: '4px',
                     }}>
-                      <Clock size={11} color="#38bdf8" />
-                      <span>{m.start_time || 'TBD'}</span>
+                      <Calendar size={11} color="#38bdf8" />
+                      <span>{schedule.date}</span>
+                    </span>
+
+                    {/* Start Time of Escort */}
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                      color: '#fbbf24',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      fontFamily: 'monospace',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}>
+                      <Clock size={11} color="#fbbf24" />
+                      <span>Start: {schedule.time}</span>
                     </span>
                   </div>
                 </div>
@@ -508,7 +724,7 @@ export default function EscortView({
                   </div>
                 )}
 
-                {/* Actions / Status updater */}
+                {/* Actions / Status updater & Edit/Delete Buttons */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -516,12 +732,14 @@ export default function EscortView({
                   borderTop: '1px solid #1f2937',
                   paddingTop: '0.75rem',
                   marginTop: 'auto',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
                 }}>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
-                    Est. Completion: <span style={{ color: '#cbd5e1' }}>{m.estimated_completion || 'Open'}</span>
+                    Est. End: <span style={{ color: '#cbd5e1' }}>{m.estimated_completion || 'Open'}</span>
                   </span>
 
-                  <div style={{ display: 'flex', gap: '0.35rem' }}>
+                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                     {m.status !== 'In Transit' && (
                       <button
                         onClick={() => handleStatusChange(m.id, 'In Transit')}
@@ -557,6 +775,52 @@ export default function EscortView({
                         Complete
                       </button>
                     )}
+
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => handleOpenEditModal(m)}
+                      title="Edit Mission Details"
+                      style={{
+                        padding: '4px 9px',
+                        borderRadius: '6px',
+                        backgroundColor: '#1e293b',
+                        border: '1px solid #334155',
+                        color: '#cbd5e1',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Edit2 size={12} />
+                      <span>Edit</span>
+                    </button>
+
+                    {/* Delete Button (Admin Only) */}
+                    {currentUser?.role === 'ADMIN' && (
+                      <button
+                        onClick={() => handleDelete(m.id, m.principal)}
+                        title="Delete Mission (Admin Only)"
+                        style={{
+                          padding: '4px 9px',
+                          borderRadius: '6px',
+                          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.35)',
+                          color: '#f87171',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Trash2 size={12} />
+                        <span>Delete</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -569,7 +833,7 @@ export default function EscortView({
         )}
       </div>
 
-      {/* Modal: Dispatch Mission */}
+      {/* Modal: Dispatch / Edit Mission */}
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -590,11 +854,13 @@ export default function EscortView({
             borderRadius: '14px',
             width: '100%',
             maxWidth: '560px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             padding: '1.75rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
           }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', marginBottom: '1.25rem' }}>
-              Dispatch Executive Escort Mission
+              {isEditing ? `Edit Escort Mission — ${editingMissionId}` : 'Dispatch Executive Escort Mission'}
             </h3>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -612,7 +878,7 @@ export default function EscortView({
                         setCustomPrincipalName('');
                         setFormData({ ...formData, principal: '' });
                       } else {
-                        setFormData({ ...formData, principal: 'President' });
+                        setFormData({ ...formData, principal: standardVipOptions[0]?.value || 'President' });
                       }
                     }}
                     style={{
@@ -654,24 +920,19 @@ export default function EscortView({
                       cursor: 'pointer'
                     }}
                   >
-                    <option value="President">President of the Republic (Supreme Principal)</option>
-                    <option value="Ministry of Defense and Human Rights">Ministry of Defense and Human Rights (VIP Principal)</option>
-                    {vipPersonnel.map(vip => (
-                      <option key={vip.id} value={`${vip.name} (${vip.rank})`}>
-                        {vip.name} — {vip.rank}
+                    {standardVipOptions.map((opt, idx) => (
+                      <option key={idx} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
-                    <option value="Executive Diplomatic Envoy">Executive Diplomatic Envoy</option>
-                    <option value="Secretary General of Defense">Secretary General of Defense</option>
-                    <option value="Foreign Dignitary Delegation">Foreign Dignitary Delegation</option>
-                    <option value="__CUSTOM__">✍️ Custom Principal (Enter Name Below)...</option>
+                    <option value="__CUSTOM__">✍️ + Custom Principal (Enter Name Below)...</option>
                   </select>
                 ) : (
                   <input
                     type="text"
                     required
                     autoFocus
-                    placeholder="Enter custom principal name or organization..."
+                    placeholder="Enter custom principal name or visiting organization..."
                     value={customPrincipalName}
                     onChange={(e) => {
                       setCustomPrincipalName(e.target.value);
@@ -691,14 +952,17 @@ export default function EscortView({
                 )}
               </div>
 
+              {/* Date of Escort & Start Time of Escort (Replaces Threat Level) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Threat Level
+                    Date of Escort *
                   </label>
-                  <select
-                    value={formData.threat_level}
-                    onChange={(e) => setFormData({ ...formData, threat_level: e.target.value })}
+                  <input
+                    type="date"
+                    required
+                    value={formData.escort_date}
+                    onChange={(e) => setFormData({ ...formData, escort_date: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.75rem',
@@ -709,17 +973,37 @@ export default function EscortView({
                       fontSize: '0.85rem',
                       outline: 'none',
                     }}
-                  >
-                    <option value="Critical (Level 4)">Critical (Level 4)</option>
-                    <option value="High (Level 3)">High (Level 3)</option>
-                    <option value="Medium (Level 2)">Medium (Level 2)</option>
-                    <option value="Low (Level 1)">Low (Level 1)</option>
-                  </select>
+                  />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Lead Officer
+                    Start Time of Escort *
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Lead Officer (Excludes President and Minister) & Est. Completion */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                    Lead Officer *
                   </label>
                   <select
                     value={formData.lead_agent_id}
@@ -743,9 +1027,30 @@ export default function EscortView({
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                    Est. Completion Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.estimated_completion}
+                    onChange={(e) => setFormData({ ...formData, estimated_completion: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* Multiple Assigned Officers Selection */}
+              {/* Multiple Assigned Officers Selection (EXCLUDES President and Minister) */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -767,7 +1072,7 @@ export default function EscortView({
                   borderRadius: '8px',
                   border: '1px solid #1e293b',
                 }}>
-                  {personnel.map((p) => {
+                  {guardPersonnel.map((p) => {
                     const isLead = p.id === formData.lead_agent_id;
                     const isSelected = isLead || (formData.assigned_officer_ids || []).includes(p.id);
                     return (
@@ -951,6 +1256,33 @@ export default function EscortView({
                 />
               </div>
 
+              {/* Status if editing */}
+              {isEditing && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                    Mission Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="In Transit">In Transit</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
                   Operational Notes & Escort Directives
@@ -1001,7 +1333,7 @@ export default function EscortView({
                     cursor: submitting ? 'wait' : 'pointer',
                   }}
                 >
-                  {submitting ? 'Dispatching...' : 'Dispatch Mission'}
+                  {submitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Dispatch Mission')}
                 </button>
               </div>
             </form>

@@ -442,6 +442,22 @@ export default function App() {
     await fetchData();
   };
 
+  const handleEditMission = async (id, data) => {
+    await db.updateEscortMission(id, data);
+    notify(`Escort mission ${id} updated.`);
+    await fetchData();
+  };
+
+  const handleDeleteMission = async (id) => {
+    if (currentUser?.role !== 'ADMIN') {
+      notify('Access Denied: Only administrators can delete escort missions.');
+      return;
+    }
+    await db.deleteEscortMission(id);
+    notify(`Escort mission ${id} deleted.`);
+    await fetchData();
+  };
+
   const handleUpdateEscortStatus = async (id, status) => {
     await db.updateEscortStatus(id, status);
     await fetchData();
@@ -833,8 +849,11 @@ export default function App() {
             <EscortView
               missions={escort}
               personnel={personnel}
+              users={users}
               currentUser={currentUser}
               onCreateMission={handleCreateMission}
+              onEditMission={handleEditMission}
+              onDeleteMission={handleDeleteMission}
               onUpdateStatus={handleUpdateEscortStatus}
               onExportCsv={handleExportCsv}
               onNotify={notify}

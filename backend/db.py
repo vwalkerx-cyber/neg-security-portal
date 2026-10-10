@@ -1198,6 +1198,35 @@ def update_escort_mission_status(eid, status, notes=None):
         conn.commit()
     return get_escort_mission_by_id(eid)
 
+def update_escort_mission(eid, data):
+    with get_connection() as conn:
+        fields = ["principal", "mission_type", "origin", "destination", "destinations_json",
+                  "lead_agent", "lead_agent_id", "team_size", "assigned_personnel_json",
+                  "vehicle_convoy", "start_time", "estimated_completion", "notes"]
+        sets = []
+        vals = []
+        for f in fields:
+            if f in data:
+                sets.append(f"{f} = ?")
+                vals.append(data[f])
+        if "threat_level" in data:
+            sets.append("threat_level = ?")
+            vals.append(data["threat_level"])
+        if "status" in data:
+            sets.append("status = ?")
+            vals.append(data["status"])
+        vals.append(eid)
+        if sets:
+            conn.execute(f"UPDATE escort_missions SET {', '.join(sets)} WHERE id = ?", tuple(vals))
+            conn.commit()
+    return get_escort_mission_by_id(eid)
+
+def delete_escort_mission(eid):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM escort_missions WHERE id = ?", (eid,))
+        conn.commit()
+    return True
+
 # ----------------- Training & Certifications -----------------
 def get_all_training():
     with get_connection() as conn:

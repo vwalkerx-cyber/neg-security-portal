@@ -586,6 +586,41 @@ export const updateEscortStatus = async (id, status, notes = null) => {
   return data;
 };
 
+export const updateEscortMission = async (id, missionData) => {
+  const allDests = missionData.destinations?.length ? missionData.destinations : (missionData.destination ? [missionData.destination] : ['Undisclosed']);
+  const assignedList = missionData.assigned_personnel?.length ? missionData.assigned_personnel : [missionData.lead_agent || 'Unknown Agent'];
+
+  const payload = {
+    principal: missionData.principal,
+    threat_level: missionData.threat_level || 'Standard Protection',
+    mission_type: missionData.mission_type || 'Close Protection Convoy',
+    origin: missionData.origin || 'Executive Headquarters',
+    destination: allDests.join(' → '),
+    destinations_json: JSON.stringify(allDests),
+    lead_agent: missionData.lead_agent || 'Lead Agent',
+    lead_agent_id: missionData.lead_agent_id || null,
+    team_size: assignedList.length,
+    assigned_personnel_json: JSON.stringify(assignedList),
+    vehicle_convoy: missionData.vehicle_convoy || 'Convoy Alfa',
+    start_time: missionData.start_time || '08:00',
+    estimated_completion: missionData.estimated_completion || '16:00',
+    notes: missionData.notes || '',
+  };
+  if (missionData.status) {
+    payload.status = missionData.status;
+  }
+
+  const { data, error } = await supabase.from('escort_missions').update(payload).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteEscortMission = async (id) => {
+  const { error } = await supabase.from('escort_missions').delete().eq('id', id);
+  if (error) throw error;
+  return true;
+};
+
 // Vehicles
 export const fetchVehicles = async () => {
   const { data, error } = await supabase.from('department_vehicles').select('*').order('id', { ascending: true });

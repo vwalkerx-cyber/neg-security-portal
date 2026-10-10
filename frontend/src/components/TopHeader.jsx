@@ -203,8 +203,8 @@ export default function TopHeader({
   return (
     <header style={{
       height: '64px',
-      borderBottom: '1px solid #1e293b',
-      backgroundColor: 'rgba(10, 15, 29, 0.9)',
+      borderBottom: '1px solid #17232d',
+      backgroundColor: 'rgba(8, 12, 16, 0.94)',
       backdropFilter: 'blur(12px)',
       position: 'sticky',
       top: 0,
@@ -231,9 +231,9 @@ export default function TopHeader({
               height: '38px',
               minWidth: '38px',
               borderRadius: '8px',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              backgroundColor: mobileOpen ? '#0284c7' : 'rgba(56, 189, 248, 0.12)',
-              color: mobileOpen ? '#ffffff' : '#38bdf8',
+              border: '1px solid rgba(0, 229, 255, 0.4)',
+              backgroundColor: mobileOpen ? '#00e5ff' : 'rgba(0, 229, 255, 0.12)',
+              color: mobileOpen ? '#05080a' : '#00e5ff',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
@@ -245,8 +245,8 @@ export default function TopHeader({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#111827',
-            border: '1px solid #1f2937',
+            backgroundColor: '#0c1217',
+            border: '1px solid #17232d',
             borderRadius: '8px',
             padding: '2px',
             gap: '2px',
@@ -261,8 +261,8 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'expanded' ? '#1e293b' : 'transparent',
-                color: sidebarMode === 'expanded' ? '#38bdf8' : '#94a3b8',
+                backgroundColor: sidebarMode === 'expanded' ? '#141e26' : 'transparent',
+                color: sidebarMode === 'expanded' ? '#00e5ff' : '#708a9c',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -282,8 +282,8 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'minimal' ? '#1e293b' : 'transparent',
-                color: sidebarMode === 'minimal' ? '#38bdf8' : '#94a3b8',
+                backgroundColor: sidebarMode === 'minimal' ? '#141e26' : 'transparent',
+                color: sidebarMode === 'minimal' ? '#00e5ff' : '#708a9c',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -303,8 +303,8 @@ export default function TopHeader({
                 padding: '4px 8px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sidebarMode === 'hidden' ? '#e11d48' : 'transparent',
-                color: sidebarMode === 'hidden' ? '#ffffff' : '#94a3b8',
+                backgroundColor: sidebarMode === 'hidden' ? '#ff2e63' : 'transparent',
+                color: sidebarMode === 'hidden' ? '#ffffff' : '#708a9c',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -318,11 +318,11 @@ export default function TopHeader({
 
         {/* Current Active Section Heading */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-          <div style={{ width: '6px', height: '6px', minWidth: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
+          <div style={{ width: '6px', height: '6px', minWidth: '6px', borderRadius: '50%', backgroundColor: '#00ff9d', boxShadow: '0 0 8px #00ff9d' }} />
           <h1 style={{
             fontSize: isMobile ? '0.88rem' : '0.95rem',
             fontWeight: 700,
-            color: '#f8fafc',
+            color: '#e6f1f8',
             margin: 0,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -345,9 +345,9 @@ export default function TopHeader({
               position: 'relative',
               padding: '0.45rem',
               borderRadius: '8px',
-              backgroundColor: allAnomalies.length > 0 ? 'rgba(239, 68, 68, 0.12)' : '#1e293b',
-              border: `1px solid ${allAnomalies.length > 0 ? 'rgba(239, 68, 68, 0.4)' : '#334155'}`,
-              color: allAnomalies.length > 0 ? '#f87171' : '#cbd5e1',
+              backgroundColor: allAnomalies.length > 0 ? 'rgba(255, 46, 99, 0.14)' : '#0c1217',
+              border: `1px solid ${allAnomalies.length > 0 ? 'rgba(255, 46, 99, 0.45)' : '#17232d'}`,
+              color: allAnomalies.length > 0 ? '#ff2e63' : '#708a9c',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -361,7 +361,7 @@ export default function TopHeader({
                 position: 'absolute',
                 top: '-4px',
                 right: '-4px',
-                backgroundColor: '#ef4444',
+                backgroundColor: '#ff2e63',
                 color: '#ffffff',
                 fontSize: '0.62rem',
                 fontWeight: 800,
@@ -372,7 +372,7 @@ export default function TopHeader({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '0 3px',
-                boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)'
+                boxShadow: '0 0 8px rgba(255, 46, 99, 0.6)'
               }}>
                 {allAnomalies.length}
               </span>
@@ -386,8 +386,8 @@ export default function TopHeader({
               top: '42px',
               right: 0,
               width: isMobile ? '290px' : '360px',
-              backgroundColor: '#111827',
-              border: '1px solid #1f2937',
+              backgroundColor: '#0c1217',
+              border: '1px solid #17232d',
               borderRadius: '12px',
               boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.4)',
               zIndex: 100,
@@ -398,15 +398,15 @@ export default function TopHeader({
             }}>
               <div style={{
                 padding: '0.75rem 1rem',
-                borderBottom: '1px solid #1f2937',
-                backgroundColor: '#090d14',
+                borderBottom: '1px solid #17232d',
+                backgroundColor: '#05080a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertTriangle size={15} color={allAnomalies.length > 0 ? '#f59e0b' : '#10b981'} />
-                  <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#f8fafc' }}>
+                  <AlertTriangle size={15} color={allAnomalies.length > 0 ? '#ffb800' : '#00ff9d'} />
+                  <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#e6f1f8' }}>
                     Operational Anomalies ({allAnomalies.length})
                   </span>
                 </div>
@@ -542,9 +542,9 @@ export default function TopHeader({
           style={{
             padding: '0.45rem',
             borderRadius: '8px',
-            backgroundColor: '#1e293b',
-            border: '1px solid #334155',
-            color: '#cbd5e1',
+            backgroundColor: '#0c1217',
+            border: '1px solid #17232d',
+            color: '#708a9c',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -564,14 +564,14 @@ export default function TopHeader({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                backgroundColor: showUserDropdown ? '#1e293b' : '#111827',
-                border: showUserDropdown ? '1px solid #38bdf8' : '1px solid #1f2937',
+                backgroundColor: showUserDropdown ? '#141e26' : '#0c1217',
+                border: showUserDropdown ? '1px solid #00e5ff' : '1px solid #17232d',
                 padding: isMobile ? '4px 8px' : '5px 12px',
                 borderRadius: '8px',
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
-                color: '#cbd5e1',
-                boxShadow: showUserDropdown ? '0 0 12px rgba(56, 189, 248, 0.25)' : 'none',
+                color: '#e6f1f8',
+                boxShadow: showUserDropdown ? '0 0 14px rgba(0, 229, 255, 0.25)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
@@ -579,20 +579,20 @@ export default function TopHeader({
                 width: '20px',
                 height: '20px',
                 borderRadius: '50%',
-                backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.18)' : 'rgba(0, 229, 255, 0.18)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}`,
+                border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.4)' : 'rgba(0, 229, 255, 0.4)'}`,
               }}>
-                <ShieldCheck size={12} color={isAdmin ? '#fbbf24' : '#38bdf8'} />
+                <ShieldCheck size={12} color={isAdmin ? '#ffb800' : '#00e5ff'} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: '#f1f5f9', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.74rem', color: '#e6f1f8', fontWeight: 600 }}>
                 {isMobile ? currentUser.rank : `${currentUser.name} (${currentUser.rank})`}
               </span>
               <ChevronDown 
                 size={13} 
-                color="#94a3b8" 
+                color="#708a9c" 
                 style={{
                   transform: showUserDropdown ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.2s ease',
@@ -607,10 +607,10 @@ export default function TopHeader({
                 top: 'calc(100% + 8px)',
                 right: 0,
                 width: '270px',
-                backgroundColor: '#111827',
-                border: '1px solid #1f2937',
+                backgroundColor: '#0c1217',
+                border: '1px solid #17232d',
                 borderRadius: '12px',
-                boxShadow: '0 15px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                boxShadow: '0 15px 30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 229, 255, 0.1)',
                 zIndex: 100,
                 overflow: 'hidden',
                 animation: 'fadeIn 0.15s ease',
@@ -618,27 +618,27 @@ export default function TopHeader({
                 {/* User Info Header */}
                 <div style={{
                   padding: '1rem',
-                  borderBottom: '1px solid #1f2937',
-                  backgroundColor: '#090d14',
+                  borderBottom: '1px solid #17232d',
+                  backgroundColor: '#05080a',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
                     <div style={{
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.15)' : 'rgba(2, 132, 199, 0.15)',
-                      border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.35)' : 'rgba(2, 132, 199, 0.35)'}`,
+                      backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.15)' : 'rgba(0, 229, 255, 0.15)',
+                      border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.35)' : 'rgba(0, 229, 255, 0.35)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      <User size={16} color={isAdmin ? '#fbbf24' : '#38bdf8'} />
+                      <User size={16} color={isAdmin ? '#ffb800' : '#00e5ff'} />
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#e6f1f8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {currentUser.name}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#708a9c' }}>
                         @{currentUser.username || 'user'}
                       </div>
                     </div>
@@ -650,27 +650,27 @@ export default function TopHeader({
                       fontWeight: 700,
                       padding: '2px 6px',
                       borderRadius: '4px',
-                      backgroundColor: isAdmin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                      color: isAdmin ? '#fbbf24' : '#38bdf8',
-                      border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}`,
+                      backgroundColor: isAdmin ? 'rgba(255, 184, 0, 0.18)' : 'rgba(0, 229, 255, 0.18)',
+                      color: isAdmin ? '#ffb800' : '#00e5ff',
+                      border: `1px solid ${isAdmin ? 'rgba(255, 184, 0, 0.4)' : 'rgba(0, 229, 255, 0.4)'}`,
                       textTransform: 'uppercase',
                     }}>
                       {currentUser.role || 'OFFICER'}
                     </span>
                     <span style={{
                       fontSize: '0.65rem',
-                      color: '#cbd5e1',
-                      backgroundColor: '#1e293b',
+                      color: '#e6f1f8',
+                      backgroundColor: '#141e26',
                       padding: '2px 6px',
                       borderRadius: '4px',
-                      border: '1px solid #334155',
+                      border: '1px solid #17232d',
                     }}>
                       {currentUser.rank}
                     </span>
                     {currentUser.badge_id && (
                       <span style={{
                         fontSize: '0.65rem',
-                        color: '#94a3b8',
+                        color: '#708a9c',
                         fontFamily: 'monospace',
                       }}>
                         [{currentUser.badge_id}]

@@ -170,10 +170,10 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#070b14',
+      backgroundColor: '#05080a',
       padding: '1.5rem',
       backgroundImage: `
-        linear-gradient(to bottom, rgba(5, 9, 18, 0.78), rgba(7, 12, 24, 0.88)),
+        linear-gradient(to bottom, rgba(5, 8, 10, 0.88), rgba(7, 12, 16, 0.94)),
         url('/bg.jpg')
       `,
       backgroundSize: 'cover',
@@ -183,12 +183,12 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
       <div style={{
         width: '100%',
         maxWidth: activeTab === 'register' ? '760px' : (activeTab === 'reinstatement' ? '560px' : '440px'),
-        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+        backgroundColor: 'rgba(12, 18, 23, 0.96)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(51, 65, 85, 0.65)',
+        border: '1px solid #17232d',
         borderRadius: '18px',
         padding: '2.25rem 2rem',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.15)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 157, 0.12)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.5rem',
@@ -205,20 +205,20 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 height: '105px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                boxShadow: '0 0 35px rgba(217, 119, 6, 0.4), 0 0 15px rgba(14, 165, 233, 0.25)',
-                border: '2px solid rgba(245, 158, 11, 0.5)',
+                boxShadow: '0 0 35px rgba(0, 255, 157, 0.35), 0 0 15px rgba(0, 229, 255, 0.25)',
+                border: '2px solid rgba(0, 255, 157, 0.5)',
                 display: 'block',
               }} 
             />
           </div>
 
-          <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.03em' }}>
+          <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#e6f1f8', letterSpacing: '0.03em' }}>
             NATIONAL EXECUTIVE GUARD
           </h1>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '0.15rem' }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ffb800', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '0.15rem' }}>
             INVICTI IN TUTELA
           </div>
-          <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+          <p style={{ fontSize: '0.78rem', color: '#708a9c', marginTop: '0.2rem' }}>
             Operations & Command Tactical Personnel Portal
           </p>
 
@@ -226,10 +226,10 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
           <div style={{
             display: 'flex',
             gap: '6px',
-            backgroundColor: '#0b1329',
+            backgroundColor: '#05080a',
             padding: '4px',
             borderRadius: '10px',
-            border: '1px solid #1e293b',
+            border: '1px solid #17232d',
             marginTop: '1.15rem',
             width: '100%',
           }}>
@@ -245,9 +245,9 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 padding: '8px 8px',
                 borderRadius: '8px',
                 border: 'none',
-                backgroundColor: activeTab === 'login' ? '#0284c7' : 'transparent',
-                color: activeTab === 'login' ? '#ffffff' : '#94a3b8',
-                fontWeight: 600,
+                backgroundColor: activeTab === 'login' ? '#00e5ff' : 'transparent',
+                color: activeTab === 'login' ? '#05080a' : '#708a9c',
+                fontWeight: 700,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -269,9 +269,9 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 padding: '8px 8px',
                 borderRadius: '8px',
                 border: 'none',
-                backgroundColor: activeTab === 'register' ? '#0284c7' : 'transparent',
-                color: activeTab === 'register' ? '#ffffff' : '#94a3b8',
-                fontWeight: 600,
+                backgroundColor: activeTab === 'register' ? '#00e5ff' : 'transparent',
+                color: activeTab === 'register' ? '#05080a' : '#708a9c',
+                fontWeight: 700,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -294,9 +294,9 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                 padding: '8px 8px',
                 borderRadius: '8px',
                 border: 'none',
-                backgroundColor: activeTab === 'reinstatement' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-                color: activeTab === 'reinstatement' ? '#f87171' : '#94a3b8',
-                fontWeight: 600,
+                backgroundColor: activeTab === 'reinstatement' ? 'rgba(255, 46, 99, 0.2)' : 'transparent',
+                color: activeTab === 'reinstatement' ? '#ff2e63' : '#708a9c',
+                fontWeight: 700,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -393,11 +393,11 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
           <>
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#708a9c', marginBottom: '0.4rem' }}>
                   Security Username / Badge Call-sign
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <User size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <User size={16} color="#708a9c" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type="text"
                     required
@@ -408,9 +408,9 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       width: '100%',
                       padding: '0.65rem 0.75rem 0.65rem 2.25rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1e293b',
-                      border: '1px solid #334155',
-                      color: '#f8fafc',
+                      backgroundColor: '#0c1217',
+                      border: '1px solid #17232d',
+                      color: '#e6f1f8',
                       fontSize: '0.875rem',
                       outline: 'none',
                     }}
@@ -419,11 +419,11 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#708a9c', marginBottom: '0.4rem' }}>
                   Access Password
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <KeyRound size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <KeyRound size={16} color="#708a9c" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -434,9 +434,9 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       width: '100%',
                       padding: '0.65rem 2.25rem 0.65rem 2.25rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1e293b',
-                      border: '1px solid #334155',
-                      color: '#f8fafc',
+                      backgroundColor: '#0c1217',
+                      border: '1px solid #17232d',
+                      color: '#e6f1f8',
                       fontSize: '0.875rem',
                       outline: 'none',
                     }}
@@ -451,7 +451,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
-                      color: '#64748b',
+                      color: '#708a9c',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -472,14 +472,14 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                   gap: '0.5rem',
                   padding: '0.75rem',
                   borderRadius: '8px',
-                  backgroundColor: '#0284c7',
+                  backgroundColor: '#00e5ff',
                   border: 'none',
-                  color: '#ffffff',
+                  color: '#05080a',
                   fontSize: '0.9rem',
                   fontWeight: 700,
                   cursor: isLoading ? 'wait' : 'pointer',
                   marginTop: '0.35rem',
-                  boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)',
+                  boxShadow: '0 4px 18px rgba(0, 229, 255, 0.4)',
                   transition: 'all 0.2s',
                 }}
               >
@@ -488,14 +488,14 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
               </button>
             </form>
 
-            <div style={{ textAlign: 'center', marginTop: '0.4rem', borderTop: '1px solid #1e293b', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center', marginTop: '0.4rem', borderTop: '1px solid #17232d', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={() => { setActiveTab('register'); setErrorMessage(null); }}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#38bdf8',
+                  color: '#00e5ff',
                   fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer',

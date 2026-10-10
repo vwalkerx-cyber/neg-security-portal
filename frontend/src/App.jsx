@@ -670,7 +670,29 @@ export default function App() {
       if (targetModule === 'presence') data = presence;
       else if (targetModule === 'payroll') data = payroll;
       else if (targetModule === 'armory') data = armory;
-      else if (targetModule === 'personnel') data = personnel;
+      else if (targetModule === 'personnel') {
+        const isAdminUser = currentUser?.role === 'ADMIN';
+        data = personnel.map((p) => {
+          const isOwn = (currentUser?.personnel_id && p.id === currentUser.personnel_id) ||
+                        (currentUser?.id && p.id === currentUser.id) ||
+                        (currentUser?.name && p.name && currentUser.name.toLowerCase().trim() === p.name.toLowerCase().trim()) ||
+                        (currentUser?.badge_id && p.badge_id && currentUser.badge_id.toLowerCase().trim() === p.badge_id.toLowerCase().trim());
+          if (isAdminUser || isOwn) {
+            return p;
+          }
+          const sanitized = { ...p };
+          delete sanitized.id_card_number;
+          delete sanitized.id_card_expiry;
+          delete sanitized.id_card_image;
+          delete sanitized.driving_license_number;
+          delete sanitized.driving_license_expiry;
+          delete sanitized.driving_license_image;
+          delete sanitized.expungement_letter_number;
+          delete sanitized.expungement_letter_expiry;
+          delete sanitized.expungement_letter_image;
+          return sanitized;
+        });
+      }
       else if (targetModule === 'escort') data = escort;
       else if (targetModule === 'vehicles') data = vehicles;
       else if (targetModule === 'training') data = training;

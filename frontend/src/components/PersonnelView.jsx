@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   ShieldX,
-  Filter
+  Filter,
+  Lock
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 
@@ -191,6 +192,10 @@ export default function PersonnelView({
   };
 
   const openEditModal = (p) => {
+    if (!isAdmin && !isOwnRecord(p)) {
+      if (onNotify) onNotify("Access Denied: You cannot view or edit another officer's credentials.");
+      return;
+    }
     setEditingPersonnel(p);
     setFormData({
       name: p.name || '',
@@ -312,6 +317,7 @@ export default function PersonnelView({
     }
 
     const q = searchQuery.toLowerCase().trim();
+    const canSeeCreds = isAdmin || isOwnRecord(p);
     const matchesSearch = 
       !searchQuery ||
       p.name?.toLowerCase().includes(q) ||
@@ -319,9 +325,9 @@ export default function PersonnelView({
       p.id?.toLowerCase().includes(q) ||
       (p.badge_id && p.badge_id.toLowerCase().includes(q)) ||
       (p.division && p.division.toLowerCase().includes(q)) ||
-      (p.id_card_number && p.id_card_number.toLowerCase().includes(q)) ||
-      (p.driving_license_number && p.driving_license_number.toLowerCase().includes(q)) ||
-      (p.expungement_letter_number && p.expungement_letter_number.toLowerCase().includes(q)) ||
+      (canSeeCreds && p.id_card_number && p.id_card_number.toLowerCase().includes(q)) ||
+      (canSeeCreds && p.driving_license_number && p.driving_license_number.toLowerCase().includes(q)) ||
+      (canSeeCreds && p.expungement_letter_number && p.expungement_letter_number.toLowerCase().includes(q)) ||
       (p.plate_riot_van && p.plate_riot_van.toLowerCase().includes(q)) ||
       (p.plate_patrol_motorcycle && p.plate_patrol_motorcycle.toLowerCase().includes(q)) ||
       (p.plate_g500 && p.plate_g500.toLowerCase().includes(q)) ||
@@ -833,6 +839,26 @@ export default function PersonnelView({
 
                   {/* Credentials & Clearances Section */}
                   {(() => {
+                    const canViewCredentials = isAdmin || isOwnRecord(p);
+                    if (!canViewCredentials) {
+                      return (
+                        <div style={{
+                          marginTop: '0.4rem',
+                          paddingTop: '0.45rem',
+                          borderTop: '1px dashed #1e293b',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          color: '#64748b',
+                          fontSize: '0.72rem',
+                          fontStyle: 'italic',
+                        }}>
+                          <Lock size={12} color="#64748b" />
+                          <span>Credentials & Clearances: Confidential (Command & Officer Only)</span>
+                        </div>
+                      );
+                    }
+
                     const idStatus = getExpiryStatus(p.id_card_expiry);
                     const dlStatus = getExpiryStatus(p.driving_license_expiry);
                     const expStatus = getExpiryStatus(p.expungement_letter_expiry);

@@ -1148,7 +1148,7 @@ export default function UserManagementView({
                         </button>
 
                         {/* Disband / Activate Status Button */}
-                        {u.username !== 'commander' && (
+                        {u.username !== 'commander' && u.role !== 'ADMIN' && (
                           <button
                             onClick={async () => {
                               const isDisbanded = u.status === 'Disbanded';

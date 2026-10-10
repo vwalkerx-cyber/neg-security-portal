@@ -841,13 +841,22 @@ export const createUser = async (userData) => {
 };
 
 export const updateUser = async (userId, userData) => {
-  const { data, error } = await supabase.from('users').update(userData).eq('id', userId).select().single();
+  const { data: existing } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
+  const payload = { ...userData };
+  if (existing?.role === 'ADMIN' || payload.role === 'ADMIN') {
+    payload.status = 'Active';
+  }
+  const { data, error } = await supabase.from('users').update(payload).eq('id', userId).select().single();
   if (error) throw error;
   return data;
 };
 
 export const toggleUserStatus = async (userId) => {
-  const { data: u } = await supabase.from('users').select('status').eq('id', userId).single();
+  const { data: u } = await supabase.from('users').select('status, role').eq('id', userId).single();
+  if (u?.role === 'ADMIN') {
+    // Admin role accounts must remain permanently Active
+    return u;
+  }
   const nextStatus = u?.status === 'Active' ? 'Inactive' : 'Active';
   const { data, error } = await supabase.from('users').update({ status: nextStatus }).eq('id', userId).select().single();
   if (error) throw error;

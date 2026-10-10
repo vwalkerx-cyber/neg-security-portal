@@ -27,7 +27,8 @@ import {
   ShieldAlert,
   ShieldX,
   Filter,
-  Lock
+  Lock,
+  Phone
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 import ConfirmModal from './ConfirmModal';
@@ -147,6 +148,7 @@ export default function PersonnelView({
     division: 'Protective Detail Division',
     join_date: '',
     license_certificate: '',
+    phone_number: '',
     status: 'Active',
     id_card_number: '',
     id_card_expiry: '',
@@ -175,6 +177,7 @@ export default function PersonnelView({
       division: 'Protective Detail Division',
       join_date: new Date().toISOString().split('T')[0],
       license_certificate: '',
+      phone_number: '',
       status: 'Active',
       id_card_number: '',
       id_card_expiry: '',
@@ -207,6 +210,7 @@ export default function PersonnelView({
       division: p.division || 'Protective Detail Division',
       join_date: p.join_date || '',
       license_certificate: p.license_certificate || '',
+      phone_number: p.phone_number || '',
       status: p.status || 'Active',
       id_card_number: p.id_card_number || '',
       id_card_expiry: p.id_card_expiry || '',
@@ -297,6 +301,7 @@ export default function PersonnelView({
         rank: 'Officer I',
         join_date: '',
         license_certificate: '',
+        phone_number: '',
         status: 'Active',
         id_card_number: '',
         id_card_expiry: '',
@@ -850,6 +855,18 @@ export default function PersonnelView({
                     <Award size={12} color="#f59e0b" style={{marginTop: '2px'}} />
                     <span>License/Cert: <strong style={{ color: '#fbbf24' }}>{p.license_certificate}</strong></span>
                   </div>
+                  <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Phone size={12} color="#38bdf8" />
+                    <span>Phone: {isAdmin || isOwnRecord(p) ? (
+                      <strong style={{ color: '#38bdf8', fontFamily: 'monospace' }}>
+                        {p.phone_number || '—'}
+                      </strong>
+                    ) : (
+                      <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.74rem' }}>
+                        •••••••• (Confidential)
+                      </span>
+                    )}</span>
+                  </div>
 
                   {/* Credentials & Clearances Section */}
                   {(() => {
@@ -1346,27 +1363,51 @@ export default function PersonnelView({
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                  License/Certificate
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Tactical Driving, Tier 1 Firearms"
-                  value={formData.license_certificate}
-                  onChange={(e) => setFormData({ ...formData, license_certificate: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.75rem',
-                    borderRadius: '8px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    color: '#f8fafc',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                  }}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                    License/Certificate
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Tactical Driving, Tier 1 Firearms"
+                    value={formData.license_certificate}
+                    onChange={(e) => setFormData({ ...formData, license_certificate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                    Contact Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 555-019-2831"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Credentials, Licenses & Clearance Section */}

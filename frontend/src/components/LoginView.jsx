@@ -79,6 +79,7 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     license_certificate: 'Standard Guard License',
     discord_username: '',
     discord_id: '',
+    phone_number: '',
     id_card_number: '',
     id_card_expiry: '',
     id_card_image: '',
@@ -609,6 +610,23 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
                       {showRegPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.3rem' }}>
+                    Contact Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 555-019-2831"
+                    value={regData.phone_number}
+                    onChange={(e) => setRegData({ ...regData, phone_number: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '6px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '0.825rem', outline: 'none' }}
+                  />
+                  <span style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                    Official tactical comms number. Strictly confidential (visible to Command & yourself).
+                  </span>
                 </div>
 
                 <div>

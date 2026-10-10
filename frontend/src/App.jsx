@@ -681,6 +681,7 @@ export default function App() {
             return p;
           }
           const sanitized = { ...p };
+          delete sanitized.phone_number;
           delete sanitized.id_card_number;
           delete sanitized.id_card_expiry;
           delete sanitized.id_card_image;

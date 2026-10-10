@@ -15,7 +15,8 @@ import {
   RotateCcw,
   FileText,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  Phone
 } from 'lucide-react';
 import { canExportGeneralCsv, canApproveReinstatements } from '../utils/permissions';
 
@@ -525,6 +526,15 @@ export default function UserManagementView({
                   borderRadius: '6px',
                 }}>
                   <div><strong>Portal Username:</strong> <span style={{ fontFamily: 'monospace' }}>{pu.username}</span></div>
+                  {(() => {
+                    const phone = pu.phone_number || personnel.find(p => p.id === pu.personnel_id)?.phone_number;
+                    return phone ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Phone size={13} color="#38bdf8" />
+                        <span><strong>Phone:</strong> <span style={{ fontFamily: 'monospace', color: '#38bdf8' }}>{phone}</span></span>
+                      </div>
+                    ) : null;
+                  })()}
                   {pu.discord_username ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <DiscordIcon size={14} color="#818cf8" />

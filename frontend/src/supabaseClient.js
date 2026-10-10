@@ -720,14 +720,74 @@ export const fetchUsers = async () => {
 };
 
 export const createUser = async (userData) => {
+  const cleanUsername = (userData.username || '').trim();
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .ilike('username', cleanUsername)
+    .maybeSingle();
+
+  if (existingUser) {
+    throw new Error(`Username '${cleanUsername}' is already taken.`);
+  }
+
   const { data: allUsers } = await supabase.from('users').select('id');
-  const newId = `USR-${String((allUsers?.length || 0) + 1).padStart(3, '0')}`;
-  const record = {
-    ...userData,
-    id: newId,
-    created_at: getNowIso()
+  const userNum = (allUsers?.length || 0) + 1;
+  const newUserId = `USR-${String(userNum).padStart(3, '0')}`;
+  let personnelId = userData.personnel_id;
+
+  // If no personnel_id provided and officer information is filled, create a personnel roster entry
+  if (!personnelId && (userData.name || userData.badge_id)) {
+    const { data: allPersonnel } = await supabase.from('personnel').select('id');
+    const pNum = (allPersonnel?.length || 0) + 1;
+    personnelId = `NEG-${String(pNum).padStart(3, '0')}`;
+
+    const personnelRecord = {
+      id: personnelId,
+      name: userData.name || cleanUsername,
+      badge_id: userData.badge_id || `NEG-B-${pNum}`,
+      rank: userData.rank || 'Officer I',
+      join_date: userData.join_date || getTodayStr(),
+      license_certificate: userData.license_certificate || 'Standard Guard License',
+      status: userData.status || 'Active',
+      division: userData.division || 'Unassigned',
+      id_card_number: userData.id_card_number || '',
+      id_card_expiry: userData.id_card_expiry || '',
+      id_card_image: userData.id_card_image || '',
+      driving_license_number: userData.driving_license_number || '',
+      driving_license_expiry: userData.driving_license_expiry || '',
+      driving_license_image: userData.driving_license_image || '',
+      expungement_letter_number: userData.expungement_letter_number || '',
+      expungement_letter_expiry: userData.expungement_letter_expiry || '',
+      expungement_letter_image: userData.expungement_letter_image || '',
+      plate_riot_van: userData.plate_riot_van || '',
+      plate_patrol_motorcycle: userData.plate_patrol_motorcycle || '',
+      plate_g500: userData.plate_g500 || '',
+      plate_ioniq_4: userData.plate_ioniq_4 || '',
+      plate_presidential_limo: userData.plate_presidential_limo || '',
+    };
+    await supabase.from('personnel').insert(personnelRecord);
+  }
+
+  // Insert into users table strictly with valid users table columns
+  const userRecord = {
+    id: newUserId,
+    username: cleanUsername,
+    password: userData.password,
+    personnel_id: personnelId || null,
+    name: userData.name || cleanUsername,
+    rank: userData.rank || 'Officer I',
+    role: (userData.role || 'OFFICER').toUpperCase(),
+    status: userData.status || 'Active',
+    created_at: getNowIso(),
+    created_by: userData.created_by || 'High Command',
+    last_login: '--',
+    discord_id: userData.discord_id || '',
+    discord_username: userData.discord_username || '',
+    discord_avatar: userData.discord_avatar || ''
   };
-  const { data, error } = await supabase.from('users').insert(record).select().single();
+
+  const { data, error } = await supabase.from('users').insert(userRecord).select().single();
   if (error) throw error;
   return data;
 };

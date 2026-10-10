@@ -154,32 +154,43 @@ export const verifySession = async (token) => {
 // =========================================================================
 
 export const fetchDashboardStats = async () => {
-  const [pRes, prRes, aRes, eRes] = await Promise.all([
+  const [pRes, prRes, aRes, eRes, payRes] = await Promise.all([
     supabase.from('personnel').select('status'),
-    supabase.from('presence').select('date, shift, status:notes').limit(200),
+    supabase.from('presence').select('date, shift, time_out, status:notes').limit(200),
     supabase.from('armory').select('status, quantity'),
-    supabase.from('escort_missions').select('status')
+    supabase.from('escort_missions').select('status'),
+    supabase.from('payroll').select('salary')
   ]);
 
   const personnel = pRes.data || [];
   const presence = prRes.data || [];
   const armory = aRes.data || [];
   const escort = eRes.data || [];
+  const payroll = payRes.data || [];
 
-  const activePersonnel = personnel.filter(p => p.status === 'Active').length;
+  const activePersonnel = personnel.filter(p => (p.status || '').toLowerCase() === 'active').length;
   const todayStr = getTodayStr();
-  const activeShiftsToday = presence.filter(pr => pr.date === todayStr).length;
+  const activeShiftsToday = presence.filter(pr => (!pr.time_out || pr.time_out === '--' || pr.time_out.trim() === '')).length;
   const weaponsIssued = armory
-    .filter(a => a.status === 'Issued')
+    .filter(a => (a.status || '').toLowerCase() === 'issued' || (a.status || '').toLowerCase() === 'checked out')
     .reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
-  const activeEscorts = escort.filter(e => e.status === 'Active' || e.status === 'In Progress').length;
+  const totalArmory = armory.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
+  const activeEscorts = escort.filter(e => {
+    const s = (e.status || '').toLowerCase().trim();
+    return s === 'in transit' || s === 'active' || s === 'in progress';
+  }).length;
+  const payrollTotal = payroll.reduce((sum, item) => sum + Number(item.salary || 0), 0);
 
   return {
     total_personnel: personnel.length,
     active_personnel: activePersonnel,
     active_shifts_today: activeShiftsToday,
     weapons_issued: weaponsIssued,
+    armory_issued: weaponsIssued,
+    armory_total: totalArmory,
     active_escorts: activeEscorts,
+    payroll_total: payrollTotal,
+    total_payroll_obligation: payrollTotal,
     personnel_count: personnel.length
   };
 };

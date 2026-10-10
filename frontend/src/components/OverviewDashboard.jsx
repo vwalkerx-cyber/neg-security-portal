@@ -96,9 +96,11 @@ export default function OverviewDashboard({
     return (b.id || '').localeCompare(a.id || '');
   });
 
-  // Synchronized counts computed directly from live arrays for 100% accuracy
-  const totalPersonnel = personnel.length > 0 ? personnel.length : (stats?.total_personnel ?? 0);
-  const onDutyCount = presence.filter(p => !p.time_out || p.time_out === '--').length;
+  // Synchronized counts computed directly from live arrays for 100% accuracy with fallback to stats
+  const totalPersonnel = personnel.length > 0 ? personnel.length : (stats?.total_personnel ?? stats?.personnel_count ?? 0);
+  const onDutyCount = presence.length > 0 
+    ? presence.filter(p => !p.time_out || p.time_out === '--' || (typeof p.time_out === 'string' && p.time_out.trim() === '')).length
+    : (stats?.active_shifts_today ?? 0);
   const coveragePercent = totalPersonnel > 0 ? Math.min(100, Math.round((onDutyCount / totalPersonnel) * 100)) : 0;
   
   // Payroll calculation: synchronized with payroll array or stats
@@ -106,14 +108,24 @@ export default function OverviewDashboard({
     ? payroll.reduce((sum, item) => sum + Number(item.salary || 0), 0)
     : (stats?.payroll_total ?? stats?.total_payroll_obligation ?? 0);
   
-  // Active Escort Convoys (In Transit or Active)
-  const activeEscorts = escort.filter(e => e.status === 'In Transit' || e.status === 'Active' || e.status === 'In Progress');
-  const activeEscortCount = activeEscorts.length;
+  // Active Escort Convoys (In Transit, Active, or In Progress)
+  const activeEscorts = escort.filter(e => {
+    const s = (e.status || '').toLowerCase().trim();
+    return s === 'in transit' || s === 'active' || s === 'in progress';
+  });
+  const activeEscortCount = escort.length > 0 ? activeEscorts.length : (stats?.active_escorts ?? 0);
 
   // Armory calculation: Issued weapons and equipment
-  const checkedOutGear = armory.filter(a => a.status === 'Issued');
-  const armoryIssuedCount = checkedOutGear.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
-  const armoryTotalCount = armory.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
+  const checkedOutGear = armory.filter(a => {
+    const s = (a.status || '').toLowerCase().trim();
+    return s === 'issued' || s === 'checked out';
+  });
+  const armoryIssuedCount = armory.length > 0
+    ? checkedOutGear.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0)
+    : (stats?.armory_issued ?? stats?.weapons_issued ?? 0);
+  const armoryTotalCount = armory.length > 0
+    ? armory.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0)
+    : (stats?.armory_total ?? 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

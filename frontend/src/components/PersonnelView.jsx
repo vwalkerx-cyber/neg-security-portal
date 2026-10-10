@@ -90,14 +90,24 @@ export default function PersonnelView({
   });
   const [savingPlates, setSavingPlates] = useState(false);
 
-  // Check if current user is allowed to edit this officer's vehicle plates
-  const canEditOfficerPlates = (p) => {
-    if (isAdmin) return true;
+  // Check if current record belongs to the logged-in user
+  const isOwnRecord = (p) => {
+    if (!currentUser || !p) return false;
     if (currentUser?.personnel_id && currentUser.personnel_id === p.id) return true;
+    if (currentUser?.id && currentUser.id === p.id) return true;
     if (currentUser?.name && p.name && currentUser.name.toLowerCase().trim() === p.name.toLowerCase().trim()) return true;
     if (currentUser?.badge_id && p.badge_id && currentUser.badge_id.toLowerCase().trim() === p.badge_id.toLowerCase().trim()) return true;
     return false;
   };
+
+  // Check if current user is allowed to edit this officer's vehicle plates
+  const canEditOfficerPlates = (p) => {
+    if (isAdmin) return true;
+    return isOwnRecord(p);
+  };
+
+  // The logged-in officer's own roster entry
+  const myRosterRecord = personnel.find(p => isOwnRecord(p));
 
   const openVehiclePlatesModal = (p) => {
     setVehicleModalOfficer(p);
@@ -249,9 +259,19 @@ export default function PersonnelView({
     setSubmitting(true);
     try {
       if (editingPersonnel) {
-        await onEditPersonnel(editingPersonnel.id, formData);
+        const payload = !isAdmin ? {
+          ...formData,
+          name: editingPersonnel.name,
+          badge_id: editingPersonnel.badge_id,
+          rank: editingPersonnel.rank,
+          division: editingPersonnel.division,
+          status: editingPersonnel.status,
+          join_date: editingPersonnel.join_date,
+        } : formData;
+
+        await onEditPersonnel(editingPersonnel.id, payload);
         setShowModal(false);
-        onNotify(`Officer ${formData.name} record updated.`);
+        onNotify(isAdmin ? `Officer ${formData.name} record updated.` : 'Your roster credentials and documents have been updated successfully.');
       } else {
         await onAddPersonnel(formData);
         setShowModal(false);
@@ -481,6 +501,29 @@ export default function PersonnelView({
               <span>Induct Officer</span>
             </button>
           )}
+
+          {!isAdmin && myRosterRecord && (
+            <button
+              onClick={() => openEditModal(myRosterRecord)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1.15rem',
+                borderRadius: '8px',
+                backgroundColor: '#0284c7',
+                border: 'none',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+              }}
+            >
+              <Edit2 size={16} />
+              <span>Edit My Roster & Credentials</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -694,44 +737,51 @@ export default function PersonnelView({
                     {p.status}
                   </span>
 
-                  {isAdmin && (
-                    <div style={{ display: 'flex', gap: '0.15rem' }}>
+                  {(isAdmin || isOwnRecord(p)) && (
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditModal(p);
                         }}
-                        title="Edit Roster Record"
+                        title={isAdmin ? "Edit Roster Record" : "Edit My Roster & Credentials"}
                         style={{
-                          background: 'none',
-                          border: 'none',
+                          background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.15)' : 'none',
+                          border: !isAdmin && isOwnRecord(p) ? '1px solid rgba(56, 189, 248, 0.35)' : 'none',
+                          borderRadius: '6px',
                           color: '#38bdf8',
                           cursor: 'pointer',
-                          padding: '3px',
+                          padding: !isAdmin && isOwnRecord(p) ? '2px 6px' : '3px',
                           display: 'flex',
                           alignItems: 'center',
+                          gap: '3px',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
                         }}
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
+                        {!isAdmin && isOwnRecord(p) && <span>Edit</span>}
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(p);
-                        }}
-                        title="Delete Roster Record"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#f87171',
-                          cursor: 'pointer',
-                          padding: '3px',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(p);
+                          }}
+                          title="Delete Roster Record"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#f87171',
+                            cursor: 'pointer',
+                            padding: '3px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -1062,18 +1112,39 @@ export default function PersonnelView({
             padding: '1.75rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
           }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', marginBottom: '1.25rem' }}>
-              {editingPersonnel ? 'Edit Personnel Roster Record' : 'Add Personnel Record'}
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem' }}>
+              {isAdmin 
+                ? (editingPersonnel ? 'Edit Personnel Roster Record' : 'Add Personnel Record') 
+                : 'Edit My Roster Profile & Credentials'}
             </h3>
+
+            {!isAdmin && (
+              <div style={{
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderRadius: '8px',
+                padding: '0.65rem 0.85rem',
+                fontSize: '0.78rem',
+                color: '#38bdf8',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '0.85rem',
+              }}>
+                <ShieldAlert size={16} style={{ flexShrink: 0 }} />
+                <span>Self-Service Portal: You can update your National ID, Driving License, Expungement Letter, and Vehicle Plates below. Identity, Rank, and Division are locked by High Command.</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                  Name
+                  Name {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked by Command)</span>}
                 </label>
                 <input
                   type="text"
                   required
+                  disabled={!isAdmin}
                   placeholder="e.g. Samuel Drake"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -1081,11 +1152,12 @@ export default function PersonnelView({
                     width: '100%',
                     padding: '0.6rem 0.75rem',
                     borderRadius: '8px',
-                    backgroundColor: '#1f2937',
+                    backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                     border: '1px solid #374151',
-                    color: '#f8fafc',
+                    color: !isAdmin ? '#94a3b8' : '#f8fafc',
                     fontSize: '0.85rem',
                     outline: 'none',
+                    cursor: !isAdmin ? 'not-allowed' : 'text',
                   }}
                 />
               </div>
@@ -1093,20 +1165,22 @@ export default function PersonnelView({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Rank
+                    Rank {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked)</span>}
                   </label>
                   <select
                     value={formData.rank}
+                    disabled={!isAdmin}
                     onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
+                      backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                       border: '1px solid #374151',
-                      color: '#f8fafc',
+                      color: !isAdmin ? '#94a3b8' : '#f8fafc',
                       fontSize: '0.85rem',
                       outline: 'none',
+                      cursor: !isAdmin ? 'not-allowed' : 'pointer',
                     }}
                   >
                     <option value="President">President</option>
@@ -1127,11 +1201,12 @@ export default function PersonnelView({
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Badge ID
+                    Badge ID {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked)</span>}
                   </label>
                   <input
                     type="text"
                     required
+                    disabled={!isAdmin}
                     placeholder="e.g. NEG-OF-63"
                     value={formData.badge_id}
                     onChange={(e) => setFormData({ ...formData, badge_id: e.target.value })}
@@ -1139,11 +1214,12 @@ export default function PersonnelView({
                       width: '100%',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
+                      backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                       border: '1px solid #374151',
-                      color: '#f8fafc',
+                      color: !isAdmin ? '#94a3b8' : '#f8fafc',
                       fontSize: '0.85rem',
                       outline: 'none',
+                      cursor: !isAdmin ? 'not-allowed' : 'text',
                     }}
                   />
                 </div>
@@ -1151,20 +1227,22 @@ export default function PersonnelView({
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                  Operational Division
+                  Operational Division {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked)</span>}
                 </label>
                 <select
                   value={formData.division}
+                  disabled={!isAdmin}
                   onChange={(e) => setFormData({ ...formData, division: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.6rem 0.75rem',
                     borderRadius: '8px',
-                    backgroundColor: '#1f2937',
+                    backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                     border: '1px solid #374151',
-                    color: '#f8fafc',
+                    color: !isAdmin ? '#94a3b8' : '#f8fafc',
                     fontSize: '0.85rem',
                     outline: 'none',
+                    cursor: !isAdmin ? 'not-allowed' : 'pointer',
                   }}
                 >
                   <option value="Protective Detail Division">Protective Detail Division (PDD)</option>
@@ -1179,42 +1257,46 @@ export default function PersonnelView({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Join Date
+                    Join Date {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked)</span>}
                   </label>
                   <input
                     type="date"
                     required
+                    disabled={!isAdmin}
                     value={formData.join_date}
                     onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
+                      backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                       border: '1px solid #374151',
-                      color: '#f8fafc',
+                      color: !isAdmin ? '#94a3b8' : '#f8fafc',
                       fontSize: '0.85rem',
                       outline: 'none',
+                      cursor: !isAdmin ? 'not-allowed' : 'text',
                     }}
                   />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Status
+                    Status {!isAdmin && <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(Locked)</span>}
                   </label>
                   <select
                     value={formData.status}
+                    disabled={!isAdmin}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.75rem',
                       borderRadius: '8px',
-                      backgroundColor: '#1f2937',
+                      backgroundColor: !isAdmin ? '#18202f' : '#1f2937',
                       border: '1px solid #374151',
-                      color: '#f8fafc',
+                      color: !isAdmin ? '#94a3b8' : '#f8fafc',
                       fontSize: '0.85rem',
                       outline: 'none',
+                      cursor: !isAdmin ? 'not-allowed' : 'pointer',
                     }}
                   >
                     <option value="Active">Active</option>

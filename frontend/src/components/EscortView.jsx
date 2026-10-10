@@ -10,7 +10,11 @@ import {
   Trash2,
   Clock,
   Calendar,
-  Edit2
+  Edit2,
+  Upload,
+  Image as ImageIcon,
+  Eye,
+  X
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
 
@@ -33,6 +37,7 @@ export default function EscortView({
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isCustomPrincipal, setIsCustomPrincipal] = useState(false);
   const [customPrincipalName, setCustomPrincipalName] = useState('');
+  const [previewImageModal, setPreviewImageModal] = useState(null);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -145,6 +150,7 @@ export default function EscortView({
     vehicle_convoy: 'Armored SUV x2, Police Outrider x2',
     notes: 'Advance security reconnaissance completed.',
     status: 'Scheduled',
+    screenshot: '',
   };
 
   const [formData, setFormData] = useState(defaultFormState);
@@ -160,6 +166,7 @@ export default function EscortView({
       escort_date: todayStr,
       lead_agent_id: guardPersonnel[0]?.id || 'NEG-001',
       assigned_officer_ids: [guardPersonnel[0]?.id || 'NEG-001'],
+      screenshot: '',
     });
     setShowModal(true);
   };
@@ -213,9 +220,34 @@ export default function EscortView({
       vehicle_convoy: m.vehicle_convoy || 'Armored SUV x2, Police Outrider x2',
       notes: m.notes || '',
       status: m.status || 'Scheduled',
+      screenshot: m.screenshot || '',
     });
 
     setShowModal(true);
+  };
+
+  const handleScreenshotUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (onNotify) onNotify('Please upload an image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      if (onNotify) onNotify('Screenshot exceeds 5MB limit.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFormData((prev) => ({
+        ...prev,
+        screenshot: event.target?.result || '',
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLeadChange = (newLeadId) => {
@@ -716,6 +748,66 @@ export default function EscortView({
                     ))}
                   </div>
                 </div>
+
+                {/* Escort Mission Convoy Proof Screenshot */}
+                {m.screenshot && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: '#090d14',
+                    border: '1px solid #1e293b',
+                    borderRadius: '8px',
+                    padding: '0.6rem 0.75rem',
+                    gap: '0.75rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                      <img
+                        src={m.screenshot}
+                        alt="Escort Convoy Proof"
+                        onClick={() => setPreviewImageModal({ title: `Escort Convoy Proof — ${m.id} (${m.principal})`, src: m.screenshot })}
+                        style={{
+                          width: '46px',
+                          height: '36px',
+                          objectFit: 'cover',
+                          borderRadius: '5px',
+                          border: '1px solid #334155',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ overflow: 'hidden' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <ImageIcon size={12} color="#38bdf8" /> Convoy Proof Attached
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          Click to inspect image
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImageModal({ title: `Escort Convoy Proof — ${m.id} (${m.principal})`, src: m.screenshot })}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        color: '#38bdf8',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Eye size={12} />
+                      <span>Preview</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Notes */}
                 {m.notes && (
@@ -1305,6 +1397,115 @@ export default function EscortView({
                 />
               </div>
 
+              {/* Convoy Screenshot Upload */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
+                  Convoy / Mission Screenshot Evidence (Optional)
+                </label>
+                
+                {formData.screenshot ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    gap: '0.75rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                      <img
+                        src={formData.screenshot}
+                        alt="Evidence Preview"
+                        style={{
+                          width: '48px',
+                          height: '36px',
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          border: '1px solid #4b5563',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                        onClick={() => setPreviewImageModal({ title: 'Escort Screenshot Preview', src: formData.screenshot })}
+                      />
+                      <div style={{ overflow: 'hidden' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <ImageIcon size={13} color="#38bdf8" /> Screenshot Attached
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Click thumbnail or preview to view full image</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImageModal({ title: 'Escort Screenshot Preview', src: formData.screenshot })}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          backgroundColor: '#374151',
+                          border: 'none',
+                          color: '#38bdf8',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Eye size={12} /> View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, screenshot: '' })}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          color: '#f87171',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0.85rem',
+                    borderRadius: '8px',
+                    border: '1px dashed #4b5563',
+                    backgroundColor: '#111827',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.2s',
+                    gap: '0.35rem',
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleScreenshotUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <Upload size={18} color="#94a3b8" />
+                    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 500 }}>
+                      Click to upload convoy screenshot or departure proof
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                      PNG, JPG, or WebP (Max 5MB)
+                    </span>
+                  </label>
+                )}
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
                 <button
                   type="button"
@@ -1337,6 +1538,91 @@ export default function EscortView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Lightbox Modal */}
+      {previewImageModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 110,
+            padding: '1rem',
+          }}
+          onClick={() => setPreviewImageModal(null)}
+        >
+          <div 
+            style={{
+              backgroundColor: '#0f172a',
+              border: '1px solid #1e293b',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid #1e293b',
+              backgroundColor: '#111827',
+            }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ImageIcon size={16} color="#38bdf8" />
+                {previewImageModal.title}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{
+              padding: '1rem',
+              overflow: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#090d14',
+            }}>
+              <img
+                src={previewImageModal.src}
+                alt={previewImageModal.title}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '75vh',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

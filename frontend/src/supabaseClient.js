@@ -543,7 +543,14 @@ export const fetchEscortMissions = async () => {
     if (d.assigned_personnel_json) {
       try { assigned_personnel = JSON.parse(d.assigned_personnel_json); } catch {}
     }
-    return { ...d, destinations, assigned_personnel };
+    let cleanNotes = d.notes || '';
+    let screenshot = '';
+    const match = cleanNotes.match(/\[SCREENSHOT:([\s\S]*?)\]/);
+    if (match) {
+      screenshot = match[1];
+      cleanNotes = cleanNotes.replace(/\[SCREENSHOT:[\s\S]*?\]/, '').trim();
+    }
+    return { ...d, destinations, assigned_personnel, screenshot, notes: cleanNotes };
   });
 };
 
@@ -554,10 +561,15 @@ export const createEscortMission = async (missionData) => {
   const allDests = missionData.destinations?.length ? missionData.destinations : (missionData.destination ? [missionData.destination] : ['Undisclosed']);
   const assignedList = missionData.assigned_personnel?.length ? missionData.assigned_personnel : [missionData.lead_agent || 'Unknown Agent'];
 
+  let finalNotes = missionData.notes || '';
+  if (missionData.screenshot) {
+    finalNotes = `${finalNotes} [SCREENSHOT:${missionData.screenshot}]`.trim();
+  }
+
   const record = {
     id: newId,
     principal: missionData.principal,
-    threat_level: missionData.threat_level || 'Moderate',
+    threat_level: missionData.threat_level || 'Standard Protection',
     mission_type: missionData.mission_type || 'Close Protection Convoy',
     origin: missionData.origin || 'Executive Headquarters',
     destination: allDests.join(' → '),
@@ -570,7 +582,7 @@ export const createEscortMission = async (missionData) => {
     start_time: missionData.start_time || '08:00',
     estimated_completion: missionData.estimated_completion || '16:00',
     status: 'Scheduled',
-    notes: missionData.notes || '',
+    notes: finalNotes,
   };
 
   const { data: inserted, error } = await supabase.from('escort_missions').insert(record).select().single();
@@ -580,7 +592,9 @@ export const createEscortMission = async (missionData) => {
 
 export const updateEscortStatus = async (id, status, notes = null) => {
   const payload = { status };
-  if (notes) payload.notes = notes;
+  if (notes !== null && notes !== undefined) {
+    payload.notes = notes;
+  }
   const { data, error } = await supabase.from('escort_missions').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return data;
@@ -589,6 +603,11 @@ export const updateEscortStatus = async (id, status, notes = null) => {
 export const updateEscortMission = async (id, missionData) => {
   const allDests = missionData.destinations?.length ? missionData.destinations : (missionData.destination ? [missionData.destination] : ['Undisclosed']);
   const assignedList = missionData.assigned_personnel?.length ? missionData.assigned_personnel : [missionData.lead_agent || 'Unknown Agent'];
+
+  let finalNotes = missionData.notes || '';
+  if (missionData.screenshot) {
+    finalNotes = `${finalNotes} [SCREENSHOT:${missionData.screenshot}]`.trim();
+  }
 
   const payload = {
     principal: missionData.principal,
@@ -604,7 +623,7 @@ export const updateEscortMission = async (id, missionData) => {
     vehicle_convoy: missionData.vehicle_convoy || 'Convoy Alfa',
     start_time: missionData.start_time || '08:00',
     estimated_completion: missionData.estimated_completion || '16:00',
-    notes: missionData.notes || '',
+    notes: finalNotes,
   };
   if (missionData.status) {
     payload.status = missionData.status;

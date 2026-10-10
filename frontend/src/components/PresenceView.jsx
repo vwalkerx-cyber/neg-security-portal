@@ -508,7 +508,6 @@ export default function PresenceView({
                     fontSize: '0.85rem',
                   }}>
                     {formData.time_in && (Number(formData.time_in.slice(0, 2)) >= 18 || Number(formData.time_in.slice(0, 2)) < 6) ? 'Night' : 'Day'}
-                    <span style={{ color: '#64748b', marginLeft: '0.5rem' }}>(Day 06:00–17:59; Night 18:00–05:59)</span>
                   </div>
                 </div>
               </div>

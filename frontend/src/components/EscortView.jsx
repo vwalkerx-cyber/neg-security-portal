@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import ConfirmModal from './ConfirmModal';
 
 export default function EscortView({ 
   missions = [], 
@@ -38,6 +39,8 @@ export default function EscortView({
   const [isCustomPrincipal, setIsCustomPrincipal] = useState(false);
   const [customPrincipalName, setCustomPrincipalName] = useState('');
   const [previewImageModal, setPreviewImageModal] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id: string, principal: string }
+  const [deleting, setDeleting] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -424,21 +427,27 @@ export default function EscortView({
     }
   };
 
-  const handleDelete = async (missionId, principalName) => {
+  const handleDelete = (missionId, principalName) => {
     if (currentUser?.role !== 'ADMIN') {
       onNotify('Access Denied: Only administrators can delete escort missions.');
       return;
     }
-    const confirmed = window.confirm(`Are you sure you want to permanently delete escort mission ${missionId} (${principalName})? This action cannot be undone.`);
-    if (!confirmed) return;
+    setDeleteTarget({ id: missionId, principal: principalName });
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
       if (onDeleteMission) {
-        await onDeleteMission(missionId);
+        await onDeleteMission(deleteTarget.id);
       }
-      onNotify(`Escort mission ${missionId} deleted successfully.`);
+      onNotify(`Escort mission ${deleteTarget.id} permanently deleted.`);
+      setDeleteTarget(null);
     } catch (err) {
       onNotify('Failed to delete mission: ' + err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1871,6 +1880,18 @@ export default function EscortView({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Abort & Purge Escort Mission Directive"
+        message={`Are you sure you want to permanently purge escort mission ${deleteTarget?.id} assigned for ${deleteTarget?.principal}? All route transit telemetry and logs for this operation will be destroyed.`}
+        itemName={deleteTarget ? `Mission ${deleteTarget.id} — Principal: ${deleteTarget.principal}` : ''}
+        confirmText="Confirm Mission Purge"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

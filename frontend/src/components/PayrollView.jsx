@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, Download, Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { canExportPayrollCsv } from '../utils/permissions';
+import ConfirmModal from './ConfirmModal';
 
 const getToday = () => {
   const today = new Date();
@@ -54,6 +55,8 @@ export default function PayrollView({
   const [rankFilter, setRankFilter] = useState('ALL');
   const [weekFilter, setWeekFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, salary_desc, salary_asc, name_asc
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     personnel_id: currentUser?.personnel_id || personnel[0]?.id || '',
     salary: '',
@@ -142,17 +145,23 @@ export default function PayrollView({
     setShowModal(true);
   };
 
-  const handleDelete = async (record) => {
-    if (!window.confirm(`Are you sure you want to remove the salary record for ${record.name} (${record.salary_date})?`)) {
-      return;
-    }
+  const handleDelete = (record) => {
+    setDeleteTarget(record);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
       if (onDeletePayroll) {
-        await onDeletePayroll(record.id);
+        await onDeletePayroll(deleteTarget.id);
       }
-      onNotify(`Salary record for ${record.name} removed.`);
+      onNotify(`Salary record for ${deleteTarget.name} permanently removed.`);
+      setDeleteTarget(null);
     } catch (error) {
       onNotify(`Failed to delete salary record: ${error.message}`);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -379,14 +388,23 @@ export default function PayrollView({
         </div>
       </div>
 
-      <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)' }}>
+      <div style={{
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
+        borderRadius: '12px',
+        overflowX: 'auto',
+        maxHeight: '720px',
+        overflowY: 'auto',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+        position: 'relative'
+      }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', minWidth: '700px' }}>
-          <thead>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
             <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {['Name', 'Rank', 'Salary', 'Salary Date', 'Week Number'].map((heading) => (
-                <th key={heading} style={{ padding: '0.85rem 1rem' }}>{heading}</th>
+                <th key={heading} style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>{heading}</th>
               ))}
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+              <th style={{ padding: '0.85rem 1rem', textAlign: 'right', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -538,6 +556,17 @@ export default function PayrollView({
           </div>
         </div>
       )}
+      {/* Delete Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Salary Record Directive"
+        message={`Are you sure you want to permanently remove the salary record for ${deleteTarget?.name || 'this officer'}? This will remove the payout allocation of $${Number(deleteTarget?.salary || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} on ${deleteTarget?.salary_date}.`}
+        itemName={deleteTarget ? `${deleteTarget.name} — ${deleteTarget.rank} (${deleteTarget.salary_date})` : ''}
+        confirmText="Confirm Permanent Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

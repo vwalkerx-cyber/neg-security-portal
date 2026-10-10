@@ -9,6 +9,7 @@ import {
   Check
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import ConfirmModal from './ConfirmModal';
 
 const getToday = () => {
   const today = new Date();
@@ -39,6 +40,8 @@ export default function PresenceView({
   const [completionRecord, setCompletionRecord] = useState(null);
   const [completionTime, setCompletionTime] = useState('');
   const [completing, setCompleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -99,6 +102,22 @@ export default function PresenceView({
       onNotify('Failed to complete presence shift: ' + err.message);
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      if (onDeletePresence) {
+        await onDeletePresence(deleteTarget.id);
+      }
+      onNotify(`Presence record for ${deleteTarget.name} on ${deleteTarget.date} deleted.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      onNotify('Failed to delete presence record: ' + err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -231,22 +250,19 @@ export default function PresenceView({
         backgroundColor: '#0f1728',
         border: '1px solid #1c2a42',
         borderRadius: '12px',
-        overflow: 'hidden',
+        overflowX: 'auto',
+        maxHeight: '720px',
+        overflowY: 'auto',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+        position: 'relative'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-          <thead>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
             <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              <th style={{ padding: '0.85rem 1rem' }}>Date</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Shift</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Name</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Badge ID</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Time In</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Time Out</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Duration (Hours)</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Duration (Minutes)</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Escort Count</th>
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Action</th>
+              {['Date', 'Shift', 'Name', 'Badge ID', 'Time In', 'Time Out', 'Duration (Hours)', 'Duration (Minutes)', 'Escort Count'].map((heading) => (
+                <th key={heading} style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>{heading}</th>
+              ))}
+              <th style={{ padding: '0.85rem 1rem', textAlign: 'right', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -292,7 +308,7 @@ export default function PresenceView({
                         </button>
                       )}
                       <button
-                        onClick={() => onDeletePresence(rec.id)}
+                        onClick={() => setDeleteTarget(rec)}
                         title="Delete entry"
                         style={{
                           background: 'none',
@@ -658,6 +674,18 @@ export default function PresenceView({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Presence Record Directive"
+        message={`Are you sure you want to permanently delete the presence log for ${deleteTarget?.name || 'this officer'} on ${deleteTarget?.date} (${deleteTarget?.shift} shift)?`}
+        itemName={deleteTarget ? `${deleteTarget.name} — ${deleteTarget.date} (${deleteTarget.shift} shift)` : ''}
+        confirmText="Confirm Permanent Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

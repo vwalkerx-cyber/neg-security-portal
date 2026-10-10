@@ -961,23 +961,27 @@ export default function UserManagementView({
 
       {/* Main Table */}
       <div style={{
-        backgroundColor: '#111827',
-        border: '1px solid #1f2937',
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
         borderRadius: '12px',
         overflowX: 'auto',
+        maxHeight: '720px',
+        overflowY: 'auto',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+        position: 'relative'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', minWidth: '1050px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#182234', color: '#94a3b8', borderBottom: '1px solid #1f2937', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-              <th style={{ padding: '0.85rem 1rem' }}>User ID</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Officer & Rank</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Username / Call-sign</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Discord Sync</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Access Role</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Account Status</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Provisioned By</th>
-              <th style={{ padding: '0.85rem 1rem' }}>Last Login</th>
-              <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Security Actions</th>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+            <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>User ID</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Officer & Rank</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Username / Call-sign</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Discord Sync</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Access Role</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Account Status</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Provisioned By</th>
+              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Last Login</th>
+              <th style={{ padding: '0.85rem 1rem', textAlign: 'right', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Security Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -16,6 +16,7 @@ import {
   LogOut,
   User,
   Lock,
+  Clock,
   X
 } from 'lucide-react';
 import { canExportModuleCsv } from '../utils/permissions';
@@ -49,6 +50,14 @@ export default function TopHeader({
   const [showConfirmPw, setShowConfirmPw] = React.useState(false);
   const [passwordError, setPasswordError] = React.useState('');
   const [passwordSubmitting, setPasswordSubmitting] = React.useState(false);
+  const [currentClock, setCurrentClock] = React.useState(() => new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentClock(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const userDropdownRef = React.useRef(null);
 
@@ -347,6 +356,54 @@ export default function TopHeader({
 
       {/* Right: Quick Actions (Anomaly Notifications, Export, Refresh, Status) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.4rem' : '0.65rem', position: 'relative' }}>
+        {/* Tactical Ops Live Clock */}
+        <div 
+          title="Command Center Synchronized Clock (Local Ops Time)"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: isMobile ? '4px 8px' : '4px 11px',
+            borderRadius: '8px',
+            backgroundColor: '#070a12',
+            border: '1px solid #1c2a42',
+            fontFamily: 'monospace',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            backgroundColor: '#10b981',
+            boxShadow: '0 0 8px #10b981',
+            flexShrink: 0
+          }} />
+          <Clock size={12} color="#60a5fa" style={{ flexShrink: 0 }} />
+          <span style={{
+            fontSize: isMobile ? '0.72rem' : '0.8rem',
+            fontWeight: 700,
+            color: '#f1f5f9',
+            letterSpacing: '0.04em'
+          }}>
+            {currentClock.toLocaleTimeString('en-US', { hour12: false })}
+          </span>
+          {!isMobile && (
+            <span style={{
+              fontSize: '0.67rem',
+              color: '#64748b',
+              fontWeight: 600,
+              borderLeft: '1px solid #1c2a42',
+              paddingLeft: '6px',
+              marginLeft: '2px',
+              textTransform: 'uppercase'
+            }}>
+              {currentClock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
+          )}
+        </div>
+
         {/* Anomaly Notification Bell & Drawer */}
         <div style={{ position: 'relative' }}>
           <button

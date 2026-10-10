@@ -30,6 +30,7 @@ import {
   Lock
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import ConfirmModal from './ConfirmModal';
 
 const getExpiryStatus = (dateStr) => {
   if (!dateStr) return { text: 'Not Recorded', color: '#64748b', bg: 'rgba(100, 116, 139, 0.1)', border: 'rgba(100, 116, 139, 0.25)', isExpired: false, isExpiring: false };
@@ -79,6 +80,8 @@ export default function PersonnelView({
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [minimizedCards, setMinimizedCards] = useState({});
   const [previewImageModal, setPreviewImageModal] = useState(null); // { title: string, src: string }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Quick Vehicle Plates Modal state (for player self-service or admin update)
   const [vehicleModalOfficer, setVehicleModalOfficer] = useState(null);
@@ -247,15 +250,21 @@ export default function PersonnelView({
     reader.readAsDataURL(file);
   };
 
-  const handleDelete = async (p) => {
-    if (!window.confirm(`Are you sure you want to remove ${p.name} (${p.rank}) from the roster?`)) {
-      return;
-    }
+  const handleDelete = (p) => {
+    setDeleteTarget(p);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await onDeletePersonnel(p.id);
-      onNotify(`Officer ${p.name} removed from roster.`);
+      await onDeletePersonnel(deleteTarget.id);
+      onNotify(`Officer ${deleteTarget.name} permanently removed from roster.`);
+      setDeleteTarget(null);
     } catch (err) {
       onNotify('Failed to delete personnel: ' + err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1999,6 +2008,18 @@ export default function PersonnelView({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Remove Officer From Active Roster"
+        message={`Are you sure you want to permanently discharge and remove ${deleteTarget?.name || 'this officer'} (${deleteTarget?.rank || 'Officer'}) from the National Executive Guard roster? All associated credentials and weapon licenses will be purged.`}
+        itemName={deleteTarget ? `${deleteTarget.name} — ${deleteTarget.rank} (Badge: ${deleteTarget.badge_id})` : ''}
+        confirmText="Confirm Permanent Removal"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

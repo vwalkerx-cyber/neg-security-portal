@@ -821,6 +821,7 @@ export default function App() {
               stats={stats}
               personnel={personnel}
               presence={presence}
+              payroll={payroll}
               escort={escort}
               armory={armory}
               vehicles={vehicles}

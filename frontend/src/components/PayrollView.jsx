@@ -51,6 +51,9 @@ export default function PayrollView({
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [rankFilter, setRankFilter] = useState('ALL');
+  const [weekFilter, setWeekFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, salary_desc, salary_asc, name_asc
   const [formData, setFormData] = useState({
     personnel_id: currentUser?.personnel_id || personnel[0]?.id || '',
     salary: '',
@@ -58,22 +61,66 @@ export default function PayrollView({
   });
   const [submitting, setSubmitting] = useState(false);
 
-  const selectablePersonnel = currentUser?.role === 'ADMIN'
+  const isAdmin = currentUser?.role === 'ADMIN';
+
+  // Role-based visibility: non-admins can strictly see their own records
+  const myPid = currentUser?.personnel_id || currentUser?.id;
+  const myName = (currentUser?.name || '').trim().toLowerCase();
+
+  const accessiblePayroll = isAdmin
+    ? payroll
+    : payroll.filter((record) => {
+        if (myPid && record.personnel_id === myPid) return true;
+        if (myName && record.name && record.name.trim().toLowerCase() === myName) return true;
+        return false;
+      });
+
+  const selectablePersonnel = isAdmin
     ? personnel
     : personnel.filter((person) => person.id === currentUser?.personnel_id);
   const selectedPerson = selectablePersonnel.find((person) => person.id === formData.personnel_id);
   const weekNumber = getWeekNumber(formData.salary_date);
 
-  const filteredPayroll = payroll.filter((record) => {
+  // Extract unique weeks & ranks for filter dropdowns
+  const availableWeeks = Array.from(new Set(accessiblePayroll.map(r => r.week_number).filter(Boolean))).sort((a, b) => b - a);
+  const availableRanks = Array.from(new Set(accessiblePayroll.map(r => r.rank).filter(Boolean))).sort();
+
+  // Filter and search
+  const filteredPayroll = accessiblePayroll.filter((record) => {
     const query = searchQuery.toLowerCase();
-    return !query
-      || record.name.toLowerCase().includes(query)
-      || record.rank.toLowerCase().includes(query)
-      || record.salary_date.includes(query)
-      || String(record.week_number).includes(query);
+    const matchesSearch = !query
+      || (record.name || '').toLowerCase().includes(query)
+      || (record.rank || '').toLowerCase().includes(query)
+      || (record.salary_date || '').includes(query)
+      || String(record.week_number || '').includes(query);
+
+    const matchesRank = rankFilter === 'ALL' || record.rank === rankFilter;
+    const matchesWeek = weekFilter === 'ALL' || String(record.week_number) === String(weekFilter);
+
+    return matchesSearch && matchesRank && matchesWeek;
   });
 
-  const totalSalary = payroll.reduce((total, record) => total + Number(record.salary || 0), 0);
+  // Sorting
+  const sortedPayroll = [...filteredPayroll].sort((a, b) => {
+    if (sortBy === 'date_desc') {
+      return (b.salary_date || '').localeCompare(a.salary_date || '') || (b.id || '').localeCompare(a.id || '');
+    }
+    if (sortBy === 'date_asc') {
+      return (a.salary_date || '').localeCompare(b.salary_date || '') || (a.id || '').localeCompare(b.id || '');
+    }
+    if (sortBy === 'salary_desc') {
+      return Number(b.salary || 0) - Number(a.salary || 0);
+    }
+    if (sortBy === 'salary_asc') {
+      return Number(a.salary || 0) - Number(b.salary || 0);
+    }
+    if (sortBy === 'name_asc') {
+      return (a.name || '').localeCompare(b.name || '');
+    }
+    return 0;
+  });
+
+  const totalSalary = sortedPayroll.reduce((total, record) => total + Number(record.salary || 0), 0);
 
   const handleOpenAdd = () => {
     setEditingRecord(null);
@@ -148,54 +195,194 @@ export default function PayrollView({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <DollarSign size={26} color="#34d399" />
-            <span>Salary Records</span>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <DollarSign size={26} color="#10b981" />
+            <span>Salary & Compensation Ledger</span>
           </h2>
           <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-            Name, rank, salary, salary date, and automatically calculated week number.
+            {isAdmin 
+              ? 'Department-wide officer salaries, compensation disbursement, and fiscal week logs.'
+              : 'Personal salary disbursement records and official compensation history.'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {canExportPayrollCsv(currentUser) && (
             <button
               onClick={() => onExportCsv('payroll')}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#cbd5e1', fontSize: '0.85rem', cursor: 'pointer' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1rem',
+                borderRadius: '8px',
+                backgroundColor: '#111928',
+                border: '1px solid #1c2a42',
+                color: '#cbd5e1',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
             >
               <Download size={15} />
-              Export CSV
+              <span>Export CSV</span>
             </button>
           )}
-          <button
-            onClick={handleOpenAdd}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.15rem', borderRadius: '8px', backgroundColor: '#059669', border: 'none', color: '#fff', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
-          >
-            <Plus size={16} />
-            Add Salary Record
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleOpenAdd}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1.15rem',
+                borderRadius: '8px',
+                backgroundColor: '#2563eb',
+                border: 'none',
+                color: '#fff',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Plus size={16} />
+              <span>Add Salary Record</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ position: 'relative', maxWidth: '420px', width: '100%' }}>
+      {/* Filter, Search, and Sort Toolbar */}
+      <div style={{
+        backgroundColor: '#0f1728',
+        border: '1px solid #1c2a42',
+        borderRadius: '12px',
+        padding: '1rem 1.25rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
+      }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="search"
-            placeholder="Search by name, rank, salary date, or week..."
+            placeholder={isAdmin ? "Search by name, rank, date, or week..." : "Search by date or week..."}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            style={{ ...inputStyle, paddingLeft: '2.25rem' }}
+            style={{
+              width: '100%',
+              padding: '0.55rem 0.75rem 0.55rem 2.25rem',
+              borderRadius: '8px',
+              backgroundColor: '#070a12',
+              border: '1px solid #1c2a42',
+              color: '#f1f5f9',
+              fontSize: '0.85rem',
+              outline: 'none',
+              boxSizing: 'border-box'
+            }}
           />
         </div>
-        <div style={{ padding: '0.6rem 1rem', borderRadius: '8px', backgroundColor: '#111827', border: '1px solid #1f2937', color: '#cbd5e1', fontSize: '0.85rem' }}>
-          Total Paid: <strong style={{ color: '#34d399', fontFamily: 'monospace' }}>${totalSalary.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+
+        {/* Filter & Sort Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {isAdmin && availableRanks.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>RANK:</span>
+              <select
+                value={rankFilter}
+                onChange={(e) => setRankFilter(e.target.value)}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  borderRadius: '7px',
+                  backgroundColor: '#070a12',
+                  border: '1px solid #1c2a42',
+                  color: '#f1f5f9',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="ALL">All Ranks</option>
+                {availableRanks.map(rank => (
+                  <option key={rank} value={rank}>{rank}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {availableWeeks.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>WEEK:</span>
+              <select
+                value={weekFilter}
+                onChange={(e) => setWeekFilter(e.target.value)}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  borderRadius: '7px',
+                  backgroundColor: '#070a12',
+                  border: '1px solid #1c2a42',
+                  color: '#f1f5f9',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="ALL">All Weeks</option>
+                {availableWeeks.map(w => (
+                  <option key={w} value={w}>Week {w}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>SORT:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '0.45rem 0.65rem',
+                borderRadius: '7px',
+                backgroundColor: '#070a12',
+                border: '1px solid #1c2a42',
+                color: '#f1f5f9',
+                fontSize: '0.8rem',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="date_desc">Date (Newest First)</option>
+              <option value="date_asc">Date (Oldest First)</option>
+              <option value="salary_desc">Salary (Highest First)</option>
+              <option value="salary_asc">Salary (Lowest First)</option>
+              {isAdmin && <option value="name_asc">Name (A-Z)</option>}
+            </select>
+          </div>
+
+          <div style={{
+            padding: '0.5rem 0.9rem',
+            borderRadius: '8px',
+            backgroundColor: '#070a12',
+            border: '1px solid #1c2a42',
+            color: '#cbd5e1',
+            fontSize: '0.82rem',
+            whiteSpace: 'nowrap'
+          }}>
+            Total: <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>${totalSalary.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+          </div>
         </div>
       </div>
 
-      <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', overflowX: 'auto' }}>
+      <div style={{ backgroundColor: '#0f1728', border: '1px solid #1c2a42', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', minWidth: '700px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#182234', color: '#94a3b8', borderBottom: '1px solid #1f2937', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+            <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {['Name', 'Rank', 'Salary', 'Salary Date', 'Week Number'].map((heading) => (
                 <th key={heading} style={{ padding: '0.85rem 1rem' }}>{heading}</th>
               ))}
@@ -203,56 +390,65 @@ export default function PayrollView({
             </tr>
           </thead>
           <tbody>
-            {filteredPayroll.length ? filteredPayroll.map((record) => (
-              <tr key={record.id} style={{ borderBottom: '1px solid #1f2937' }}>
-                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#f8fafc' }}>{record.name}</td>
+            {sortedPayroll.length ? sortedPayroll.map((record) => (
+              <tr key={record.id} style={{ borderBottom: '1px solid #1c2a42', transition: 'background-color 0.15s' }}>
+                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#f1f5f9' }}>{record.name}</td>
                 <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{record.rank}</td>
-                <td style={{ padding: '0.85rem 1rem', color: '#34d399', fontFamily: 'monospace' }}>
+                <td style={{ padding: '0.85rem 1rem', color: '#10b981', fontFamily: 'monospace', fontWeight: 700 }}>
                   ${Number(record.salary).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </td>
                 <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1', fontFamily: 'monospace' }}>{record.salary_date}</td>
-                <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{record.week_number}</td>
+                <td style={{ padding: '0.85rem 1rem', color: '#60a5fa', fontWeight: 600 }}>Week {record.week_number}</td>
                 <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
-                    <button
-                      onClick={() => handleOpenEdit(record)}
-                      title="Edit Salary Record"
-                      style={{
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                        border: '1px solid rgba(56, 189, 248, 0.3)',
-                        color: '#38bdf8',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '0.75rem',
-                      }}
-                    >
-                      <Edit2 size={13} />
-                      <span>Edit</span>
-                    </button>
-                    {currentUser?.role === 'ADMIN' && (
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleOpenEdit(record)}
+                        title="Edit Salary Record"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                          border: '1px solid rgba(37, 99, 235, 0.35)',
+                          color: '#60a5fa',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Edit2 size={13} />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    {isAdmin && (
                       <button
                         onClick={() => handleDelete(record)}
                         title="Delete Salary Record"
                         style={{
                           padding: '4px 8px',
                           borderRadius: '6px',
-                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                          border: '1px solid rgba(239, 68, 68, 0.35)',
                           color: '#f87171',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '4px',
                           fontSize: '0.75rem',
+                          fontWeight: 600,
                         }}
                       >
                         <Trash2 size={13} />
                         <span>Delete</span>
                       </button>
+                    )}
+                    {!isAdmin && (
+                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>
+                        Read-Only Verified
+                      </span>
                     )}
                   </div>
                 </td>
@@ -260,7 +456,7 @@ export default function PayrollView({
             )) : (
               <tr>
                 <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                  No salary records found.
+                  No salary records match the selected criteria.
                 </td>
               </tr>
             )}

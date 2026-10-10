@@ -26,6 +26,7 @@ export default function OverviewDashboard({
   stats, 
   personnel = [],
   presence = [], 
+  payroll = [],
   escort = [], 
   armory = [], 
   vehicles = [],
@@ -95,21 +96,24 @@ export default function OverviewDashboard({
     return (b.id || '').localeCompare(a.id || '');
   });
 
-  const totalPersonnel = stats?.total_personnel ?? personnel.length ?? 0;
-  const onDutyCount = stats?.on_duty_count ?? presence.filter(p => !p.time_out || p.time_out === '--').length;
+  // Synchronized counts computed directly from live arrays for 100% accuracy
+  const totalPersonnel = personnel.length > 0 ? personnel.length : (stats?.total_personnel ?? 0);
+  const onDutyCount = presence.filter(p => !p.time_out || p.time_out === '--').length;
   const coveragePercent = totalPersonnel > 0 ? Math.min(100, Math.round((onDutyCount / totalPersonnel) * 100)) : 0;
   
-  const payrollTotal = stats?.payroll_total ?? stats?.total_payroll_obligation ?? 0;
+  // Payroll calculation: synchronized with payroll array or stats
+  const payrollTotal = payroll.length > 0 
+    ? payroll.reduce((sum, item) => sum + Number(item.salary || 0), 0)
+    : (stats?.payroll_total ?? stats?.total_payroll_obligation ?? 0);
   
-  const activeEscorts = escort.filter(e => e.status === 'In Transit');
-  const activeEscortCount = stats?.active_escorts ?? activeEscorts.length;
+  // Active Escort Convoys (In Transit or Active)
+  const activeEscorts = escort.filter(e => e.status === 'In Transit' || e.status === 'Active' || e.status === 'In Progress');
+  const activeEscortCount = activeEscorts.length;
 
+  // Armory calculation: Issued weapons and equipment
   const checkedOutGear = armory.filter(a => a.status === 'Issued');
-  const armoryIssuedCount = stats?.armory_issued ?? stats?.issued_equipment ?? checkedOutGear.length;
-  const armoryTotalCount = stats?.armory_total ?? armory.length;
-
-  const totalVehiclesCount = stats?.total_vehicles ?? vehicles.length;
-  const assignedVehiclesCount = stats?.assigned_vehicles ?? vehicles.filter(v => v.status === 'Assigned').length;
+  const armoryIssuedCount = checkedOutGear.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
+  const armoryTotalCount = armory.reduce((acc, a) => acc + (parseInt(a.quantity, 10) || 1), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -873,48 +877,6 @@ export default function OverviewDashboard({
             </div>
           </div>
           <div style={{ color: '#60a5fa', display: 'flex', alignItems: 'center' }}>
-            <ArrowRight size={16} />
-          </div>
-        </div>
-
-        {/* Pillar 4: Department Vehicle Fleet */}
-        <div
-          onClick={() => setActiveTab('vehicles')}
-          style={{
-            backgroundColor: '#0f1728',
-            border: '1px solid #1c2a42',
-            borderRadius: '14px',
-            padding: '1.1rem 1.25rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{
-              padding: '10px',
-              borderRadius: '10px',
-              backgroundColor: 'rgba(217, 119, 6, 0.12)',
-              color: '#f59e0b',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Car size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Department Fleet
-              </span>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#fbbf24', marginTop: '2px' }}>
-                {assignedVehiclesCount} <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>/ {totalVehiclesCount} In Fleet</span>
-              </div>
-              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Motor pool readiness & assigned custody</span>
-            </div>
-          </div>
-          <div style={{ color: '#f59e0b', display: 'flex', alignItems: 'center' }}>
             <ArrowRight size={16} />
           </div>
         </div>

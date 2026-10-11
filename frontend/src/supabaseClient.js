@@ -320,10 +320,181 @@ export const updateVehiclePlates = async (officerId, platesForm) => {
 };
 
 // Presence & Shifts
+export const calculatePresenceDuration = (timeIn, timeOut, shiftDate = null) => {
+  if (!timeIn) return { duration_hours: null, duration_minutes: null, is_active: false };
+
+  const parseMinutes = (tStr) => {
+    if (!tStr) return null;
+    const parts = String(tStr).trim().split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1] || '0', 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  };
+
+  const inMins = parseMinutes(timeIn);
+  if (inMins === null) return { duration_hours: null, duration_minutes: null, is_active: false };
+
+  let outMins = parseMinutes(timeOut);
+  let isActive = false;
+
+  if (outMins === null) {
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    if (shiftDate && shiftDate < localToday) {
+      // Check if it was yesterday's night shift and currently morning (< 12:00)
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+      if (shiftDate === yesterdayStr && now.getHours() < 12) {
+        isActive = true;
+        outMins = nowMins;
+      } else {
+        return { duration_hours: null, duration_minutes: null, is_active: false };
+      }
+    } else {
+      isActive = true;
+      outMins = nowMins;
+    }
+  }
+
+  let diff = outMins - inMins;
+  if (diff < 0) {
+    diff += 24 * 60; // Overnight shift crossing midnight
+  }
+
+  const duration_minutes = diff;
+  const duration_hours = Number((diff / 60).toFixed(2));
+
+  return { duration_hours, duration_minutes, is_active: isActive };
+};
+
+export const countOfficerMissionsOnDate = (presenceRec, escortMissions = []) => {
+  if (!presenceRec || !Array.isArray(escortMissions)) return 0;
+  const targetDate = presenceRec.date;
+  if (!targetDate) return 0;
+
+  const officerId = (presenceRec.personnel_id || '').trim().toLowerCase();
+  const officerName = (presenceRec.name || '').trim().toLowerCase();
+  const officerBadge = (presenceRec.badge_id || '').trim().toLowerCase();
+
+  const cleanName = (s) => String(s || '').replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+
+  let count = 0;
+  for (const m of escortMissions) {
+    if (!m) continue;
+
+    // 1. Date match
+    let mDate = null;
+    if (m.start_time) {
+      const match = String(m.start_time).match(/\d{4}-\d{2}-\d{2}/);
+      if (match) mDate = match[0];
+    }
+    if (!mDate && m.escort_date) {
+      const match = String(m.escort_date).match(/\d{4}-\d{2}-\d{2}/);
+      if (match) mDate = match[0];
+    }
+    if (!mDate && m.created_at) {
+      const match = String(m.created_at).match(/\d{4}-\d{2}-\d{2}/);
+      if (match) mDate = match[0];
+    }
+
+    if (mDate !== targetDate) continue;
+
+    // 2. Officer match: Lead Agent OR Assigned Officer
+    let isMatched = false;
+
+    // Check Lead Agent
+    const leadId = (m.lead_agent_id || '').trim().toLowerCase();
+    if (officerId && leadId === officerId) {
+      isMatched = true;
+    } else {
+      const leadNameClean = cleanName(m.lead_agent);
+      if (officerName && leadNameClean && (leadNameClean.includes(officerName) || officerName.includes(leadNameClean))) {
+        isMatched = true;
+      } else if (officerBadge && officerBadge !== '-' && String(m.lead_agent || '').toLowerCase().includes(officerBadge)) {
+        isMatched = true;
+      }
+    }
+
+    // Check Assigned Officer IDs
+    if (!isMatched && Array.isArray(m.assigned_officer_ids)) {
+      if (officerId && m.assigned_officer_ids.some(id => String(id).toLowerCase() === officerId)) {
+        isMatched = true;
+      }
+    }
+
+    // Check Assigned Personnel
+    if (!isMatched) {
+      let assigned = m.assigned_personnel;
+      if (!assigned && m.assigned_personnel_json) {
+        try { assigned = JSON.parse(m.assigned_personnel_json); } catch {}
+      }
+
+      if (Array.isArray(assigned)) {
+        for (const item of assigned) {
+          if (!item) continue;
+          if (typeof item === 'object') {
+            const itemId = String(item.id || item.personnel_id || '').toLowerCase();
+            const itemName = cleanName(item.name || item.officer_name);
+            if (officerId && itemId === officerId) {
+              isMatched = true;
+              break;
+            }
+            if (officerName && itemName && (itemName.includes(officerName) || officerName.includes(itemName))) {
+              isMatched = true;
+              break;
+            }
+          } else {
+            const str = String(item);
+            const strLower = str.toLowerCase();
+            const strClean = cleanName(str);
+            if (officerId && strLower === officerId) {
+              isMatched = true;
+              break;
+            }
+            if (officerName && strClean && (strClean.includes(officerName) || officerName.includes(strClean))) {
+              isMatched = true;
+              break;
+            }
+            if (officerBadge && officerBadge !== '-' && strLower.includes(officerBadge)) {
+              isMatched = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (isMatched) count++;
+  }
+
+  return count;
+};
+
 export const fetchPresence = async () => {
-  const { data, error } = await supabase.from('presence').select('*').order('id', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  const [presRes, escRes] = await Promise.all([
+    supabase.from('presence').select('*').order('id', { ascending: false }),
+    supabase.from('escort_missions').select('id, start_time, created_at, lead_agent_id, lead_agent, assigned_officer_ids, assigned_personnel_json').catch(() => ({ data: [] }))
+  ]);
+
+  if (presRes.error) throw presRes.error;
+  const presenceRows = presRes.data || [];
+  const escortRows = escRes.data || [];
+
+  return presenceRows.map(rec => {
+    const dur = calculatePresenceDuration(rec.time_in, rec.time_out, rec.date);
+    const escortCount = countOfficerMissionsOnDate(rec, escortRows);
+    return {
+      ...rec,
+      duration_hours: dur.duration_hours,
+      duration_minutes: dur.duration_minutes,
+      is_active: dur.is_active,
+      escort_count: escortCount
+    };
+  });
 };
 
 export const logPresence = async (presenceData) => {

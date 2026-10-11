@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ClipboardCheck, 
   Plus, 
@@ -9,6 +9,7 @@ import {
   Check
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import { calculatePresenceDuration, countOfficerMissionsOnDate } from '../supabaseClient';
 import ConfirmModal from './ConfirmModal';
 import EmptyState from './EmptyState';
 
@@ -28,6 +29,7 @@ const getCurrentTime = () => {
 
 export default function PresenceView({ 
   records = [], 
+  escortMissions = [],
   personnel = [], 
   currentUser,
   onLogPresence, 
@@ -43,6 +45,13 @@ export default function PresenceView({
   const [completing, setCompleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [, setTick] = useState(0);
+
+  // Live timer for active shifts
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -268,7 +277,13 @@ export default function PresenceView({
           </thead>
           <tbody>
             {filteredRecords.length > 0 ? (
-              filteredRecords.map((rec) => (
+              filteredRecords.map((rec) => {
+                const dur = calculatePresenceDuration(rec.time_in, rec.time_out, rec.date);
+                const dynamicEscortCount = escortMissions && escortMissions.length > 0
+                  ? countOfficerMissionsOnDate(rec, escortMissions)
+                  : (rec.escort_count ?? 0);
+
+                return (
                   <tr key={rec.id} style={{ borderBottom: '1px solid #1c2a42', transition: 'background-color 0.15s' }}>
                     <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontFamily: 'monospace' }}>{rec.date}</td>
                     <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{rec.shift}</td>
@@ -283,9 +298,72 @@ export default function PresenceView({
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{rec.duration_hours ?? '--'}</td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{rec.duration_minutes ?? '--'}</td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>{rec.escort_count}</td>
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      {dur.is_active ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          color: '#38bdf8',
+                          fontWeight: 600,
+                          backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(56, 189, 248, 0.25)',
+                          fontSize: '0.8rem',
+                        }}>
+                          <span style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#38bdf8',
+                            boxShadow: '0 0 6px #38bdf8',
+                          }} />
+                          {dur.duration_hours} hrs
+                          <span style={{ fontSize: '0.68rem', color: '#7dd3fc', fontWeight: 500 }}>Live</span>
+                        </span>
+                      ) : dur.duration_hours !== null ? (
+                        <span style={{ color: '#f1f5f9', fontWeight: 500 }}>
+                          {dur.duration_hours} hrs
+                        </span>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>--</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      {dur.is_active ? (
+                        <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                          {dur.duration_minutes} min
+                        </span>
+                      ) : dur.duration_minutes !== null ? (
+                        <span style={{ color: '#cbd5e1' }}>
+                          {dur.duration_minutes} min
+                        </span>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>--</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      {dynamicEscortCount > 0 ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                        }}>
+                          <span>🛡️</span>
+                          <span>{dynamicEscortCount} mission{dynamicEscortCount === 1 ? '' : 's'}</span>
+                        </span>
+                      ) : (
+                        <span style={{ color: '#64748b' }}>0</span>
+                      )}
+                    </td>
                     <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                       {!rec.time_out && (currentUser?.role === 'ADMIN' || currentUser?.personnel_id === rec.personnel_id) && (
                         <button
@@ -323,7 +401,8 @@ export default function PresenceView({
                       </button>
                     </td>
                   </tr>
-                ))
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="10" style={{ padding: '2rem 1rem' }}>

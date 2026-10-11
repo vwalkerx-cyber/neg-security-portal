@@ -1231,6 +1231,7 @@ export default function App() {
           {activeTab === 'presence' && (
             <PresenceView
               records={presence}
+              escortMissions={escort}
               personnel={personnel}
               currentUser={currentUser}
               onLogPresence={handleLogPresence}

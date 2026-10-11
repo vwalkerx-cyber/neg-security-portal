@@ -475,14 +475,23 @@ export const countOfficerMissionsOnDate = (presenceRec, escortMissions = []) => 
 };
 
 export const fetchPresence = async () => {
-  const [presRes, escRes] = await Promise.all([
-    supabase.from('presence').select('*').order('id', { ascending: false }),
-    supabase.from('escort_missions').select('id, start_time, created_at, lead_agent_id, lead_agent, assigned_officer_ids, assigned_personnel_json').catch(() => ({ data: [] }))
-  ]);
+  const { data: presenceRows, error: presError } = await supabase
+    .from('presence')
+    .select('*')
+    .order('id', { ascending: false });
 
-  if (presRes.error) throw presRes.error;
-  const presenceRows = presRes.data || [];
-  const escortRows = escRes.data || [];
+  if (presError) throw presError;
+  if (!presenceRows || presenceRows.length === 0) return [];
+
+  let escortRows = [];
+  try {
+    const { data: escData } = await supabase
+      .from('escort_missions')
+      .select('id, start_time, lead_agent_id, lead_agent, assigned_personnel_json');
+    if (escData) escortRows = escData;
+  } catch (e) {
+    console.warn('Could not load escort missions for presence linking:', e);
+  }
 
   return presenceRows.map(rec => {
     const dur = calculatePresenceDuration(rec.time_in, rec.time_out, rec.date);

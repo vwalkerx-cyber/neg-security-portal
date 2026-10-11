@@ -58,19 +58,21 @@ export default function PayrollView({
   const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, salary_desc, salary_asc, name_asc
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [formData, setFormData] = useState({
-    personnel_id: currentUser?.personnel_id || personnel[0]?.id || '',
-    salary: '',
-    salary_date: getToday(),
-  });
-  const [submitting, setSubmitting] = useState(false);
 
-  const isAdmin = currentUser?.role === 'ADMIN';
+  // Resolve the logged in user's matching personnel record
+  const myPersonnel = React.useMemo(() => {
+    if (!currentUser) return null;
+    return personnel.find((p) => 
+      (currentUser.personnel_id && p.id === currentUser.personnel_id) ||
+      (currentUser.id && p.id === currentUser.id) ||
+      (currentUser.name && p.name && p.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
+    ) || null;
+  }, [personnel, currentUser]);
+
+  const myPid = myPersonnel?.id || currentUser?.personnel_id || currentUser?.id || '';
+  const myName = (myPersonnel?.name || currentUser?.name || '').trim().toLowerCase();
 
   // Role-based visibility: non-admins can strictly see their own records
-  const myPid = currentUser?.personnel_id || currentUser?.id;
-  const myName = (currentUser?.name || '').trim().toLowerCase();
-
   const accessiblePayroll = isAdmin
     ? payroll
     : payroll.filter((record) => {
@@ -79,10 +81,36 @@ export default function PayrollView({
         return false;
       });
 
-  const selectablePersonnel = isAdmin
-    ? personnel
-    : personnel.filter((person) => person.id === currentUser?.personnel_id);
-  const selectedPerson = selectablePersonnel.find((person) => person.id === formData.personnel_id);
+  const selectablePersonnel = React.useMemo(() => {
+    if (isAdmin) return personnel;
+    if (myPersonnel) return [myPersonnel];
+    if (myPid) {
+      return [{
+        id: myPid,
+        name: currentUser?.name || 'My Record',
+        rank: currentUser?.rank || 'Officer I'
+      }];
+    }
+    return [];
+  }, [isAdmin, personnel, myPersonnel, myPid, currentUser]);
+
+  const defaultPersonnelId = myPersonnel?.id || currentUser?.personnel_id || (isAdmin ? personnel[0]?.id : '') || '';
+
+  const [formData, setFormData] = useState({
+    personnel_id: defaultPersonnelId,
+    salary: '',
+    salary_date: getToday(),
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Keep form personnel_id synchronized when user or personnel changes
+  React.useEffect(() => {
+    if (!formData.personnel_id && defaultPersonnelId) {
+      setFormData(prev => ({ ...prev, personnel_id: defaultPersonnelId }));
+    }
+  }, [defaultPersonnelId, formData.personnel_id]);
+
+  const selectedPerson = selectablePersonnel.find((person) => person.id === formData.personnel_id) || myPersonnel;
   const weekNumber = getWeekNumber(formData.salary_date);
 
   // Extract unique weeks & ranks for filter dropdowns
@@ -145,7 +173,7 @@ export default function PayrollView({
   const handleOpenAdd = () => {
     setEditingRecord(null);
     setFormData({
-      personnel_id: currentUser?.personnel_id || personnel[0]?.id || '',
+      personnel_id: defaultPersonnelId,
       salary: '',
       salary_date: getToday(),
     });
@@ -160,6 +188,13 @@ export default function PayrollView({
       salary_date: record.salary_date,
     });
     setShowModal(true);
+  };
+
+  const isOwnRecord = (record) => {
+    if (!record) return false;
+    if (myPid && record.personnel_id === myPid) return true;
+    if (myName && record.name && record.name.trim().toLowerCase() === myName) return true;
+    return false;
   };
 
   const handleDelete = (record) => {
@@ -186,9 +221,14 @@ export default function PayrollView({
     event.preventDefault();
     setSubmitting(true);
     try {
+      const officerName = selectedPerson?.name || editingRecord?.name || currentUser?.name || 'Officer';
+      const officerRank = selectedPerson?.rank || editingRecord?.rank || currentUser?.rank || 'Officer I';
+
       if (editingRecord && onEditPayroll) {
         await onEditPayroll(editingRecord.id, {
           personnel_id: formData.personnel_id,
+          name: officerName,
+          rank: officerRank,
           salary: Number(formData.salary),
           salary_date: formData.salary_date,
           week_number: Number(weekNumber) || 1,
@@ -197,6 +237,8 @@ export default function PayrollView({
       } else {
         await onAddPayroll({
           personnel_id: formData.personnel_id,
+          name: officerName,
+          rank: officerRank,
           salary: Number(formData.salary),
           salary_date: formData.salary_date,
           week_number: Number(weekNumber) || 1,
@@ -206,7 +248,7 @@ export default function PayrollView({
       setShowModal(false);
       setEditingRecord(null);
       setFormData({
-        personnel_id: currentUser?.personnel_id || personnel[0]?.id || '',
+        personnel_id: defaultPersonnelId,
         salary: '',
         salary_date: getToday(),
       });
@@ -254,29 +296,28 @@ export default function PayrollView({
               <span>Export CSV</span>
             </button>
           )}
-          {isAdmin && (
-            <button
-              onClick={handleOpenAdd}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.6rem 1.15rem',
-                borderRadius: '8px',
-                backgroundColor: '#2563eb',
-                border: 'none',
-                color: '#fff',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Plus size={16} />
-              <span>Add Salary Record</span>
-            </button>
-          )}
+
+          <button
+            onClick={handleOpenAdd}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '8px',
+              backgroundColor: '#2563eb',
+              border: 'none',
+              color: '#fff',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Plus size={16} />
+            <span>{isAdmin ? 'Add Salary Record' : 'Record My Salary'}</span>
+          </button>
         </div>
       </div>
 
@@ -549,7 +590,7 @@ export default function PayrollView({
                 <td style={{ padding: '0.85rem 1rem', color: '#60a5fa', fontWeight: 600 }}>Week {record.week_number}</td>
                 <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
-                    {isAdmin && (
+                    {(isAdmin || isOwnRecord(record)) && (
                       <button
                         onClick={() => handleOpenEdit(record)}
                         title="Edit Salary Record"
@@ -571,7 +612,7 @@ export default function PayrollView({
                         <span>Edit</span>
                       </button>
                     )}
-                    {isAdmin && (
+                    {(isAdmin || isOwnRecord(record)) && (
                       <button
                         onClick={() => handleDelete(record)}
                         title="Delete Salary Record"
@@ -593,11 +634,6 @@ export default function PayrollView({
                         <span>Delete</span>
                       </button>
                     )}
-                    {!isAdmin && (
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>
-                        Read-Only Verified
-                      </span>
-                    )}
                   </div>
                 </td>
               </tr>
@@ -610,9 +646,9 @@ export default function PayrollView({
                     title="No Salary Records Located"
                     description={searchQuery || rankFilter !== 'ALL' || weekFilter !== 'ALL'
                       ? "No records match your active search and filter parameters. Try clearing your filters."
-                      : "No compensation disbursement records currently exist in the database."}
-                    actionText={isAdmin ? "Add Salary Record" : undefined}
-                    onAction={isAdmin ? handleOpenAdd : undefined}
+                      : (isAdmin ? "No compensation disbursement records currently exist in the database." : "You have no recorded salary disbursements in the ledger yet.")}
+                    actionText={isAdmin ? "Add Salary Record" : "Record My Salary"}
+                    onAction={handleOpenAdd}
                     secondaryActionText={searchQuery || rankFilter !== 'ALL' || weekFilter !== 'ALL' ? "Reset Filters" : undefined}
                     onSecondaryAction={() => {
                       setSearchQuery('');

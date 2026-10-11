@@ -29,6 +29,10 @@ export default function AdminAuditNotificationsView({
   const [filterAction, setFilterAction] = useState('ALL');
   const [isClearing, setIsClearing] = useState(false);
 
+  React.useEffect(() => {
+    onRefresh?.();
+  }, [onRefresh]);
+
   // Filter logs
   const filteredLogs = auditLogs.filter(log => {
     const q = searchQuery.toLowerCase().trim();
@@ -320,6 +324,7 @@ export default function AdminAuditNotificationsView({
             }}
           >
             <option value="ALL">All Action Types</option>
+            <option value="PASSWORD">Password Changes / Resets</option>
             <option value="INSERT">Created / Inserted</option>
             <option value="UPDATE">Updated / Modified</option>
             <option value="DELETE">Deleted / Cleared</option>

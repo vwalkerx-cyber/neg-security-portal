@@ -1301,19 +1301,31 @@ export const createUser = async (userData) => {
   return data;
 };
 
-export const updateUser = async (userId, userData) => {
-  const { data: existing } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
+export const updateUser = async (userId, userData, actor = null) => {
+  const { data: existing } = await supabase.from('users').select('role, username, name').eq('id', userId).maybeSingle();
   const payload = { ...userData };
   if (existing?.role === 'ADMIN' || payload.role === 'ADMIN') {
     payload.status = 'Active';
   }
   const { data, error } = await supabase.from('users').update(payload).eq('id', userId).select().single();
   if (error) throw error;
+
+  if (userData.password) {
+    const actorUser = actor || { name: 'Admin', role: 'ADMIN', rank: 'High Command' };
+    await logAuditEvent({
+      action: 'USER_PASSWORD_UPDATED',
+      module: 'users',
+      target: data?.username || existing?.username || userId,
+      user: actorUser,
+      details: `Password changed via User Management edit for ${data?.username || userId}`
+    }).catch(() => {});
+  }
+
   return data;
 };
 
 export const toggleUserStatus = async (userId) => {
-  const { data: u } = await supabase.from('users').select('status, role').eq('id', userId).single();
+  const { data: u } = await supabase.from('users').select('status, role, username').eq('id', userId).single();
   if (u?.role === 'ADMIN') {
     // Admin role accounts must remain permanently Active
     return u;
@@ -1324,27 +1336,39 @@ export const toggleUserStatus = async (userId) => {
   return data;
 };
 
-export const resetPassword = async (userId, newPassword) => {
+export const resetPassword = async (userId, newPassword, actor = null) => {
   const { data, error } = await supabase.from('users').update({ password: newPassword }).eq('id', userId).select().single();
   if (error) throw error;
+
+  const actorUser = actor || { name: 'Admin', role: 'ADMIN', rank: 'High Command' };
+  await logAuditEvent({
+    action: 'PASSWORD_RESET',
+    module: 'users',
+    target: data?.username || data?.name || userId,
+    user: actorUser,
+    details: `Password reset executed for account ${data?.username || data?.name || userId}`
+  }).catch(() => {});
+
   return data;
 };
 
-export const changePassword = async (userId, currentPassword, newPassword) => {
+export const changePassword = async (userId, currentPassword, newPassword, actor = null) => {
   if (!newPassword || newPassword.length < 4) {
     throw new Error('New password must be at least 4 characters long.');
   }
 
   // If current password provided, verify it first
-  if (currentPassword) {
-    const { data: user, error: fetchErr } = await supabase
-      .from('users')
-      .select('id, password')
-      .eq('id', userId)
-      .maybeSingle();
+  let userRecord = null;
+  const { data: user, error: fetchErr } = await supabase
+    .from('users')
+    .select('id, password, username, name, role, rank')
+    .eq('id', userId)
+    .maybeSingle();
 
-    if (fetchErr) throw fetchErr;
-    if (user && user.password && user.password !== currentPassword) {
+  if (fetchErr) throw fetchErr;
+  if (user) {
+    userRecord = user;
+    if (currentPassword && user.password && user.password !== currentPassword) {
       throw new Error('Current password is incorrect.');
     }
   }
@@ -1357,6 +1381,17 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
     .single();
 
   if (error) throw error;
+
+  const actorUser = actor || data || userRecord;
+  const targetLabel = data?.username || data?.name || userRecord?.username || userId;
+  await logAuditEvent({
+    action: 'PASSWORD_CHANGED',
+    module: 'auth',
+    target: targetLabel,
+    user: actorUser,
+    details: `User ${actorUser?.name || targetLabel} successfully changed login password`
+  }).catch(() => {});
+
   return data;
 };
 
@@ -1429,8 +1464,12 @@ export const logAuditEvent = async ({ action, module, target, user, ip, details 
       created_at: getNowIso(),
     };
 
-    const { data } = await supabase.from('chat_messages').insert(record).select().single();
-    return data;
+    const { data, error } = await supabase.from('chat_messages').insert(record).select().single();
+    if (error) {
+      console.warn('Primary audit log insert returned error, retrying standard insert:', error);
+      await supabase.from('chat_messages').insert(record);
+    }
+    return data || record;
   } catch (err) {
     console.warn('Failed to dispatch audit log:', err);
     return null;

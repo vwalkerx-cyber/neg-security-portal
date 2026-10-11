@@ -111,13 +111,17 @@ export default function ArmoryView({
   const [depotActiveCategory, setDepotActiveCategory] = useState('Ammunition');
 
   // Issue / User Assignment Form State
-  const [issueData, setIssueData] = useState({
-    name: currentUser?.name || 'Alexander Hayes',
-    item_type: 'Weapon',
-    item: 'VHS-2 Rifle',
-    serial_number: '',
-    quantity: 1,
-    expected_return: '2026-10-15',
+  const [isCustomRecipient, setIsCustomRecipient] = useState(false);
+  const [issueData, setIssueData] = useState(() => {
+    const defaultName = currentUser?.name || (personnel && personnel[0]?.name) || '';
+    return {
+      name: defaultName,
+      item_type: 'Weapon',
+      item: 'VHS-2 Rifle',
+      serial_number: '',
+      quantity: 1,
+      expected_return: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+    };
   });
 
   // Admin Add Item / Restock Form State
@@ -176,13 +180,14 @@ export default function ArmoryView({
       setShowIssueModal(false);
       onNotify(`Assigned ${issueData.item} (${issueData.quantity}x) to ${issueData.name}`);
       setIssueData({
-        name: currentUser?.name || 'Alexander Hayes',
+        name: currentUser?.name || (personnel && personnel[0]?.name) || '',
         item_type: 'Weapon',
         item: 'VHS-2 Rifle',
         serial_number: '',
         quantity: 1,
-        expected_return: '2026-10-15',
+        expected_return: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
       });
+      setIsCustomRecipient(false);
     } catch (err) {
       onNotify('Failed to issue item: ' + err.message);
     } finally {
@@ -843,13 +848,14 @@ export default function ArmoryView({
                         <button
                           onClick={() => {
                             setIssueData({
-                              name: currentUser?.name || 'Alexander Hayes',
+                              name: currentUser?.name || (personnel && personnel[0]?.name) || '',
                               item_type: itemType,
                               item: itemName,
                               serial_number: item.serial_number && item.serial_number !== '-' ? item.serial_number : '',
                               quantity: item.quantity || 1,
-                              expected_return: '2026-10-15',
+                              expected_return: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
                             });
+                            setIsCustomRecipient(false);
                             setShowIssueModal(true);
                           }}
                           style={{
@@ -913,50 +919,111 @@ export default function ArmoryView({
             </p>
 
             <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* 1. User Name */}
+              {/* 1. Recipient Officer Dropdown */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                  Recipient Officer Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Alexander Hayes"
-                  value={issueData.name}
-                  onChange={(e) => setIssueData({ ...issueData, name: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.75rem',
-                    borderRadius: '8px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    color: '#f8fafc',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                  }}
-                />
-                {currentUser?.role === 'ADMIN' && (
-                  <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Quick select:</span>
-                    {personnel.slice(0, 4).map((p) => (
-                      <button
-                        type="button"
-                        key={p.id}
-                        onClick={() => setIssueData({ ...issueData, name: p.name })}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          fontSize: '0.72rem',
-                          color: '#38bdf8',
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1' }}>
+                    Recipient Officer Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {isCustomRecipient ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomRecipient(false);
+                        const fallbackName = currentUser?.name || (personnel && personnel[0]?.name) || '';
+                        setIssueData({ ...issueData, name: fallbackName });
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        fontSize: '0.72rem',
+                        color: '#38bdf8',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      ← Back to Officer Dropdown
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomRecipient(true);
+                        setIssueData({ ...issueData, name: '' });
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        fontSize: '0.72rem',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      + Manual Entry
+                    </button>
+                  )}
+                </div>
+
+                {!isCustomRecipient ? (
+                  <select
+                    required
+                    value={issueData.name}
+                    onChange={(e) => {
+                      if (e.target.value === '__MANUAL__') {
+                        setIsCustomRecipient(true);
+                        setIssueData({ ...issueData, name: '' });
+                      } else {
+                        setIssueData({ ...issueData, name: e.target.value });
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="" disabled>-- Select Recipient Officer from Roster --</option>
+                    {personnel
+                      .filter((p) => p.status !== 'Disbanded')
+                      .map((p) => {
+                        const badgePart = p.badge_id && p.badge_id !== '-' ? `(${p.badge_id})` : '';
+                        const rankPart = p.rank ? `— ${p.rank}` : '';
+                        return (
+                          <option key={p.id} value={p.name}>
+                            {p.name} {badgePart} {rankPart}
+                          </option>
+                        );
+                      })}
+                    <option value="__MANUAL__">✎ Other / Enter Custom Name...</option>
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="Enter recipient officer name..."
+                    value={issueData.name}
+                    onChange={(e) => setIssueData({ ...issueData, name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '8px',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #38bdf8',
+                      color: '#f8fafc',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
                 )}
               </div>
 

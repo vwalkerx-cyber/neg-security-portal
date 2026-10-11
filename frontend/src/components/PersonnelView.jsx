@@ -720,8 +720,8 @@ export default function PersonnelView({
                   alignItems: 'center',
                   background: theme.headerBg,
                   borderRadius: '8px',
-                  padding: isMinimized ? '0.2rem 0' : '0.35rem 0.6rem',
-                  margin: isMinimized ? '0' : '-0.25rem -0.25rem 0 -0.25rem'
+                  padding: isMinimized ? '0.2rem 0' : '0.45rem 0.65rem',
+                  gap: '0.6rem'
                 }}
               >
                 <div 
@@ -732,8 +732,8 @@ export default function PersonnelView({
                     alignItems: 'center',
                     gap: '0.75rem',
                     flex: 1, 
-                    userSelect: 'none',
-                    marginRight: '0.5rem'
+                    minWidth: 0,
+                    userSelect: 'none'
                   }}
                   title={isMinimized ? 'Click to expand officer card' : 'Click to minimize officer card'}
                 >
@@ -765,7 +765,12 @@ export default function PersonnelView({
                         fontSize: isMinimized ? '0.95rem' : '1.02rem', 
                         fontWeight: 700, 
                         color: p.status === 'Disbanded' ? '#94a3b8' : '#f8fafc',
-                        textDecoration: p.status === 'Disbanded' ? 'line-through' : 'none'
+                        textDecoration: p.status === 'Disbanded' ? 'line-through' : 'none',
+                        margin: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '100%'
                       }}>
                         {p.name}
                       </h3>
@@ -829,6 +834,7 @@ export default function PersonnelView({
                   </div>
                 </div>
 
+                {/* Right Header Side: Status Pill & Minimize Toggle (+ compact icons if minimized) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
                   <span style={{
                     fontSize: '0.68rem',
@@ -846,62 +852,57 @@ export default function PersonnelView({
                     {p.status}
                   </span>
 
-                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                    {/* View Dossier Slide-out Button (Improvement #11) */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveDossier(p);
-                      }}
-                      title="Inspect Officer Tactical Dossier"
-                      style={{
-                        background: 'rgba(37, 99, 235, 0.15)',
-                        border: '1px solid rgba(37, 99, 235, 0.35)',
-                        borderRadius: '6px',
-                        color: '#60a5fa',
-                        cursor: 'pointer',
-                        padding: '3px 8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <User size={13} />
-                      <span>Dossier</span>
-                    </button>
-
-                    {(isAdmin || isOwnRecord(p)) && (
+                  {isMinimized && (
+                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openEditModal(p);
+                          setActiveDossier(p);
                         }}
-                        title={isAdmin ? "Edit Roster Record" : "Edit My Roster & Credentials"}
+                        title="Inspect Officer Tactical Dossier"
                         style={{
-                          background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.1)',
-                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          background: 'rgba(37, 99, 235, 0.15)',
+                          border: '1px solid rgba(37, 99, 235, 0.35)',
                           borderRadius: '6px',
-                          color: '#38bdf8',
+                          color: '#60a5fa',
                           cursor: 'pointer',
-                          padding: '3px 8px',
+                          padding: '3px 6px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
+                          justifyContent: 'center',
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <Edit2 size={13} />
-                        <span>Edit</span>
+                        <User size={13} />
                       </button>
-                    )}
-                  </div>
+
+                      {(isAdmin || isOwnRecord(p)) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(p);
+                          }}
+                          title={isAdmin ? "Edit Roster Record" : "Edit My Roster & Credentials"}
+                          style={{
+                            background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.1)',
+                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            borderRadius: '6px',
+                            color: '#38bdf8',
+                            cursor: 'pointer',
+                            padding: '3px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Minimize / Expand Toggle Button */}
                   <button
@@ -914,7 +915,7 @@ export default function PersonnelView({
                       color: '#cbd5e1',
                       borderRadius: '6px',
                       cursor: 'pointer',
-                      padding: '3px 5px',
+                      padding: '4px 6px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1279,6 +1280,76 @@ export default function PersonnelView({
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Card Action Footer Bar (Contained cleanly within card body) */}
+                  <div style={{
+                    marginTop: '0.45rem',
+                    paddingTop: '0.55rem',
+                    borderTop: '1px solid #1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    width: '100%'
+                  }}>
+                    {/* View Dossier Slide-out Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveDossier(p);
+                      }}
+                      title="Inspect Officer Tactical Dossier"
+                      style={{
+                        flex: 1,
+                        background: 'rgba(37, 99, 235, 0.12)',
+                        border: '1px solid rgba(37, 99, 235, 0.35)',
+                        borderRadius: '6px',
+                        color: '#60a5fa',
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <User size={14} />
+                      <span>Dossier</span>
+                    </button>
+
+                    {(isAdmin || isOwnRecord(p)) && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(p);
+                        }}
+                        title={isAdmin ? "Edit Roster Record" : "Edit My Roster & Credentials"}
+                        style={{
+                          flex: 1,
+                          background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.16)' : 'rgba(56, 189, 248, 0.1)',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          borderRadius: '6px',
+                          color: '#38bdf8',
+                          cursor: 'pointer',
+                          padding: '6px 10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Edit2 size={13} />
+                        <span>Edit</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

@@ -13,6 +13,7 @@ import DisciplinaryLettersView from './components/DisciplinaryLettersView';
 import InfractionPointsView from './components/InfractionPointsView';
 import ResignationProposalsView from './components/ResignationProposalsView';
 import UserManagementView from './components/UserManagementView';
+import AdminAuditNotificationsView from './components/AdminAuditNotificationsView';
 import LoginView from './components/LoginView';
 import { CheckCircle2, Clock, AlertTriangle, LogOut } from 'lucide-react';
 import { getRankSeniority, canExportGeneralCsv, canExportPayrollCsv, canAccessLetters, canViewAllInfractions } from './utils/permissions';
@@ -30,6 +31,7 @@ const VALID_TABS = [
   'personnel',
   'resignations',
   'hierarchy',
+  'notifications',
   'users',
   'login',
   'register',
@@ -40,6 +42,7 @@ const pathToTab = (pathname) => {
   const clean = (pathname || '').toLowerCase().replace(/^\/+|\/+$/g, '');
   if (!clean || clean === 'overview' || clean === 'command-hub' || clean === 'commandhub' || clean === 'hub') return 'overview';
   if (clean === 'roster') return 'personnel';
+  if (clean === 'audit' || clean === 'notifications' || clean === 'logs') return 'notifications';
   if (['login', 'signin', 'auth'].includes(clean)) return 'login';
   if (['register', 'signup', 'recruit'].includes(clean)) return 'register';
   if (['reinstatement', 'appeal', 'reinstate'].includes(clean)) return 'reinstatement';
@@ -103,6 +106,7 @@ export default function App() {
   const [resignations, setResignations] = useState([]);
   const [reinstatements, setReinstatements] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
@@ -244,7 +248,8 @@ export default function App() {
         resignationsRes,
         lettersRes,
         usersRes,
-        reinstatementsRes
+        reinstatementsRes,
+        auditLogsRes
       ] = await Promise.all([
         db.fetchDashboardStats().catch(() => null),
         db.fetchPersonnel().catch(() => []),
@@ -261,6 +266,7 @@ export default function App() {
         canAccessLetters(currentUser) ? db.fetchDisciplinaryLetters().catch(() => []) : Promise.resolve([]),
         currentUser?.role === 'ADMIN' ? db.fetchUsers().catch(() => []) : Promise.resolve([]),
         currentUser?.role === 'ADMIN' ? db.fetchReinstatements().catch(() => []) : Promise.resolve([]),
+        currentUser?.role === 'ADMIN' ? db.fetchAuditLogs().catch(() => []) : Promise.resolve([]),
       ]);
 
       if (statsRes) setStats(statsRes);
@@ -278,6 +284,7 @@ export default function App() {
       if (lettersRes) setLetters(lettersRes);
       if (usersRes) setUsers(usersRes);
       if (reinstatementsRes) setReinstatements(reinstatementsRes);
+      if (auditLogsRes) setAuditLogs(auditLogsRes);
 
       // Keep currentUser status synced with live database
       if (currentUser) {
@@ -336,9 +343,28 @@ export default function App() {
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
       // Realtime subscription via Supabase Channels (Improvement #21)
-      const unsubscribeRealtime = db.subscribeToRealtimeChanges((_table) => {
+      const unsubscribeRealtime = db.subscribeToRealtimeChanges((table, payload) => {
         // Fast refresh when any operational table updates in Supabase
         fetchData();
+
+        // If the current user has ADMIN role, show a live change toast
+        if (currentUser?.role === 'ADMIN' && payload) {
+          const eventType = payload.eventType || 'UPDATE';
+          const rec = payload.new || payload.old || {};
+          const label = rec.name || rec.title || rec.item || rec.lead_agent || rec.proposal_number || rec.username || rec.id || 'Record';
+
+          let actionWord = 'modified';
+          if (eventType === 'INSERT') actionWord = 'created';
+          else if (eventType === 'DELETE') actionWord = 'deleted';
+
+          const tableTitle = table ? table.replace(/_/g, ' ').toUpperCase() : 'DATABASE';
+          
+          // Don't show toast for chat message insertion if current user is the author
+          if (table === 'chat_messages' && rec.sender_id === currentUser.id) return;
+          if (table === 'chat_messages' && rec.channel === 'system-audit') return;
+
+          notify(`[REALTIME] ${tableTitle}: ${label} was ${actionWord}.`);
+        }
       });
 
       return () => {
@@ -458,16 +484,37 @@ export default function App() {
   // Payroll handlers
   const handleAddPayroll = async (data) => {
     await db.addPayroll(data);
+    await db.logAuditEvent({
+      action: 'SALARY_CLAIM_ADDED',
+      module: 'payroll',
+      target: data.name || 'Officer',
+      user: currentUser,
+      details: `Logged salary claim for Week ${data.week_number || 1} ($${Number(data.salary || 0).toLocaleString()})`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleEditPayroll = async (id, data) => {
     await db.updatePayroll(id, data);
+    await db.logAuditEvent({
+      action: 'SALARY_RECORD_UPDATED',
+      module: 'payroll',
+      target: data.name || id,
+      user: currentUser,
+      details: `Updated salary record ${id}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleDeletePayroll = async (id) => {
     await db.deletePayroll(id);
+    await db.logAuditEvent({
+      action: 'SALARY_RECORD_DELETED',
+      module: 'payroll',
+      target: id,
+      user: currentUser,
+      details: `Removed salary record ${id}`
+    }).catch(() => {});
     notify('Salary record removed.');
     await fetchData();
   };
@@ -475,32 +522,74 @@ export default function App() {
   // Armory handlers
   const handleIssueItem = async (data) => {
     await db.issueArmoryItem(data);
+    await db.logAuditEvent({
+      action: 'ARMORY_ITEM_ISSUED',
+      module: 'armory',
+      target: data.assigned_to || data.item,
+      user: currentUser,
+      details: `Issued ${data.quantity || 1}x ${data.item} (${data.serial_number || 'N/A'}) to ${data.assigned_to}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleReturnItem = async (id) => {
     await db.returnArmoryItem(id);
+    await db.logAuditEvent({
+      action: 'ARMORY_ITEM_RETURNED',
+      module: 'armory',
+      target: id,
+      user: currentUser,
+      details: `Armory item ${id} returned to arsenal stockpile`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleAddArmoryItem = async (data) => {
     await db.addArmoryItem(data);
+    await db.logAuditEvent({
+      action: 'ARMORY_STOCK_ADDED',
+      module: 'armory',
+      target: data.item,
+      user: currentUser,
+      details: `Added new stockpile item: ${data.item} (${data.quantity || 1} units)`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleRestockDepot = async (data) => {
     await db.restockDepotStockpile(data);
+    await db.logAuditEvent({
+      action: 'DEPOT_RESTOCKED',
+      module: 'armory',
+      target: data.item,
+      user: currentUser,
+      details: `Depot stockpile updated for ${data.item} (${data.quantity} units)`
+    }).catch(() => {});
     await fetchData();
   };
 
   // Escort handlers
   const handleCreateMission = async (data) => {
     await db.createEscortMission(data);
+    await db.logAuditEvent({
+      action: 'ESCORT_MISSION_CREATED',
+      module: 'escort',
+      target: data.principal || 'VIP Detail',
+      user: currentUser,
+      details: `Initiated escort mission for Principal ${data.principal} (Lead: ${data.lead_agent})`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleEditMission = async (id, data) => {
     await db.updateEscortMission(id, data);
+    await db.logAuditEvent({
+      action: 'ESCORT_MISSION_UPDATED',
+      module: 'escort',
+      target: data.principal || id,
+      user: currentUser,
+      details: `Updated convoy details for mission ${id}`
+    }).catch(() => {});
     notify(`Escort mission ${id} updated.`);
     await fetchData();
   };
@@ -511,66 +600,150 @@ export default function App() {
       return;
     }
     await db.deleteEscortMission(id);
+    await db.logAuditEvent({
+      action: 'ESCORT_MISSION_DELETED',
+      module: 'escort',
+      target: id,
+      user: currentUser,
+      details: `Deleted escort mission ${id}`
+    }).catch(() => {});
     notify(`Escort mission ${id} deleted.`);
     await fetchData();
   };
 
   const handleUpdateEscortStatus = async (id, status) => {
     await db.updateEscortStatus(id, status);
+    await db.logAuditEvent({
+      action: 'ESCORT_STATUS_UPDATED',
+      module: 'escort',
+      target: id,
+      user: currentUser,
+      details: `Updated status of escort ${id} to ${status}`
+    }).catch(() => {});
     await fetchData();
   };
 
   // Personnel handlers
   const handleAddPersonnel = async (data) => {
     await db.createPersonnel(data);
+    await db.logAuditEvent({
+      action: 'PERSONNEL_CREATED',
+      module: 'personnel',
+      target: data.name,
+      user: currentUser,
+      details: `Registered new officer: ${data.name} (Badge: ${data.badge_id}, Rank: ${data.rank})`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleEditPersonnel = async (id, data) => {
     await db.updatePersonnel(id, data);
+    await db.logAuditEvent({
+      action: 'PERSONNEL_UPDATED',
+      module: 'personnel',
+      target: data.name || id,
+      user: currentUser,
+      details: `Updated dossier and credentials for officer ${data.name || id}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleDeletePersonnel = async (id) => {
     await db.deletePersonnel(id);
+    await db.logAuditEvent({
+      action: 'PERSONNEL_DELETED',
+      module: 'personnel',
+      target: id,
+      user: currentUser,
+      details: `Purged officer record ${id} from active roster`
+    }).catch(() => {});
     await fetchData();
   };
 
   // Training & Certification handlers
   const handleAddTraining = async (trainingData) => {
     await db.addTraining(trainingData);
+    await db.logAuditEvent({
+      action: 'TRAINING_LOGGED',
+      module: 'training',
+      target: trainingData.officer_name,
+      user: currentUser,
+      details: `Scheduled certification training: ${trainingData.course_name} for ${trainingData.officer_name}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleUpdateTraining = async (id, trainingData) => {
     await db.updateTraining(id, trainingData);
+    await db.logAuditEvent({
+      action: 'TRAINING_UPDATED',
+      module: 'training',
+      target: trainingData.officer_name || id,
+      user: currentUser,
+      details: `Updated qualification status for training ${id} (${trainingData.status || 'Active'})`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleDeleteTraining = async (id) => {
     await db.deleteTraining(id);
+    await db.logAuditEvent({
+      action: 'TRAINING_DELETED',
+      module: 'training',
+      target: id,
+      user: currentUser,
+      details: `Deleted training certificate ${id}`
+    }).catch(() => {});
     await fetchData();
   };
 
   // Disciplinary Letters handlers
   const handleCreateLetter = async (data) => {
     await db.createDisciplinaryLetter(data);
+    await db.logAuditEvent({
+      action: 'DISCIPLINARY_LETTER_ISSUED',
+      module: 'letters',
+      target: data.officer_name,
+      user: currentUser,
+      details: `Issued formal ${data.letter_type} (${data.reference_number}) to ${data.officer_name}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleUpdateLetterStatus = async (lid, status, notes = null) => {
     await db.updateLetterStatus(lid, status, notes);
+    await db.logAuditEvent({
+      action: 'LETTER_STATUS_UPDATED',
+      module: 'letters',
+      target: lid,
+      user: currentUser,
+      details: `Updated letter ${lid} to ${status}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleDeleteLetter = async (lid) => {
     await db.deleteLetter(lid);
+    await db.logAuditEvent({
+      action: 'LETTER_DELETED',
+      module: 'letters',
+      target: lid,
+      user: currentUser,
+      details: `Deleted letter record ${lid}`
+    }).catch(() => {});
     await fetchData();
   };
 
   // Infraction Points handlers
   const handleCreateInfraction = async (data) => {
     await db.createInfraction(data);
+    await db.logAuditEvent({
+      action: data.points < 0 ? 'MERIT_OFFSET_APPLIED' : 'INFRACTION_DEMERIT_RECORDED',
+      module: 'infractions',
+      target: data.recipient_name || data.personnel_id,
+      user: currentUser,
+      details: `${data.points > 0 ? '+' + data.points : data.points} pts: ${data.title} (${data.infraction_code})`
+    }).catch(() => {});
     await fetchData();
   };
 
@@ -1144,6 +1317,19 @@ export default function App() {
               onUpdateStatus={handleUpdateLetterStatus}
               onDeleteLetter={handleDeleteLetter}
               onExportCsv={handleExportCsv}
+              onNotify={notify}
+            />
+          )}
+
+          {activeTab === 'notifications' && currentUser?.role === 'ADMIN' && (
+            <AdminAuditNotificationsView
+              auditLogs={auditLogs}
+              currentUser={currentUser}
+              onRefresh={fetchData}
+              onClearLogs={async () => {
+                await db.clearAuditLogs();
+                await fetchData();
+              }}
               onNotify={notify}
             />
           )}

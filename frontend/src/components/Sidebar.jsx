@@ -18,6 +18,7 @@ import {
   FileWarning,
   ShieldAlert,
   UserMinus,
+  Activity,
   X
 } from 'lucide-react';
 import { canAccessLetters } from '../utils/permissions';
@@ -62,6 +63,7 @@ export default function Sidebar({
   }
 
   if (isAdmin) {
+    navItems.push({ id: 'notifications', label: 'Audit & Notifications', icon: Activity });
     navItems.push({ id: 'users', label: 'User Accounts', icon: KeyRound });
   }
 

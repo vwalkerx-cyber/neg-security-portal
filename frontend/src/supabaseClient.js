@@ -7,7 +7,24 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Helper for formatting dates
 const getTodayStr = () => new Date().toISOString().split('T')[0];
-const getNowIso = () => new Date().toISOString();
+// Helper for client IP address
+export const getClientIp = async () => {
+  try {
+    const cached = sessionStorage.getItem('neg_client_ip');
+    if (cached) return cached;
+    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ip) {
+        sessionStorage.setItem('neg_client_ip', data.ip);
+        return data.ip;
+      }
+    }
+  } catch {
+    // Fallback if network blocked
+  }
+  return 'Unknown IP';
+};
 
 // =========================================================================
 // AUTHENTICATION
@@ -34,9 +51,21 @@ export const loginUser = async (username, password) => {
     throw new Error('Security clearance account has been disbanded by High Command. Access denied.');
   }
 
-  const lastLogin = new Date().toISOString().replace('T', ' ').slice(0, 16);
+  const clientIp = await getClientIp();
+  const nowStamp = new Date().toISOString().replace('T', ' ').slice(0, 16);
+  const lastLogin = `${nowStamp} [${clientIp}]`;
   await supabase.from('users').update({ last_login: lastLogin }).eq('id', user.id);
   user.last_login = lastLogin;
+
+  // Record audit log for login
+  await logAuditEvent({
+    action: 'USER_LOGIN',
+    module: 'auth',
+    target: `${user.name} (${user.username})`,
+    user,
+    ip: clientIp,
+    details: `User authenticated into Security Portal from IP ${clientIp}`
+  }).catch(() => {});
 
   const token = `NEG-SUPABASE-${user.id}-${Date.now()}`;
   return {
@@ -1019,7 +1048,11 @@ export const deleteInfraction = async (id) => {
 
 // Tactical Operational Chat
 export const fetchChatMessages = async () => {
-  const { data, error } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true });
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .neq('channel', 'system-audit')
+    .order('created_at', { ascending: true });
   if (error) throw error;
   return data || [];
 };
@@ -1361,32 +1394,130 @@ export const rejectUser = async (userId, shouldDelete = true) => {
 };
 
 // =========================================================================
-// REALTIME SUBSCRIPTIONS
+// REALTIME SUBSCRIPTIONS & ADMIN AUDIT LOGS
 // =========================================================================
+
+export const logAuditEvent = async ({ action, module, target, user, ip, details = '' }) => {
+  try {
+    const clientIp = ip || (await getClientIp());
+    const actorName = user?.name || 'Authorized Officer';
+    const actorRank = user?.rank || 'Staff';
+    const actorRole = user?.role || 'OFFICER';
+    const actorId = user?.id || user?.personnel_id || 'SYS';
+
+    const payload = {
+      action,
+      module,
+      target,
+      details,
+      actor_id: actorId,
+      actor_name: actorName,
+      actor_rank: actorRank,
+      actor_role: actorRole,
+      ip_address: clientIp,
+      timestamp: getNowIso()
+    };
+
+    const record = {
+      id: `AUDIT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      sender_id: actorId,
+      sender_name: actorName,
+      sender_rank: actorRank,
+      sender_avatar: clientIp,
+      message: JSON.stringify(payload),
+      channel: 'system-audit',
+      created_at: getNowIso(),
+    };
+
+    const { data } = await supabase.from('chat_messages').insert(record).select().single();
+    return data;
+  } catch (err) {
+    console.warn('Failed to dispatch audit log:', err);
+    return null;
+  }
+};
+
+export const fetchAuditLogs = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('channel', 'system-audit')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+
+    return (data || []).map((row) => {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(row.message);
+      } catch {
+        parsed = {
+          action: 'RECORD_MODIFIED',
+          module: 'system',
+          target: row.sender_name || 'System',
+          details: row.message,
+          ip_address: row.sender_avatar || 'Unknown IP'
+        };
+      }
+      return {
+        id: row.id,
+        created_at: row.created_at,
+        sender_id: row.sender_id,
+        sender_name: row.sender_name,
+        sender_rank: row.sender_rank,
+        ip_address: parsed?.ip_address || row.sender_avatar || 'Unknown IP',
+        action: parsed?.action || 'UPDATED',
+        module: parsed?.module || 'system',
+        target: parsed?.target || '',
+        details: parsed?.details || row.message,
+        actor_role: parsed?.actor_role || ''
+      };
+    });
+  } catch (err) {
+    console.warn('Error fetching audit logs:', err);
+    return [];
+  }
+};
+
+export const clearAuditLogs = async () => {
+  try {
+    const { error } = await supabase.from('chat_messages').delete().eq('channel', 'system-audit');
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.warn('Error clearing audit logs:', err);
+    return false;
+  }
+};
 
 export const subscribeToRealtimeChanges = (onDataChanged) => {
   const channel = supabase
     .channel('neg-portal-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, () => {
-      onDataChanged?.('presence');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, (payload) => {
+      onDataChanged?.('presence', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'escort_missions' }, () => {
-      onDataChanged?.('escort');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'escort_missions' }, (payload) => {
+      onDataChanged?.('escort', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'personnel' }, () => {
-      onDataChanged?.('personnel');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'personnel' }, (payload) => {
+      onDataChanged?.('personnel', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'payroll' }, () => {
-      onDataChanged?.('payroll');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'payroll' }, (payload) => {
+      onDataChanged?.('payroll', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'armory' }, () => {
-      onDataChanged?.('armory');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'armory' }, (payload) => {
+      onDataChanged?.('armory', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'infractions' }, () => {
-      onDataChanged?.('infractions');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'infractions' }, (payload) => {
+      onDataChanged?.('infractions', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
-      onDataChanged?.('chat_messages');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'resignation_proposals' }, (payload) => {
+      onDataChanged?.('resignations', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+      onDataChanged?.('chat_messages', payload);
     })
     .subscribe();
 

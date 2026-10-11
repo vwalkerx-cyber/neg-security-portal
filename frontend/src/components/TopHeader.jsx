@@ -588,7 +588,43 @@ export default function TopHeader({
                 )}
               </div>
 
-              {allAnomalies.length > 0 && (
+              {isAdmin && (
+                <div style={{
+                  padding: '0.6rem 0.75rem',
+                  borderTop: '1px solid #1c2a42',
+                  backgroundColor: '#090e1a',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '0.72rem'
+                }}>
+                  <span style={{ color: '#94a3b8' }}>Realtime System Audit</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onNavigateTab) {
+                        onNavigateTab('notifications');
+                        setShowNotifications(false);
+                      }
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#38bdf8',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px'
+                    }}
+                  >
+                    <span>View Audit Logs & IP</span>
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
+              )}
+
+              {allAnomalies.length > 0 && !isAdmin && (
                 <div style={{
                   padding: '0.5rem 0.75rem',
                   borderTop: '1px solid #1c2a42',
@@ -597,7 +633,7 @@ export default function TopHeader({
                   color: '#94a3b8',
                   textAlign: 'center'
                 }}>
-                  {isAdmin ? 'Showing anomalies across all personnel and shifts.' : 'Showing anomalies assigned to your clearance.'}
+                  Showing anomalies assigned to your clearance.
                 </div>
               )}
             </div>

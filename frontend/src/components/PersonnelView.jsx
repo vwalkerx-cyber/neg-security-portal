@@ -1050,12 +1050,12 @@ export default function PersonnelView({
                         fontSize: '0.74rem',
                       }}>
                         {/* ID Card */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                             <CreditCard size={12} color="#38bdf8" />
                             <span>ID Card:</span>
                           </span>
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontFamily: 'monospace', color: p.id_card_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
                               {p.id_card_number || '—'}
                             </span>
@@ -1068,6 +1068,7 @@ export default function PersonnelView({
                                 backgroundColor: idStatus.bg,
                                 color: idStatus.color,
                                 border: `1px solid ${idStatus.border}`,
+                                whiteSpace: 'nowrap'
                               }}>
                                 {p.id_card_expiry}
                               </span>
@@ -1081,14 +1082,15 @@ export default function PersonnelView({
                                   background: 'rgba(56, 189, 248, 0.15)',
                                   border: '1px solid rgba(56, 189, 248, 0.35)',
                                   color: '#38bdf8',
-                                  padding: '2px 5px',
+                                  padding: '2px 6px',
                                   borderRadius: '4px',
                                   fontSize: '0.65rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
-                                  display: 'flex',
+                                  display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '3px',
+                                  flexShrink: 0
                                 }}
                               >
                                 <Eye size={10} />
@@ -1099,12 +1101,12 @@ export default function PersonnelView({
                         </div>
 
                         {/* Driving License */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                             <Car size={12} color="#10b981" />
                             <span>Driving Lic:</span>
                           </span>
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontFamily: 'monospace', color: p.driving_license_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
                               {p.driving_license_number || '—'}
                             </span>
@@ -1117,6 +1119,7 @@ export default function PersonnelView({
                                 backgroundColor: dlStatus.bg,
                                 color: dlStatus.color,
                                 border: `1px solid ${dlStatus.border}`,
+                                whiteSpace: 'nowrap'
                               }}>
                                 {p.driving_license_expiry}
                               </span>
@@ -1130,14 +1133,15 @@ export default function PersonnelView({
                                   background: 'rgba(16, 185, 129, 0.15)',
                                   border: '1px solid rgba(16, 185, 129, 0.35)',
                                   color: '#34d399',
-                                  padding: '2px 5px',
+                                  padding: '2px 6px',
                                   borderRadius: '4px',
                                   fontSize: '0.65rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
-                                  display: 'flex',
+                                  display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '3px',
+                                  flexShrink: 0
                                 }}
                               >
                                 <Eye size={10} />
@@ -1148,12 +1152,12 @@ export default function PersonnelView({
                         </div>
 
                         {/* DOJ Expungement Certificate */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                             <FileCheck size={12} color="#a855f7" />
-                            <span>DOJ Expungement:</span>
+                            <span>Expungement:</span>
                           </span>
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontFamily: 'monospace', color: p.expungement_letter_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
                               {p.expungement_letter_number || '—'}
                             </span>
@@ -1166,6 +1170,7 @@ export default function PersonnelView({
                                 backgroundColor: expStatus.bg,
                                 color: expStatus.color,
                                 border: `1px solid ${expStatus.border}`,
+                                whiteSpace: 'nowrap'
                               }}>
                                 {p.expungement_letter_expiry}
                               </span>
@@ -1179,14 +1184,15 @@ export default function PersonnelView({
                                   background: 'rgba(168, 85, 247, 0.15)',
                                   border: '1px solid rgba(168, 85, 247, 0.35)',
                                   color: '#c084fc',
-                                  padding: '2px 5px',
+                                  padding: '2px 6px',
                                   borderRadius: '4px',
                                   fontSize: '0.65rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
-                                  display: 'flex',
+                                  display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '3px',
+                                  flexShrink: 0
                                 }}
                               >
                                 <Eye size={10} />

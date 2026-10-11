@@ -20,14 +20,6 @@ import {
 } from 'lucide-react';
 import { canExportGeneralCsv, canApproveReinstatements } from '../utils/permissions';
 
-function DiscordIcon({ size = 16, color = "#5865F2" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.197.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" fill={color}/>
-    </svg>
-  );
-}
-
 export default function UserManagementView({ 
   users = [], 
   personnel = [],
@@ -52,8 +44,6 @@ export default function UserManagementView({
     rank: 'Officer I',
     role: 'OFFICER',
     status: 'Active',
-    discord_username: '',
-    discord_id: '',
     password: '',
   });
 
@@ -82,8 +72,6 @@ export default function UserManagementView({
     username: '',
     password: 'NegOfficer2026!',
     role: 'OFFICER',
-    discord_username: '',
-    discord_id: '',
   }));
 
   const [submitting, setSubmitting] = useState(false);
@@ -220,8 +208,6 @@ export default function UserManagementView({
         username: '',
         password: 'NegOfficer2026!',
         role: 'OFFICER',
-        discord_username: '',
-        discord_id: '',
       });
     } catch (err) {
       onNotify('Failed to provision user: ' + err.message);
@@ -238,8 +224,6 @@ export default function UserManagementView({
       rank: user.rank || 'Officer I',
       role: user.role || 'OFFICER',
       status: user.status || 'Active',
-      discord_username: user.discord_username || '',
-      discord_id: user.discord_id || '',
       password: '',
     });
     setShowEditModal(true);
@@ -256,8 +240,6 @@ export default function UserManagementView({
         rank: editFormData.rank,
         role: editFormData.role,
         status: editFormData.status,
-        discord_username: editFormData.discord_username,
-        discord_id: editFormData.discord_id,
       };
       if (editFormData.password.trim()) {
         payload.password = editFormData.password.trim();
@@ -294,7 +276,6 @@ export default function UserManagementView({
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (u.personnel_id && u.personnel_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (u.discord_username && u.discord_username.toLowerCase().includes(searchQuery.toLowerCase())) ||
       u.rank.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
@@ -535,14 +516,6 @@ export default function UserManagementView({
                       </div>
                     ) : null;
                   })()}
-                  {pu.discord_username ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <DiscordIcon size={14} color="#818cf8" />
-                      <span><strong>Discord:</strong> @{pu.discord_username} {pu.discord_id ? `(${pu.discord_id})` : ''}</span>
-                    </div>
-                  ) : (
-                    <div style={{ color: '#64748b' }}>No Discord handle provided</div>
-                  )}
                   <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Registered: {pu.created_at}</div>
                 </div>
 
@@ -970,7 +943,7 @@ export default function UserManagementView({
           <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Search accounts by officer name, username, rank, or Discord tag..."
+            placeholder="Search accounts by officer name, username, or rank..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -1019,13 +992,12 @@ export default function UserManagementView({
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
         position: 'relative'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', minWidth: '1050px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', minWidth: '950px' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
             <tr style={{ backgroundColor: '#0c121e', color: '#94a3b8', borderBottom: '1px solid #1c2a42', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>User ID</th>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Officer & Rank</th>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Username / Call-sign</th>
-              <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Discord Sync</th>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Access Role</th>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Account Status</th>
               <th style={{ padding: '0.85rem 1rem', backgroundColor: '#0c121e', position: 'sticky', top: 0, zIndex: 10 }}>Provisioned By</th>
@@ -1049,27 +1021,6 @@ export default function UserManagementView({
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', color: '#e2e8f0', fontWeight: 600 }}>
                       {u.username}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      {u.discord_username ? (
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          backgroundColor: 'rgba(88, 101, 242, 0.15)',
-                          border: '1px solid rgba(88, 101, 242, 0.3)',
-                          color: '#818cf8',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}>
-                          <DiscordIcon size={13} color="#818cf8" />
-                          <span>@{u.discord_username}</span>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Not Synced</span>
-                      )}
                     </td>
                     <td style={{ padding: '0.85rem 1rem', whiteSpace: 'nowrap' }}>
                       <span style={{
@@ -1503,51 +1454,6 @@ export default function UserManagementView({
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Discord Username / Tag
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. kikil"
-                    value={formData.discord_username}
-                    onChange={(e) => setFormData({ ...formData, discord_username: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem 0.75rem',
-                      borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Discord Snowflake ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 102938475618273645"
-                    value={formData.discord_id}
-                    onChange={(e) => setFormData({ ...formData, discord_id: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem 0.75rem',
-                      borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
                 <button
                   type="button"
@@ -1830,51 +1736,6 @@ export default function UserManagementView({
                     <option value="Inactive">Inactive</option>
                     <option value="Disbanded">Disbanded</option>
                   </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Discord Username / Tag
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. kikil"
-                    value={editFormData.discord_username}
-                    onChange={(e) => setEditFormData({ ...editFormData, discord_username: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem 0.75rem',
-                      borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                    Discord Snowflake ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 102938475618273645"
-                    value={editFormData.discord_id}
-                    onChange={(e) => setEditFormData({ ...editFormData, discord_id: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem 0.75rem',
-                      borderRadius: '8px',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      color: '#f8fafc',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                    }}
-                  />
                 </div>
               </div>
 

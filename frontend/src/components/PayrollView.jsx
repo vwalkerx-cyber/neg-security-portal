@@ -59,6 +59,8 @@ export default function PayrollView({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  const isAdmin = currentUser?.role === 'ADMIN';
+
   // Resolve the logged in user's matching personnel record
   const myPersonnel = React.useMemo(() => {
     if (!currentUser) return null;

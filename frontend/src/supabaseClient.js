@@ -85,7 +85,6 @@ export const registerUser = async (regData) => {
     license_certificate: regData.license_certificate || 'Standard Guard License',
     status: 'Pending',
     division: 'Unassigned',
-    phone_number: regData.phone_number || '',
     id_card_number: regData.id_card_number || '',
     id_card_expiry: regData.id_card_expiry || '',
     id_card_image: regData.id_card_image || '',
@@ -117,9 +116,8 @@ export const registerUser = async (regData) => {
     created_at: getNowIso(),
     created_by: 'Self Registration',
     last_login: '--',
-    phone_number: regData.phone_number || '',
     discord_id: regData.discord_id || '',
-    discord_username: regData.discord_username || '',
+    discord_username: regData.phone_number ? `TEL:${regData.phone_number}` : '',
     discord_avatar: regData.discord_avatar || '',
   };
 
@@ -197,40 +195,87 @@ export const fetchDashboardStats = async () => {
   };
 };
 
+// Personnel schema valid column filter to prevent schema cache errors
+const sanitizePersonnelPayload = (rec) => {
+  const allowed = [
+    'id', 'name', 'badge_id', 'rank', 'join_date', 'license_certificate',
+    'status', 'division', 'id_card_number', 'id_card_expiry',
+    'driving_license_number', 'driving_license_expiry',
+    'expungement_letter_number', 'expungement_letter_expiry',
+    'id_card_image', 'driving_license_image', 'expungement_letter_image',
+    'plate_riot_van', 'plate_patrol_motorcycle', 'plate_g500',
+    'plate_ioniq_4', 'plate_presidential_limo'
+  ];
+  const clean = {};
+  for (const k of allowed) {
+    if (rec[k] !== undefined) clean[k] = rec[k];
+  }
+  return clean;
+};
+
 export const fetchPersonnel = async () => {
   const { data, error } = await supabase.from('personnel').select('*').order('id', { ascending: true });
   if (error) throw error;
-  return data || [];
+  
+  // Also fetch users to hydrate phone_number seamlessly for roster display
+  const { data: usersData } = await supabase.from('users').select('id, personnel_id, name, discord_username');
+  const userMap = {};
+  (usersData || []).forEach((u) => {
+    let phone = '';
+    if (u.discord_username && u.discord_username.startsWith('TEL:')) {
+      phone = u.discord_username.replace(/^TEL:/, '');
+    }
+    if (u.personnel_id) userMap[u.personnel_id] = phone;
+    if (u.name) userMap[u.name.toLowerCase().trim()] = phone;
+  });
+
+  return (data || []).map((p) => ({
+    ...p,
+    phone_number: userMap[p.id] || userMap[p.name?.toLowerCase()?.trim()] || ''
+  }));
 };
 
 export const createPersonnel = async (record) => {
-  const { data, error } = await supabase.from('personnel').insert(record).select().single();
+  const clean = sanitizePersonnelPayload(record);
+  const { data, error } = await supabase.from('personnel').insert(clean).select().single();
   if (error) throw error;
-  return data;
+
+  // If phone_number provided, store in linked users table
+  if (record.phone_number !== undefined) {
+    const telValue = record.phone_number ? `TEL:${record.phone_number}` : '';
+    await supabase.from('users').update({ discord_username: telValue }).eq('personnel_id', data.id);
+  }
+
+  return { ...data, phone_number: record.phone_number || '' };
 };
 
 export const updatePersonnel = async (id, record) => {
-  const { data, error } = await supabase.from('personnel').update(record).eq('id', id).select().single();
+  const clean = sanitizePersonnelPayload(record);
+  const { data, error } = await supabase.from('personnel').update(clean).eq('id', id).select().single();
   if (error) throw error;
 
   // Cascade badge number and name changes to historical presence records
-  if (record.badge_id || record.name) {
+  if (clean.badge_id || clean.name) {
     const presenceUpdate = {};
-    if (record.badge_id) presenceUpdate.badge_id = record.badge_id;
-    if (record.name) presenceUpdate.name = record.name;
+    if (clean.badge_id) presenceUpdate.badge_id = clean.badge_id;
+    if (clean.name) presenceUpdate.name = clean.name;
     await supabase.from('presence').update(presenceUpdate).eq('personnel_id', id);
   }
 
-  // Also sync name, rank, status with users table linked to this personnel
+  // Also sync name, rank, status, and phone_number with users table linked to this personnel
   const userUpdate = {};
-  if (record.name) userUpdate.name = record.name;
-  if (record.rank) userUpdate.rank = record.rank;
-  if (record.status) userUpdate.status = record.status;
+  if (clean.name) userUpdate.name = clean.name;
+  if (clean.rank) userUpdate.rank = clean.rank;
+  if (clean.status) userUpdate.status = clean.status;
+  if (record.phone_number !== undefined) {
+    userUpdate.discord_username = record.phone_number ? `TEL:${record.phone_number}` : '';
+  }
+
   if (Object.keys(userUpdate).length > 0) {
     await supabase.from('users').update(userUpdate).eq('personnel_id', id);
   }
 
-  return data;
+  return { ...data, phone_number: record.phone_number || '' };
 };
 
 export const deletePersonnel = async (id) => {
@@ -1171,7 +1216,6 @@ export const createUser = async (userData) => {
       license_certificate: userData.license_certificate || 'Standard Guard License',
       status: userData.status || 'Active',
       division: userData.division || 'Unassigned',
-      phone_number: userData.phone_number || '',
       id_card_number: userData.id_card_number || '',
       id_card_expiry: userData.id_card_expiry || '',
       id_card_image: userData.id_card_image || '',
@@ -1203,9 +1247,8 @@ export const createUser = async (userData) => {
     created_at: getNowIso(),
     created_by: userData.created_by || 'High Command',
     last_login: '--',
-    phone_number: userData.phone_number || '',
     discord_id: userData.discord_id || '',
-    discord_username: userData.discord_username || '',
+    discord_username: userData.phone_number ? `TEL:${userData.phone_number}` : (userData.discord_username || ''),
     discord_avatar: userData.discord_avatar || ''
   };
 

@@ -846,7 +846,7 @@ export default function PersonnelView({
                     {p.status}
                   </span>
 
-                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                     {/* View Dossier Slide-out Button (Improvement #11) */}
                     <button
                       type="button"
@@ -861,12 +861,13 @@ export default function PersonnelView({
                         borderRadius: '6px',
                         color: '#60a5fa',
                         cursor: 'pointer',
-                        padding: '2px 6px',
+                        padding: '3px 8px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '3px',
+                        gap: '4px',
                         fontSize: '0.72rem',
                         fontWeight: 600,
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       <User size={13} />
@@ -875,50 +876,32 @@ export default function PersonnelView({
 
                     {(isAdmin || isOwnRecord(p)) && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditModal(p);
                         }}
                         title={isAdmin ? "Edit Roster Record" : "Edit My Roster & Credentials"}
                         style={{
-                          background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.15)' : 'none',
-                          border: !isAdmin && isOwnRecord(p) ? '1px solid rgba(56, 189, 248, 0.35)' : 'none',
+                          background: !isAdmin && isOwnRecord(p) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.1)',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
                           borderRadius: '6px',
                           color: '#38bdf8',
                           cursor: 'pointer',
-                          padding: !isAdmin && isOwnRecord(p) ? '2px 6px' : '3px',
+                          padding: '3px 8px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '3px',
+                          gap: '4px',
                           fontSize: '0.72rem',
                           fontWeight: 600,
+                          transition: 'all 0.15s ease'
                         }}
                       >
                         <Edit2 size={13} />
-                        {!isAdmin && isOwnRecord(p) && <span>Edit</span>}
+                        <span>Edit</span>
                       </button>
                     )}
-                      {isAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(p);
-                          }}
-                          title="Delete Roster Record"
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#f87171',
-                            cursor: 'pointer',
-                            padding: '3px',
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
+                  </div>
 
                   {/* Minimize / Expand Toggle Button */}
                   <button
@@ -2548,7 +2531,7 @@ export default function PersonnelView({
               </div>
 
               {/* Action Buttons in Dossier Footer */}
-              <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+              <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
                 {(isAdmin || isOwnRecord(activeDossier)) && (
                   <button
                     type="button"
@@ -2558,7 +2541,7 @@ export default function PersonnelView({
                       openEditModal(target);
                     }}
                     style={{
-                      flex: 1,
+                      flex: 1.2,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       backgroundColor: '#2563eb',
@@ -2574,9 +2557,40 @@ export default function PersonnelView({
                     }}
                   >
                     <Edit2 size={14} />
-                    <span>Edit Profile & Credentials</span>
+                    <span>Edit Profile</span>
                   </button>
                 )}
+
+                {/* Admin Discharge / Deletion Button (Moved to Dossier) */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = activeDossier;
+                      setActiveDossier(null);
+                      handleDelete(target);
+                    }}
+                    title="Discharge and remove officer from roster"
+                    style={{
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      color: '#f87171',
+                      fontWeight: 700,
+                      fontSize: '0.825rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    <span>Discharge</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setActiveDossier(null)}

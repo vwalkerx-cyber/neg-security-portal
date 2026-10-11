@@ -9,6 +9,30 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const getTodayStr = () => new Date().toISOString().split('T')[0];
 export const getNowIso = () => new Date().toISOString();
 
+// Helper to reliably compute next ID with prefix (e.g. USR-001, NEG-001) without collision
+export const getNextPrefixedId = (items = [], prefix = 'NEG-', padLength = 3) => {
+  let maxNum = 0;
+  const existingSet = new Set();
+  for (const item of items) {
+    const id = typeof item === 'string' ? item : item?.id;
+    if (!id || typeof id !== 'string') continue;
+    existingSet.add(id);
+    if (id.startsWith(prefix)) {
+      const numPart = parseInt(id.slice(prefix.length), 10);
+      if (!isNaN(numPart) && numPart > maxNum) {
+        maxNum = numPart;
+      }
+    }
+  }
+  let nextNum = maxNum + 1;
+  let candidate = `${prefix}${String(nextNum).padStart(padLength, '0')}`;
+  while (existingSet.has(candidate)) {
+    nextNum++;
+    candidate = `${prefix}${String(nextNum).padStart(padLength, '0')}`;
+  }
+  return candidate;
+};
+
 // Helper for client IP address
 export const getClientIp = async () => {
   try {
@@ -102,10 +126,16 @@ export const registerUser = async (regData) => {
     throw new Error(`Username '${cleanUsername}' is already taken. Please choose another.`);
   }
 
-  const { data: allUsers } = await supabase.from('users').select('id');
-  const userNum = (allUsers?.length || 0) + 1;
-  const userId = `USR-${String(userNum).padStart(3, '0')}`;
-  const personnelId = `NEG-${String(userNum).padStart(3, '0')}`;
+  const [usersRes, personnelRes] = await Promise.all([
+    supabase.from('users').select('id'),
+    supabase.from('personnel').select('id')
+  ]);
+
+  const allUsers = usersRes.data || [];
+  const allPersonnel = personnelRes.data || [];
+
+  const userId = getNextPrefixedId(allUsers, 'USR-', 3);
+  const personnelId = getNextPrefixedId(allPersonnel, 'NEG-', 3);
 
   const personnelRecord = {
     id: personnelId,
@@ -153,7 +183,11 @@ export const registerUser = async (regData) => {
   };
 
   const { error: uErr } = await supabase.from('users').insert(userRecord);
-  if (uErr) throw new Error('Failed to create account: ' + uErr.message);
+  if (uErr) {
+    // Rollback the personnel profile so we don't leave an orphan record
+    await supabase.from('personnel').delete().eq('id', personnelId);
+    throw new Error('Failed to create account: ' + uErr.message);
+  }
 
   return {
     success: true,
@@ -1423,20 +1457,18 @@ export const createUser = async (userData) => {
   }
 
   const { data: allUsers } = await supabase.from('users').select('id');
-  const userNum = (allUsers?.length || 0) + 1;
-  const newUserId = `USR-${String(userNum).padStart(3, '0')}`;
+  const newUserId = getNextPrefixedId(allUsers || [], 'USR-', 3);
   let personnelId = userData.personnel_id;
 
   // If no personnel_id provided and officer information is filled, create a personnel roster entry
   if (!personnelId && (userData.name || userData.badge_id)) {
     const { data: allPersonnel } = await supabase.from('personnel').select('id');
-    const pNum = (allPersonnel?.length || 0) + 1;
-    personnelId = `NEG-${String(pNum).padStart(3, '0')}`;
+    personnelId = getNextPrefixedId(allPersonnel || [], 'NEG-', 3);
 
     const personnelRecord = {
       id: personnelId,
       name: userData.name || cleanUsername,
-      badge_id: userData.badge_id || `NEG-B-${pNum}`,
+      badge_id: userData.badge_id || `NEG-B-${personnelId.replace('NEG-', '')}`,
       rank: userData.rank || 'Officer I',
       join_date: userData.join_date || getTodayStr(),
       license_certificate: userData.license_certificate || 'Standard Guard License',

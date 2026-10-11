@@ -105,7 +105,7 @@ export default function OverviewDashboard({
     const timeA = new Date(a.created_at || 0).getTime();
     const timeB = new Date(b.created_at || 0).getTime();
     if (timeB !== timeA) return timeB - timeA;
-    return (b.id || '').localeCompare(a.id || '');
+    return (Number(b.id) || 0) - (Number(a.id) || 0) || String(b.id || '').localeCompare(String(a.id || ''));
   });
 
   // Real-Time Operational Activity Log stream (#13)

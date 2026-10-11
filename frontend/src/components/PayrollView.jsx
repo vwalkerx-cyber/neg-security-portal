@@ -137,10 +137,14 @@ export default function PayrollView({
   // Sorting
   const sortedPayroll = [...filteredPayroll].sort((a, b) => {
     if (sortBy === 'date_desc') {
-      return (b.salary_date || '').localeCompare(a.salary_date || '') || (b.id || '').localeCompare(a.id || '');
+      const dateCmp = String(b.salary_date || '').localeCompare(String(a.salary_date || ''));
+      if (dateCmp !== 0) return dateCmp;
+      return (Number(b.id) || 0) - (Number(a.id) || 0) || String(b.id || '').localeCompare(String(a.id || ''));
     }
     if (sortBy === 'date_asc') {
-      return (a.salary_date || '').localeCompare(b.salary_date || '') || (a.id || '').localeCompare(b.id || '');
+      const dateCmp = String(a.salary_date || '').localeCompare(String(b.salary_date || ''));
+      if (dateCmp !== 0) return dateCmp;
+      return (Number(a.id) || 0) - (Number(b.id) || 0) || String(a.id || '').localeCompare(String(b.id || ''));
     }
     if (sortBy === 'salary_desc') {
       return Number(b.salary || 0) - Number(a.salary || 0);
@@ -149,7 +153,7 @@ export default function PayrollView({
       return Number(a.salary || 0) - Number(b.salary || 0);
     }
     if (sortBy === 'name_asc') {
-      return (a.name || '').localeCompare(b.name || '');
+      return String(a.name || '').localeCompare(String(b.name || ''));
     }
     return 0;
   });

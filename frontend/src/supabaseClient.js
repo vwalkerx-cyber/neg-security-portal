@@ -1495,6 +1495,9 @@ export const clearAuditLogs = async () => {
 export const subscribeToRealtimeChanges = (onDataChanged) => {
   const channel = supabase
     .channel('neg-portal-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
+      onDataChanged?.('users', payload);
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, (payload) => {
       onDataChanged?.('presence', payload);
     })

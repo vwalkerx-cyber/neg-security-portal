@@ -106,6 +106,10 @@ export default function AdminAuditNotificationsView({
       bg = 'rgba(16, 185, 129, 0.15)';
       color = '#34d399';
       border = 'rgba(16, 185, 129, 0.35)';
+    } else if (act.includes('PASSWORD') || act.includes('KEY') || act.includes('CLEARANCE')) {
+      bg = 'rgba(168, 85, 247, 0.15)';
+      color = '#c084fc';
+      border = 'rgba(168, 85, 247, 0.35)';
     } else if (act.includes('UPDATE') || act.includes('EDIT') || act.includes('STATUS')) {
       bg = 'rgba(245, 158, 11, 0.15)';
       color = '#fbbf24';

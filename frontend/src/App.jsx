@@ -760,44 +760,108 @@ export default function App() {
   // User Management handlers (Admin only)
   const handleCreateUser = async (userData) => {
     await db.createUser(userData);
+    await db.logAuditEvent({
+      action: 'USER_CREATED',
+      module: 'users',
+      target: userData.username || userData.name || 'New User',
+      user: currentUser,
+      details: `Created new user account "${userData.username || userData.name}" (Role: ${userData.role || 'OFFICER'})`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleUpdateUser = async (userId, userData) => {
+    const targetUser = users.find(u => u.id === userId);
     const updated = await db.updateUser(userId, userData);
     if (currentUser && currentUser.id === userId && updated) {
       const mergedUser = { ...currentUser, ...updated };
       setCurrentUser(mergedUser);
       sessionStorage.setItem('neg_user', JSON.stringify(mergedUser));
     }
+    const targetLabel = updated?.username || targetUser?.username || userId;
+    await db.logAuditEvent({
+      action: userData.password ? 'USER_PASSWORD_UPDATED' : 'USER_UPDATED',
+      module: 'users',
+      target: targetLabel,
+      user: currentUser,
+      details: userData.password
+        ? `Updated account credentials & details for ${targetLabel}`
+        : `Updated account details for ${targetLabel}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleToggleUserStatus = async (userId) => {
-    await db.toggleUserStatus(userId);
+    const targetUser = users.find(u => u.id === userId);
+    const toggled = await db.toggleUserStatus(userId);
+    const targetLabel = toggled?.username || targetUser?.username || userId;
+    await db.logAuditEvent({
+      action: 'USER_STATUS_TOGGLED',
+      module: 'users',
+      target: targetLabel,
+      user: currentUser,
+      details: `Account status set to ${toggled?.status || 'toggled'} for ${targetLabel}`
+    }).catch(() => {});
     await fetchData();
   };
 
   const handleResetPassword = async (userId, newPassword) => {
+    const targetUser = users.find(u => u.id === userId);
+    const targetLabel = targetUser?.username || targetUser?.name || userId;
     await db.resetPassword(userId, newPassword);
+    await db.logAuditEvent({
+      action: 'PASSWORD_RESET',
+      module: 'users',
+      target: targetLabel,
+      user: currentUser,
+      details: `Administrator ${currentUser?.name || 'Admin'} reset login password for user ${targetLabel}`
+    }).catch(() => {});
     notify('Password reset successfully.');
+    await fetchData();
   };
 
   const handleChangePassword = async (newPassword, currentPassword = null) => {
     if (!currentUser?.id) throw new Error('No active user session found.');
     await db.changePassword(currentUser.id, currentPassword, newPassword);
+    const userLabel = currentUser.username || currentUser.name || 'Current User';
+    await db.logAuditEvent({
+      action: 'PASSWORD_CHANGED',
+      module: 'auth',
+      target: userLabel,
+      user: currentUser,
+      details: `User ${userLabel} successfully updated their login password`
+    }).catch(() => {});
     notify('Password updated successfully.');
+    await fetchData();
     return true;
   };
 
   const handleApproveUser = async (userId, assignmentData) => {
+    const targetUser = users.find(u => u.id === userId);
+    const targetLabel = targetUser?.username || targetUser?.name || userId;
     await db.approveUser(userId, assignmentData);
+    await db.logAuditEvent({
+      action: 'USER_APPROVED',
+      module: 'users',
+      target: targetLabel,
+      user: currentUser,
+      details: `Approved registration and activated clearance for ${targetLabel}`
+    }).catch(() => {});
     notify('Security clearance approved! User profile and operational assignment activated.');
     await fetchData();
   };
 
   const handleRejectUser = async (userId) => {
+    const targetUser = users.find(u => u.id === userId);
+    const targetLabel = targetUser?.username || targetUser?.name || userId;
     await db.rejectUser(userId, true);
+    await db.logAuditEvent({
+      action: 'USER_REJECTED',
+      module: 'users',
+      target: targetLabel,
+      user: currentUser,
+      details: `Declined and removed clearance application for ${targetLabel}`
+    }).catch(() => {});
     notify('Clearance registration declined and removed.');
     await fetchData();
   };

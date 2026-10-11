@@ -1050,13 +1050,20 @@ export default function PersonnelView({
                         fontSize: '0.74rem',
                       }}>
                         {/* ID Card */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, minWidth: '105px' }}>
                             <CreditCard size={12} color="#38bdf8" />
                             <span>ID Card:</span>
                           </span>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: 'monospace', color: p.id_card_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontFamily: 'monospace',
+                              color: p.id_card_number ? '#f8fafc' : '#64748b',
+                              fontWeight: 600,
+                              textAlign: 'right',
+                              wordBreak: 'break-word',
+                              lineHeight: 1.25
+                            }}>
                               {p.id_card_number || '—'}
                             </span>
                             {p.id_card_expiry && (
@@ -1068,7 +1075,8 @@ export default function PersonnelView({
                                 backgroundColor: idStatus.bg,
                                 color: idStatus.color,
                                 border: `1px solid ${idStatus.border}`,
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
                               }}>
                                 {p.id_card_expiry}
                               </span>
@@ -1101,13 +1109,20 @@ export default function PersonnelView({
                         </div>
 
                         {/* Driving License */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, minWidth: '105px' }}>
                             <Car size={12} color="#10b981" />
                             <span>Driving Lic:</span>
                           </span>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: 'monospace', color: p.driving_license_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontFamily: 'monospace',
+                              color: p.driving_license_number ? '#f8fafc' : '#64748b',
+                              fontWeight: 600,
+                              textAlign: 'right',
+                              wordBreak: 'break-word',
+                              lineHeight: 1.25
+                            }}>
                               {p.driving_license_number || '—'}
                             </span>
                             {p.driving_license_expiry && (
@@ -1119,7 +1134,8 @@ export default function PersonnelView({
                                 backgroundColor: dlStatus.bg,
                                 color: dlStatus.color,
                                 border: `1px solid ${dlStatus.border}`,
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
                               }}>
                                 {p.driving_license_expiry}
                               </span>
@@ -1152,13 +1168,20 @@ export default function PersonnelView({
                         </div>
 
                         {/* DOJ Expungement Certificate */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, minWidth: '105px' }}>
                             <FileCheck size={12} color="#a855f7" />
                             <span>Expungement:</span>
                           </span>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: 'monospace', color: p.expungement_letter_number ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontFamily: 'monospace',
+                              color: p.expungement_letter_number ? '#f8fafc' : '#64748b',
+                              fontWeight: 600,
+                              textAlign: 'right',
+                              wordBreak: 'break-word',
+                              lineHeight: 1.25
+                            }}>
                               {p.expungement_letter_number || '—'}
                             </span>
                             {p.expungement_letter_expiry && (
@@ -1170,7 +1193,8 @@ export default function PersonnelView({
                                 backgroundColor: expStatus.bg,
                                 color: expStatus.color,
                                 border: `1px solid ${expStatus.border}`,
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
                               }}>
                                 {p.expungement_letter_expiry}
                               </span>

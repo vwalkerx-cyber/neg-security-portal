@@ -8,13 +8,10 @@ import {
   Download,
   Edit2,
   Trash2,
-  Database,
   Network,
   CreditCard,
   Car,
   FileCheck,
-  Calendar,
-  AlertTriangle,
   Upload,
   Image as ImageIcon,
   Eye,
@@ -26,7 +23,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   ShieldX,
-  Filter,
   Lock,
   Phone,
   Copy,
@@ -56,8 +52,6 @@ const getExpiryStatus = (dateStr) => {
   }
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
-
 export const DEPARTMENT_VEHICLES = [
   { key: 'plate_riot_van', label: 'Armored Riot Van', short: 'Armored Riot Van', color: '#ef4444' },
   { key: 'plate_patrol_motorcycle', label: 'Patrol Motorcycle', short: 'Patrol Motorcycle', color: '#06b6d4' },
@@ -68,7 +62,7 @@ export const DEPARTMENT_VEHICLES = [
 
 export default function PersonnelView({ 
   personnel = [], 
-  presence = [],
+  presence: _presence = [],
   infractionsData = { summaries: [] },
   currentUser,
   onAddPersonnel, 

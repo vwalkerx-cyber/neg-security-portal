@@ -2,23 +2,18 @@ import React, { useState } from 'react';
 import { 
   ShieldAlert, 
   AlertTriangle, 
-  Award, 
   Plus, 
   Search, 
   Download, 
   FileWarning, 
   Trash2, 
   CheckCircle, 
-  Clock, 
   BookOpen, 
   ShieldCheck, 
   User, 
-  Sparkles,
-  Layers,
-  ArrowRight,
-  TrendingUp,
-  X,
-  Filter
+  Sparkles, 
+  Layers, 
+  X 
 } from 'lucide-react';
 import { canViewAllInfractions, canExportGeneralCsv } from '../utils/permissions';
 
@@ -68,10 +63,35 @@ export default function InfractionPointsView({
 
   const [submitting, setSubmitting] = useState(false);
 
-  const infractionsList = infractionsData?.infractions || [];
-  const summariesList = infractionsData?.summaries || [];
-  const mySummary = infractionsData?.my_summary;
+  const rawInfractionsList = infractionsData?.infractions || [];
+  const rawSummariesList = infractionsData?.summaries || [];
   const catalog = infractionsData?.catalog || [];
+
+  // Identify the current user's personnel profile
+  const myPersonnel = personnel.find(p => 
+    (currentUser?.personnel_id && p.id === currentUser.personnel_id) ||
+    (currentUser?.id && p.id === currentUser.id) ||
+    (currentUser?.name && p.name && p.name.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+    (currentUser?.badge_id && p.badge_id && p.badge_id.toLowerCase().trim() === currentUser.badge_id.toLowerCase().trim())
+  );
+
+  const myPersonnelId = myPersonnel?.id || currentUser?.personnel_id || currentUser?.id;
+
+  // Accurately resolve mySummary
+  const mySummary = rawSummariesList.find(s => 
+    (myPersonnelId && s.personnel_id === myPersonnelId) ||
+    (currentUser?.name && s.name && s.name.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+    (currentUser?.badge_id && s.badge_id && s.badge_id.toLowerCase().trim() === currentUser.badge_id.toLowerCase().trim())
+  ) || infractionsData?.my_summary;
+
+  // Strict scope filtering: Non-admins ONLY ever see their own infraction records
+  const myInfractionsList = rawInfractionsList.filter(inf => 
+    (myPersonnelId && inf.personnel_id === myPersonnelId) ||
+    (currentUser?.name && inf.recipient_name && inf.recipient_name.toLowerCase().trim() === currentUser.name.toLowerCase().trim())
+  );
+
+  const infractionsList = isAdminView ? rawInfractionsList : myInfractionsList;
+  const summariesList = isAdminView ? rawSummariesList : (mySummary ? [mySummary] : []);
 
   // Helper for threshold badge
   const renderThresholdBadge = (threshold) => {

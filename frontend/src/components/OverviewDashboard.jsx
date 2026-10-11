@@ -60,18 +60,24 @@ export default function OverviewDashboard({
   const suspensionDismissalCount = summaries.filter(s => (s.active_points || 0) >= 21).length;
   const flaggedPersonnel = summaries.filter(s => (s.active_points || 0) > 0).sort((a, b) => b.active_points - a.active_points);
 
-  const mySummary = infractionsData?.my_summary;
+  const myPersonnelId = currentUser?.personnel_id || currentUser?.id;
+  const mySummary = summaries.find(s => 
+    (myPersonnelId && s.personnel_id === myPersonnelId) ||
+    (currentUser?.name && s.name && s.name.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+    (currentUser?.badge_id && s.badge_id && s.badge_id.toLowerCase().trim() === currentUser.badge_id.toLowerCase().trim())
+  ) || infractionsData?.my_summary;
+
   const myActivePoints = mySummary?.active_points ?? 0;
-  const myLifetimePoints = mySummary?.lifetime_points ?? 0;
-  const myForgivenPoints = mySummary?.forgiven_points ?? 0;
-  const myThreshold = mySummary?.threshold || {
+  const myLifetimePoints = mySummary?.lifetime_points ?? (mySummary?.total_records ?? 0);
+  const myForgivenPoints = mySummary?.forgiven_points ?? (mySummary?.decayed_records_count ?? 0);
+  const myThreshold = mySummary?.threshold || mySummary?.threshold_info || {
     tier: 0,
     status_label: 'Exemplary Standing',
     action_summary: 'Clean disciplinary record',
     badge_color: '#10b981',
     badge_bg: 'rgba(16, 185, 129, 0.15)'
   };
-  const pointsGaugePercent = Math.min(100, Math.round((myActivePoints / 30) * 100));
+  const pointsGaugePercent = Math.min(100, Math.round((myActivePoints / 15) * 100));
 
   const handleChatSubmit = async (e) => {
     e?.preventDefault();
@@ -1370,7 +1376,7 @@ export default function OverviewDashboard({
                   lineHeight: 1.1,
                   marginTop: '4px'
                 }}>
-                  {myActivePoints} <span style={{ fontSize: '1rem', fontWeight: 600, color: '#94a3b8' }}>/ 30 PTS</span>
+                  {myActivePoints} <span style={{ fontSize: '1rem', fontWeight: 600, color: '#94a3b8' }}>/ 15 PTS</span>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
                   Lifetime: {myLifetimePoints} pts • Decayed/Forgiven: {myForgivenPoints} pts

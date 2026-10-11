@@ -15,10 +15,8 @@ import ResignationProposalsView from './components/ResignationProposalsView';
 import UserManagementView from './components/UserManagementView';
 import LoginView from './components/LoginView';
 import { CheckCircle2, Clock, AlertTriangle, LogOut } from 'lucide-react';
-import { getRankSeniority, canExportGeneralCsv, canExportPayrollCsv, canAccessLetters } from './utils/permissions';
+import { getRankSeniority, canExportGeneralCsv, canExportPayrollCsv, canAccessLetters, canViewAllInfractions } from './utils/permissions';
 import * as db from './supabaseClient';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
 const VALID_TABS = [
   'overview',
@@ -159,11 +157,6 @@ export default function App() {
     };
   }, []);
 
-  const authHeaders = () => ({
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${sessionStorage.getItem('neg_token') || ''}`,
-  });
-
   const notify = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
@@ -262,7 +255,7 @@ export default function App() {
         db.fetchEscortMissions().catch(() => []),
         db.fetchVehicles().catch(() => []),
         db.fetchTraining().catch(() => []),
-        db.fetchInfractions().catch(() => ({ is_admin_view: false, infractions: [], summaries: [], my_summary: null, catalog: [] })),
+        db.fetchInfractions(currentUser).catch(() => ({ is_admin_view: false, infractions: [], summaries: [], my_summary: null, catalog: [] })),
         db.fetchChatMessages().catch(() => []),
         db.fetchResignations().catch(() => []),
         canAccessLetters(currentUser) ? db.fetchDisciplinaryLetters().catch(() => []) : Promise.resolve([]),
@@ -343,7 +336,7 @@ export default function App() {
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
       // Realtime subscription via Supabase Channels (Improvement #21)
-      const unsubscribeRealtime = db.subscribeToRealtimeChanges((table) => {
+      const unsubscribeRealtime = db.subscribeToRealtimeChanges((_table) => {
         // Fast refresh when any operational table updates in Supabase
         fetchData();
       });
@@ -441,28 +434,6 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentUser, setActiveTab]);
-
-  const parseErrorMessage = async (res, fallback) => {
-    try {
-      const data = await res.json();
-      if (!data) return fallback;
-      if (typeof data.detail === 'string') return data.detail;
-      if (Array.isArray(data.detail)) {
-        return data.detail
-          .map((d) => {
-            const loc = Array.isArray(d.loc) ? d.loc.slice(1).join('.') : (d.loc || '');
-            return loc ? `${loc}: ${d.msg}` : d.msg;
-          })
-          .join(', ');
-      }
-      if (typeof data.detail === 'object' && data.detail !== null) {
-        return JSON.stringify(data.detail);
-      }
-      return data.message || fallback;
-    } catch {
-      return fallback;
-    }
-  };
 
   // Presence handlers
   const handleLogPresence = async (data) => {
@@ -783,6 +754,19 @@ export default function App() {
       else if (targetModule === 'escort') data = escort;
       else if (targetModule === 'vehicles') data = vehicles;
       else if (targetModule === 'training') data = training;
+      else if (targetModule === 'infractions') {
+        const isAdmin = canViewAllInfractions(currentUser);
+        const allInfractions = infractionsData?.infractions || [];
+        if (isAdmin) {
+          data = allInfractions;
+        } else {
+          const myPid = currentUser?.personnel_id || currentUser?.id;
+          data = allInfractions.filter((inf) => 
+            (myPid && inf.personnel_id === myPid) ||
+            (currentUser?.name && inf.recipient_name && inf.recipient_name.toLowerCase().trim() === currentUser.name.toLowerCase().trim())
+          );
+        }
+      }
 
       if (!data || data.length === 0) {
         notify(`No records found to export for ${targetModule}.`);
@@ -1140,7 +1124,7 @@ export default function App() {
               onUpdateStatus={handleUpdateInfractionStatus}
               onDeleteInfraction={handleDeleteInfraction}
               onExportCsv={handleExportCsv}
-              onOpenLetterWithPersonnel={(pid) => {
+              onOpenLetterWithPersonnel={(_pid) => {
                 if (canAccessLetters(currentUser)) {
                   setActiveTab('letters');
                 } else {

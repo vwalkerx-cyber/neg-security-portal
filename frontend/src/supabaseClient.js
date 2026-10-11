@@ -943,7 +943,7 @@ export const getInfractionThresholdInfo = (activePoints) => {
 };
 
 // Infractions
-export const fetchInfractions = async () => {
+export const fetchInfractions = async (currentUser = null) => {
   const [infRes, pRes] = await Promise.all([
     supabase.from('infractions').select('*').order('id', { ascending: false }),
     supabase.from('personnel').select('id, name, badge_id, rank, status, division')
@@ -974,11 +974,22 @@ export const fetchInfractions = async () => {
     };
   });
 
+  // Accurately locate current user's summary
+  let userSummary = null;
+  if (currentUser) {
+    userSummary = summaries.find(s => 
+      (currentUser.personnel_id && s.personnel_id === currentUser.personnel_id) ||
+      (currentUser.id && s.personnel_id === currentUser.id) ||
+      (currentUser.name && s.name && s.name.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+      (currentUser.badge_id && s.badge_id && s.badge_id.toLowerCase().trim() === currentUser.badge_id.toLowerCase().trim())
+    ) || null;
+  }
+
   return {
     is_admin_view: true,
     infractions,
     summaries,
-    my_summary: summaries[0] || null,
+    my_summary: userSummary || summaries[0] || null,
     catalog: STANDARD_INFRACTION_CATALOG
   };
 };

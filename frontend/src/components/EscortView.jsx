@@ -763,30 +763,47 @@ export default function EscortView({
                     <Navigation size={14} color="#10b981" style={{ marginTop: '2px', flexShrink: 0 }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1 }}>
                       <span>Destination Route:</span>
-                      {m.destinations && m.destinations.length > 1 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                          {m.destinations.map((dst, i) => (
-                            <React.Fragment key={i}>
-                              <span style={{
-                                backgroundColor: '#111928',
-                                border: '1px solid #1c2a42',
-                                color: '#60a5fa',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                              }}>
-                                {i + 1}. {dst}
-                              </span>
-                              {i < m.destinations.length - 1 && (
-                                <span style={{ color: '#64748b', fontSize: '0.75rem' }}>→</span>
-                              )}
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      ) : (
-                        <strong style={{ color: '#f1f5f9' }}>{m.destination}</strong>
-                      )}
+                      {(() => {
+                        let routeList = [];
+                        if (Array.isArray(m.destinations) && m.destinations.length > 0) {
+                          routeList = m.destinations;
+                        } else if (m.destinations_json) {
+                          try {
+                            const parsed = typeof m.destinations_json === 'string' ? JSON.parse(m.destinations_json) : m.destinations_json;
+                            if (Array.isArray(parsed) && parsed.length > 0) routeList = parsed;
+                          } catch {}
+                        }
+                        if (routeList.length === 0 && m.destination) {
+                          routeList = m.destination.split(' → ').map(s => s.trim()).filter(Boolean);
+                        }
+
+                        if (routeList.length > 1) {
+                          return (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                              {routeList.map((dst, i) => (
+                                <React.Fragment key={i}>
+                                  <span style={{
+                                    backgroundColor: '#111928',
+                                    border: '1px solid #1c2a42',
+                                    color: '#60a5fa',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                  }}>
+                                    {i + 1}. {dst}
+                                  </span>
+                                  {i < routeList.length - 1 && (
+                                    <span style={{ color: '#64748b', fontSize: '0.75rem' }}>→</span>
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          );
+                        }
+
+                        return <strong style={{ color: '#f1f5f9' }}>{routeList[0] || m.destination || 'Undisclosed'}</strong>;
+                      })()}
                     </div>
                   </div>
                 </div>

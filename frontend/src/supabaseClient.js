@@ -34,15 +34,25 @@ export const getNextPrefixedId = (items = [], prefix = 'NEG-', padLength = 3) =>
 };
 
 // Helper for client IP address
+let memoryCachedIp = null;
 export const getClientIp = async () => {
+  if (memoryCachedIp) return memoryCachedIp;
   try {
-    const cached = sessionStorage.getItem('neg_client_ip');
-    if (cached) return cached;
-    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) });
+    const cached = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('neg_client_ip') : null;
+    if (cached) {
+      memoryCachedIp = cached;
+      return cached;
+    }
+  } catch {}
+
+  // Fetch in background or quick 1s timeout
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(1000) });
     if (res.ok) {
       const data = await res.json();
       if (data.ip) {
-        sessionStorage.setItem('neg_client_ip', data.ip);
+        memoryCachedIp = data.ip;
+        try { sessionStorage.setItem('neg_client_ip', data.ip); } catch {}
         return data.ip;
       }
     }
@@ -834,32 +844,52 @@ export const restockDepotStockpile = async ({ item_type, item, quantity, mode })
 };
 
 // Escort Missions
+export const parseEscortMissionRecord = (d) => {
+  if (!d) return d;
+  let destinations = [];
+  if (d.destinations_json) {
+    try {
+      const parsed = typeof d.destinations_json === 'string' ? JSON.parse(d.destinations_json) : d.destinations_json;
+      if (Array.isArray(parsed) && parsed.length > 0) destinations = parsed;
+    } catch {}
+  }
+  if (destinations.length === 0 && d.destination) {
+    destinations = d.destination.split(' → ').map(s => s.trim()).filter(Boolean);
+  }
+  if (destinations.length === 0) {
+    destinations = [d.destination || 'Undisclosed'];
+  }
+
+  let assigned_personnel = [];
+  if (d.assigned_personnel_json) {
+    try {
+      const parsed = typeof d.assigned_personnel_json === 'string' ? JSON.parse(d.assigned_personnel_json) : d.assigned_personnel_json;
+      if (Array.isArray(parsed) && parsed.length > 0) assigned_personnel = parsed;
+    } catch {}
+  }
+  if (assigned_personnel.length === 0 && d.lead_agent) {
+    assigned_personnel = [d.lead_agent];
+  }
+
+  let cleanNotes = d.notes || '';
+  let screenshot = '';
+  const match = cleanNotes.match(/\[SCREENSHOT:([\s\S]*?)\]/);
+  if (match) {
+    screenshot = match[1];
+    cleanNotes = cleanNotes.replace(/\[SCREENSHOT:[\s\S]*?\]/, '').trim();
+  }
+  return { ...d, destinations, assigned_personnel, screenshot, notes: cleanNotes };
+};
+
 export const fetchEscortMissions = async () => {
   const { data, error } = await supabase.from('escort_missions').select('*').order('id', { ascending: false });
   if (error) throw error;
-  return (data || []).map(d => {
-    let destinations = [d.destination];
-    if (d.destinations_json) {
-      try { destinations = JSON.parse(d.destinations_json); } catch {}
-    }
-    let assigned_personnel = [d.lead_agent];
-    if (d.assigned_personnel_json) {
-      try { assigned_personnel = JSON.parse(d.assigned_personnel_json); } catch {}
-    }
-    let cleanNotes = d.notes || '';
-    let screenshot = '';
-    const match = cleanNotes.match(/\[SCREENSHOT:([\s\S]*?)\]/);
-    if (match) {
-      screenshot = match[1];
-      cleanNotes = cleanNotes.replace(/\[SCREENSHOT:[\s\S]*?\]/, '').trim();
-    }
-    return { ...d, destinations, assigned_personnel, screenshot, notes: cleanNotes };
-  });
+  return (data || []).map(parseEscortMissionRecord);
 };
 
 export const createEscortMission = async (missionData) => {
   const { data: allMissions } = await supabase.from('escort_missions').select('id');
-  const newId = `ESC-${String((allMissions?.length || 0) + 1).padStart(3, '0')}`;
+  const newId = getNextPrefixedId(allMissions || [], 'ESC-', 3);
 
   const allDests = missionData.destinations?.length ? missionData.destinations : (missionData.destination ? [missionData.destination] : ['Undisclosed']);
   const assignedList = missionData.assigned_personnel?.length ? missionData.assigned_personnel : [missionData.lead_agent || 'Unknown Agent'];
@@ -890,7 +920,7 @@ export const createEscortMission = async (missionData) => {
 
   const { data: inserted, error } = await supabase.from('escort_missions').insert(record).select().single();
   if (error) throw error;
-  return inserted;
+  return parseEscortMissionRecord(inserted);
 };
 
 export const updateEscortStatus = async (id, status, notes = null) => {
@@ -900,7 +930,7 @@ export const updateEscortStatus = async (id, status, notes = null) => {
   }
   const { data, error } = await supabase.from('escort_missions').update(payload).eq('id', id).select().single();
   if (error) throw error;
-  return data;
+  return parseEscortMissionRecord(data);
 };
 
 export const updateEscortMission = async (id, missionData) => {
@@ -934,7 +964,7 @@ export const updateEscortMission = async (id, missionData) => {
 
   const { data, error } = await supabase.from('escort_missions').update(payload).eq('id', id).select().single();
   if (error) throw error;
-  return data;
+  return parseEscortMissionRecord(data);
 };
 
 export const deleteEscortMission = async (id) => {

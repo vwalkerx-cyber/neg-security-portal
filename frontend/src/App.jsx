@@ -570,20 +570,26 @@ export default function App() {
 
   // Escort handlers
   const handleCreateMission = async (data) => {
-    await db.createEscortMission(data);
-    await db.logAuditEvent({
+    const created = await db.createEscortMission(data);
+    if (created) {
+      setEscort((prev) => [created, ...(prev || []).filter((m) => m.id !== created.id)]);
+    }
+    db.logAuditEvent({
       action: 'ESCORT_MISSION_CREATED',
       module: 'escort',
       target: data.principal || 'VIP Detail',
       user: currentUser,
       details: `Initiated escort mission for Principal ${data.principal} (Lead: ${data.lead_agent})`
     }).catch(() => {});
-    await fetchData();
+    fetchData();
   };
 
   const handleEditMission = async (id, data) => {
-    await db.updateEscortMission(id, data);
-    await db.logAuditEvent({
+    const updated = await db.updateEscortMission(id, data);
+    if (updated) {
+      setEscort((prev) => (prev || []).map((m) => (m.id === id ? updated : m)));
+    }
+    db.logAuditEvent({
       action: 'ESCORT_MISSION_UPDATED',
       module: 'escort',
       target: data.principal || id,
@@ -591,7 +597,7 @@ export default function App() {
       details: `Updated convoy details for mission ${id}`
     }).catch(() => {});
     notify(`Escort mission ${id} updated.`);
-    await fetchData();
+    fetchData();
   };
 
   const handleDeleteMission = async (id) => {
@@ -599,8 +605,9 @@ export default function App() {
       notify('Access Denied: Only administrators can delete escort missions.');
       return;
     }
+    setEscort((prev) => (prev || []).filter((m) => m.id !== id));
     await db.deleteEscortMission(id);
-    await db.logAuditEvent({
+    db.logAuditEvent({
       action: 'ESCORT_MISSION_DELETED',
       module: 'escort',
       target: id,
@@ -608,19 +615,23 @@ export default function App() {
       details: `Deleted escort mission ${id}`
     }).catch(() => {});
     notify(`Escort mission ${id} deleted.`);
-    await fetchData();
+    fetchData();
   };
 
   const handleUpdateEscortStatus = async (id, status) => {
-    await db.updateEscortStatus(id, status);
-    await db.logAuditEvent({
+    setEscort((prev) => (prev || []).map((m) => (m.id === id ? { ...m, status } : m)));
+    const updated = await db.updateEscortStatus(id, status);
+    if (updated) {
+      setEscort((prev) => (prev || []).map((m) => (m.id === id ? updated : m)));
+    }
+    db.logAuditEvent({
       action: 'ESCORT_STATUS_UPDATED',
       module: 'escort',
       target: id,
       user: currentUser,
       details: `Updated status of escort ${id} to ${status}`
     }).catch(() => {});
-    await fetchData();
+    fetchData();
   };
 
   // Personnel handlers

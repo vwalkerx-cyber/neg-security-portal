@@ -320,32 +320,99 @@ export default function App() {
 
       initSession();
 
-      // Optimize polling intervals and pause when tab is inactive to prevent CPU/memory spikes
+      // Optimize session integrity check: verify every 60s when active
       const sessionInterval = setInterval(() => {
         if (!document.hidden) {
           verifySession();
         }
-      }, 15000);
+      }, 60000);
 
-      // Operational data refresh every 25s when tab is active
+      // Relax global polling to every 5 minutes (300,000ms) since Supabase Realtime pushes live changes
       const dataInterval = setInterval(() => {
         if (!document.hidden) {
           fetchData();
         }
-      }, 25000);
+      }, 300000);
 
       const handleVisibilityChange = () => {
         if (!document.hidden) {
           verifySession();
-          fetchData();
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
-      // Realtime subscription via Supabase Channels (Improvement #21)
+      // Granular realtime table updater to avoid fetching all 16 tables repeatedly
+      const refreshTable = async (table) => {
+        try {
+          switch (table) {
+            case 'chat_messages': {
+              const res = await db.fetchChatMessages().catch(() => []);
+              setChatMessages(res);
+              if (currentUser?.role === 'ADMIN') {
+                const logs = await db.fetchAuditLogs().catch(() => []);
+                setAuditLogs(logs);
+              }
+              break;
+            }
+            case 'presence': {
+              const res = await db.fetchPresence().catch(() => []);
+              setPresence(res);
+              break;
+            }
+            case 'escort':
+            case 'escort_missions': {
+              const res = await db.fetchEscortMissions().catch(() => []);
+              setEscort(res);
+              break;
+            }
+            case 'personnel': {
+              const res = await db.fetchPersonnel().catch(() => []);
+              setPersonnel(res);
+              break;
+            }
+            case 'payroll': {
+              const res = await db.fetchPayroll().catch(() => []);
+              setPayroll(res);
+              break;
+            }
+            case 'armory': {
+              const res = await db.fetchArmory().catch(() => []);
+              setArmory(res);
+              const depot = await db.fetchDepotStockpiles().catch(() => ({ stockpiles: {}, issued: {} }));
+              setDepotStockpile(depot);
+              break;
+            }
+            case 'infractions': {
+              const res = await db.fetchInfractions(currentUser).catch(() => ({ is_admin_view: false, infractions: [], summaries: [], my_summary: null, catalog: [] }));
+              setInfractionsData(res);
+              break;
+            }
+            case 'resignations':
+            case 'resignation_proposals': {
+              const res = await db.fetchResignations().catch(() => []);
+              setResignations(res);
+              break;
+            }
+            case 'users': {
+              if (currentUser?.role === 'ADMIN') {
+                const res = await db.fetchUsers().catch(() => []);
+                setUsers(res);
+              }
+              break;
+            }
+            default:
+              fetchData();
+              break;
+          }
+        } catch {
+          // fallback
+        }
+      };
+
+      // Realtime subscription via Supabase Channels (Granular Egress-Optimized)
       const unsubscribeRealtime = db.subscribeToRealtimeChanges((table, payload) => {
-        // Fast refresh when any operational table updates in Supabase
-        fetchData();
+        // Refresh only the affected table instead of pulling the entire database
+        refreshTable(table);
 
         // If the current user has ADMIN role, show a live change toast
         if (currentUser?.role === 'ADMIN' && payload) {

@@ -23,6 +23,7 @@ const ITEM_CATALOG = {
     "AP Pistol",
     "Revolver",
     "FN502",
+    "Taser",
     "Tear Gas",
     "Flashbang",
     "Stun Grenade"

@@ -202,7 +202,30 @@ export default function PersonnelView({
     setShowModal(true);
   };
 
-  const openEditModal = (p) => {
+  const [loadingDoc, setLoadingDoc] = useState(false);
+
+  const handleViewImage = async (p, field, title) => {
+    if (p[field]) {
+      setPreviewImageModal({ title, src: p[field] });
+      return;
+    }
+    setLoadingDoc(true);
+    try {
+      const docs = await db.fetchPersonnelDocuments(p.id);
+      if (docs && docs[field]) {
+        p[field] = docs[field]; // Cache locally on the object
+        setPreviewImageModal({ title, src: docs[field] });
+      } else {
+        if (onNotify) onNotify('No document image file has been uploaded for this credential.');
+      }
+    } catch {
+      if (onNotify) onNotify('Failed to retrieve document image.');
+    } finally {
+      setLoadingDoc(false);
+    }
+  };
+
+  const openEditModal = async (p) => {
     if (!isAdmin && !isOwnRecord(p)) {
       if (onNotify) onNotify("Access Denied: You cannot view or edit another officer's credentials.");
       return;
@@ -234,6 +257,23 @@ export default function PersonnelView({
       plate_presidential_limo: p.plate_presidential_limo || '',
     });
     setShowModal(true);
+
+    // If documents are not loaded yet, fetch them on-demand
+    if (!p.id_card_image && !p.driving_license_image && !p.expungement_letter_image) {
+      db.fetchPersonnelDocuments(p.id).then((docs) => {
+        if (docs) {
+          p.id_card_image = docs.id_card_image || '';
+          p.driving_license_image = docs.driving_license_image || '';
+          p.expungement_letter_image = docs.expungement_letter_image || '';
+          setFormData((prev) => ({
+            ...prev,
+            id_card_image: docs.id_card_image || prev.id_card_image,
+            driving_license_image: docs.driving_license_image || prev.driving_license_image,
+            expungement_letter_image: docs.expungement_letter_image || prev.expungement_letter_image,
+          }));
+        }
+      }).catch(() => {});
+    }
   };
 
   const handleFileUpload = (field, e) => {
@@ -1075,10 +1115,11 @@ export default function PersonnelView({
                                 {p.id_card_expiry}
                               </span>
                             )}
-                            {p.id_card_image && (
+                            {(p.id_card_image || p.id_card_number) && (
                               <button
                                 type="button"
-                                onClick={() => setPreviewImageModal({ title: `ID Card Screenshot - ${p.name}`, src: p.id_card_image })}
+                                disabled={loadingDoc}
+                                onClick={() => handleViewImage(p, 'id_card_image', `ID Card Screenshot - ${p.name}`)}
                                 title="View uploaded ID Card screenshot"
                                 style={{
                                   background: 'rgba(56, 189, 248, 0.15)',
@@ -1134,10 +1175,11 @@ export default function PersonnelView({
                                 {p.driving_license_expiry}
                               </span>
                             )}
-                            {p.driving_license_image && (
+                            {(p.driving_license_image || p.driving_license_number) && (
                               <button
                                 type="button"
-                                onClick={() => setPreviewImageModal({ title: `Driving License Screenshot - ${p.name}`, src: p.driving_license_image })}
+                                disabled={loadingDoc}
+                                onClick={() => handleViewImage(p, 'driving_license_image', `Driving License Screenshot - ${p.name}`)}
                                 title="View uploaded Driving License screenshot"
                                 style={{
                                   background: 'rgba(16, 185, 129, 0.15)',
@@ -1193,10 +1235,11 @@ export default function PersonnelView({
                                 {p.expungement_letter_expiry}
                               </span>
                             )}
-                            {p.expungement_letter_image && (
+                            {(p.expungement_letter_image || p.expungement_letter_number) && (
                               <button
                                 type="button"
-                                onClick={() => setPreviewImageModal({ title: `Expungement Letter Screenshot - ${p.name}`, src: p.expungement_letter_image })}
+                                disabled={loadingDoc}
+                                onClick={() => handleViewImage(p, 'expungement_letter_image', `Expungement Letter Screenshot - ${p.name}`)}
                                 title="View uploaded Expungement Letter screenshot"
                                 style={{
                                   background: 'rgba(168, 85, 247, 0.15)',

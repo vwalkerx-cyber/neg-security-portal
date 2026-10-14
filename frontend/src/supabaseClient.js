@@ -289,7 +289,17 @@ const sanitizePersonnelPayload = (rec) => {
 };
 
 export const fetchPersonnel = async () => {
-  const { data, error } = await supabase.from('personnel').select('*').order('id', { ascending: true });
+  // Exclude heavy base64 image fields from list view to dramatically save database egress
+  const columns = [
+    'id', 'name', 'badge_id', 'rank', 'join_date', 'license_certificate',
+    'status', 'division', 'id_card_number', 'id_card_expiry',
+    'driving_license_number', 'driving_license_expiry',
+    'expungement_letter_number', 'expungement_letter_expiry',
+    'plate_riot_van', 'plate_patrol_motorcycle', 'plate_g500',
+    'plate_ioniq_4', 'plate_presidential_limo'
+  ].join(', ');
+
+  const { data, error } = await supabase.from('personnel').select(columns).order('id', { ascending: true });
   if (error) throw error;
   
   // Also fetch users to hydrate phone_number seamlessly for roster display
@@ -308,6 +318,21 @@ export const fetchPersonnel = async () => {
     ...p,
     phone_number: userMap[p.id] || userMap[p.name?.toLowerCase()?.trim()] || ''
   }));
+};
+
+// Fetch heavy document images on-demand only when user specifically opens/views credentials
+export const fetchPersonnelDocuments = async (personnelId) => {
+  if (!personnelId) return null;
+  const { data, error } = await supabase
+    .from('personnel')
+    .select('id, id_card_image, driving_license_image, expungement_letter_image')
+    .eq('id', personnelId)
+    .maybeSingle();
+  if (error) {
+    console.warn('Could not fetch personnel document images:', error);
+    return null;
+  }
+  return data;
 };
 
 export const createPersonnel = async (record) => {
@@ -524,7 +549,8 @@ export const fetchPresence = async () => {
   const { data: presenceRows, error: presError } = await supabase
     .from('presence')
     .select('*')
-    .order('id', { ascending: false });
+    .order('id', { ascending: false })
+    .limit(300);
 
   if (presError) throw presError;
   if (!presenceRows || presenceRows.length === 0) return [];
@@ -606,7 +632,7 @@ export const deletePresence = async (id) => {
 
 // Payroll
 export const fetchPayroll = async () => {
-  const { data, error } = await supabase.from('payroll').select('*').order('id', { ascending: false });
+  const { data, error } = await supabase.from('payroll').select('*').order('id', { ascending: false }).limit(200);
   if (error) throw error;
   return data || [];
 };
@@ -1298,9 +1324,11 @@ export const fetchChatMessages = async () => {
     .from('chat_messages')
     .select('*')
     .neq('channel', 'system-audit')
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (error) throw error;
-  return data || [];
+  // Return in chronological ascending order for display
+  return (data || []).reverse();
 };
 
 export const sendChatMessage = async (msgData) => {

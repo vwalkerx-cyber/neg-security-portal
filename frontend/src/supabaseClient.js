@@ -600,8 +600,25 @@ export const logPresence = async (presenceData) => {
     shift = (!isNaN(hour) && (hour >= 18 || hour < 6)) ? 'Night' : 'Day';
   }
 
+  let presenceId = presenceData.id;
+  if (!presenceId) {
+    const { data: allPresence } = await supabase.from('presence').select('id');
+    const existingIds = new Set((allPresence || []).map(p => String(p.id)));
+    let maxNum = 0;
+    for (const idStr of existingIds) {
+      const parsedNum = parseInt(idStr, 10);
+      if (!isNaN(parsedNum) && parsedNum > maxNum) maxNum = parsedNum;
+    }
+    let nextId = maxNum + 1;
+    while (existingIds.has(String(nextId))) {
+      nextId++;
+    }
+    presenceId = String(nextId);
+  }
+
   const payload = {
     ...presenceData,
+    id: presenceId,
     name: officerName || 'Unknown Officer',
     badge_id: badgeId || '-',
     shift: shift || 'Day',

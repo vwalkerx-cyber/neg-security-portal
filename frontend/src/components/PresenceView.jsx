@@ -131,15 +131,28 @@ export default function PresenceView({
     }
   };
 
-  const filteredRecords = records.filter((r) => {
-    const matchesSearch = 
-      !searchQuery ||
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.shift.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.personnel_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.badge_id && r.badge_id.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
-  });
+  const filteredRecords = records
+    .filter((r) => {
+      const matchesSearch = 
+        !searchQuery ||
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.shift.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.personnel_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.badge_id && r.badge_id.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      // Sort by date descending (newest first)
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateA !== dateB) {
+        return dateB.localeCompare(dateA);
+      }
+      // If same date, sort by time_in descending
+      const timeA = a.time_in || '';
+      const timeB = b.time_in || '';
+      return timeB.localeCompare(timeA);
+    });
 
   const dayCount = records.filter((record) => record.shift === 'Day').length;
   const nightCount = records.filter((record) => record.shift === 'Night').length;

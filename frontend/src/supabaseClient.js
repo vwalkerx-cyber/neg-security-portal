@@ -549,7 +549,8 @@ export const fetchPresence = async () => {
   const { data: presenceRows, error: presError } = await supabase
     .from('presence')
     .select('*')
-    .order('id', { ascending: false })
+    .order('date', { ascending: false })
+    .order('time_in', { ascending: false })
     .limit(300);
 
   if (presError) throw presError;

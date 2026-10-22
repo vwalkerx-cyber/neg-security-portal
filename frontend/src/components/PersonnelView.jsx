@@ -32,6 +32,7 @@ import {
   Flame
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import { compressImageFile } from '../utils/imageCompressor';
 import ConfirmModal from './ConfirmModal';
 
 const getExpiryStatus = (dateStr) => {
@@ -276,7 +277,7 @@ export default function PersonnelView({
     }
   };
 
-  const handleFileUpload = (field, e) => {
+  const handleFileUpload = async (field, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -285,19 +286,32 @@ export default function PersonnelView({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      if (onNotify) onNotify('Image size exceeds 5MB limit.');
+    if (file.size > 10 * 1024 * 1024) {
+      if (onNotify) onNotify('Image size exceeds 10MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    try {
+      const isAvatar = field === 'photo';
+      const compressed = await compressImageFile(file, {
+        maxWidth: isAvatar ? 600 : 1200,
+        maxHeight: isAvatar ? 600 : 1200,
+        quality: 0.72
+      });
       setFormData((prev) => ({
         ...prev,
-        [field]: event.target?.result || '',
+        [field]: compressed,
       }));
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          [field]: event.target?.result || '',
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDelete = (p) => {

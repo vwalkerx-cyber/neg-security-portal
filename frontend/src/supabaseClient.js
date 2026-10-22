@@ -1754,12 +1754,11 @@ export const logAuditEvent = async ({ action, module, target, user, ip, details 
       created_at: getNowIso(),
     };
 
-    const { data, error } = await supabase.from('chat_messages').insert(record).select().single();
+    const { error } = await supabase.from('chat_messages').insert(record);
     if (error) {
-      console.warn('Primary audit log insert returned error, retrying standard insert:', error);
-      await supabase.from('chat_messages').insert(record);
+      console.warn('Failed to dispatch audit log:', error);
     }
-    return data || record;
+    return record;
   } catch (err) {
     console.warn('Failed to dispatch audit log:', err);
     return null;
@@ -1770,10 +1769,10 @@ export const fetchAuditLogs = async () => {
   try {
     const { data, error } = await supabase
       .from('chat_messages')
-      .select('*')
+      .select('id, sender_id, sender_name, sender_rank, sender_avatar, message, channel, created_at')
       .eq('channel', 'system-audit')
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(50);
 
     if (error) throw error;
 
@@ -1849,7 +1848,12 @@ export const subscribeToRealtimeChanges = (onDataChanged) => {
       onDataChanged?.('resignations', payload);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
-      onDataChanged?.('chat_messages', payload);
+      const isAudit = (payload.new?.channel === 'system-audit') || (payload.old?.channel === 'system-audit');
+      if (isAudit) {
+        onDataChanged?.('audit_logs', payload);
+      } else {
+        onDataChanged?.('chat_messages', payload);
+      }
     })
     .subscribe();
 

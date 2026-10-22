@@ -342,15 +342,54 @@ export default function App() {
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
       // Granular realtime table updater to avoid fetching all 16 tables repeatedly
-      const refreshTable = async (table) => {
+      const refreshTable = async (table, payload) => {
         try {
           switch (table) {
             case 'chat_messages': {
-              const res = await db.fetchChatMessages().catch(() => []);
-              setChatMessages(res);
+              if (payload?.eventType === 'INSERT' && payload.new) {
+                setChatMessages((prev) => {
+                  if (prev.some((m) => m.id === payload.new.id)) return prev;
+                  return [...prev, payload.new];
+                });
+              } else {
+                const res = await db.fetchChatMessages().catch(() => []);
+                setChatMessages(res);
+              }
+              break;
+            }
+            case 'audit_logs': {
               if (currentUser?.role === 'ADMIN') {
-                const logs = await db.fetchAuditLogs().catch(() => []);
-                setAuditLogs(logs);
+                if (payload?.eventType === 'INSERT' && payload.new) {
+                  let parsed = null;
+                  try {
+                    parsed = JSON.parse(payload.new.message);
+                  } catch {
+                    parsed = {
+                      action: 'RECORD_MODIFIED',
+                      module: 'system',
+                      target: payload.new.sender_name || 'System',
+                      details: payload.new.message,
+                      ip_address: payload.new.sender_avatar || 'Unknown IP'
+                    };
+                  }
+                  const newAudit = {
+                    id: payload.new.id,
+                    created_at: payload.new.created_at,
+                    sender_id: payload.new.sender_id,
+                    sender_name: payload.new.sender_name,
+                    sender_rank: payload.new.sender_rank,
+                    ip_address: parsed?.ip_address || payload.new.sender_avatar || 'Unknown IP',
+                    action: parsed?.action || 'UPDATED',
+                    module: parsed?.module || 'system',
+                    target: parsed?.target || 'System',
+                    details: parsed?.details || '',
+                    raw: payload.new
+                  };
+                  setAuditLogs((prev) => [newAudit, ...prev.filter((l) => l.id !== newAudit.id).slice(0, 49)]);
+                } else {
+                  const logs = await db.fetchAuditLogs().catch(() => []);
+                  setAuditLogs(logs);
+                }
               }
               break;
             }
@@ -412,10 +451,13 @@ export default function App() {
       // Realtime subscription via Supabase Channels (Granular Egress-Optimized)
       const unsubscribeRealtime = db.subscribeToRealtimeChanges((table, payload) => {
         // Refresh only the affected table instead of pulling the entire database
-        refreshTable(table);
+        refreshTable(table, payload);
 
         // If the current user has ADMIN role, show a live change toast
         if (currentUser?.role === 'ADMIN' && payload) {
+          // Suppress toasts for background audit logs
+          if (table === 'audit_logs') return;
+
           const eventType = payload.eventType || 'UPDATE';
           const rec = payload.new || payload.old || {};
           const label = rec.name || rec.title || rec.item || rec.lead_agent || rec.proposal_number || rec.username || rec.id || 'Record';

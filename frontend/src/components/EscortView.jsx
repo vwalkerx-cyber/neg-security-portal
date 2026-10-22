@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { canExportGeneralCsv } from '../utils/permissions';
+import { compressImageFile } from '../utils/imageCompressor';
 import ConfirmModal from './ConfirmModal';
 import EmptyState from './EmptyState';
 
@@ -296,7 +297,7 @@ export default function EscortView({
     setShowModal(true);
   };
 
-  const handleScreenshotUpload = (e) => {
+  const handleScreenshotUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -305,19 +306,31 @@ export default function EscortView({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      if (onNotify) onNotify('Screenshot exceeds 5MB limit.');
+    if (file.size > 10 * 1024 * 1024) {
+      if (onNotify) onNotify('Screenshot exceeds 10MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    try {
+      const compressed = await compressImageFile(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.72
+      });
       setFormData((prev) => ({
         ...prev,
-        screenshot: event.target?.result || '',
+        screenshot: compressed,
       }));
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          screenshot: event.target?.result || '',
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLeadChange = (newLeadId) => {

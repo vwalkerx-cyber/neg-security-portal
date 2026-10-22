@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import * as db from '../supabaseClient';
+import { compressImageFile } from '../utils/imageCompressor';
 import { 
   User, 
   KeyRound, 
@@ -117,17 +118,27 @@ export default function LoginView({ onLoginSuccess, initialTab = 'login', onTabC
     }
   };
 
-  const handleImageUpload = (field, file) => {
+  const handleImageUpload = async (field, file) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("File size exceeds 2MB limit. Please upload an optimized image.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size exceeds 10MB limit.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setRegData(prev => ({ ...prev, [field]: e.target.result }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const isAvatar = field === 'photo';
+      const compressed = await compressImageFile(file, {
+        maxWidth: isAvatar ? 600 : 1200,
+        maxHeight: isAvatar ? 600 : 1200,
+        quality: 0.72
+      });
+      setRegData(prev => ({ ...prev, [field]: compressed }));
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setRegData(prev => ({ ...prev, [field]: e.target.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleRegisterSubmit = async (e) => {

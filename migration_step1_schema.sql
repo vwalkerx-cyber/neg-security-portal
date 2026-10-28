@@ -1,11 +1,9 @@
 -- =========================================================================
--- STEP 1: SCHEMA, TABLES, EXTENSIONS, REALTIME & RLS SETUP
--- Paste into Supabase SQL Editor and click RUN.
+-- STEP 1 (PERFECT SCHEMA): EXACT DATABASE DEFINITIONS
 -- =========================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing if needed
 DROP TABLE IF EXISTS public.hierarchy_state CASCADE;
 DROP TABLE IF EXISTS public.disciplinary_letters CASCADE;
 DROP TABLE IF EXISTS public.reinstatement_requests CASCADE;
@@ -27,15 +25,20 @@ CREATE TABLE public.users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   password TEXT,
-  name TEXT,
-  role TEXT DEFAULT 'OFFICER',
-  badge_id TEXT,
-  rank TEXT DEFAULT 'Officer I',
   personnel_id TEXT,
+  name TEXT,
+  rank TEXT DEFAULT 'Officer I',
+  role TEXT DEFAULT 'OFFICER',
   status TEXT DEFAULT 'Active',
   division TEXT,
+  badge_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by TEXT,
+  last_login TIMESTAMPTZ,
+  discord_id TEXT,
   discord_username TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  discord_avatar TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 2. PERSONNEL
@@ -51,12 +54,12 @@ CREATE TABLE public.personnel (
   phone_number TEXT,
   id_card_number TEXT,
   id_card_expiry TEXT,
-  id_card_image TEXT,
   driving_license_number TEXT,
   driving_license_expiry TEXT,
-  driving_license_image TEXT,
   expungement_letter_number TEXT,
   expungement_letter_expiry TEXT,
+  id_card_image TEXT,
+  driving_license_image TEXT,
   expungement_letter_image TEXT,
   plate_riot_van TEXT,
   plate_patrol_motorcycle TEXT,
@@ -71,12 +74,16 @@ CREATE TABLE public.presence (
   id TEXT PRIMARY KEY,
   date TEXT NOT NULL,
   shift TEXT,
+  personnel_id TEXT,
   name TEXT NOT NULL,
   badge_id TEXT,
+  rank TEXT,
+  division TEXT,
   time_in TEXT,
   time_out TEXT,
   duration TEXT,
   escort_count INTEGER DEFAULT 0,
+  status TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -84,41 +91,40 @@ CREATE TABLE public.presence (
 -- 4. PAYROLL
 CREATE TABLE public.payroll (
   id TEXT PRIMARY KEY,
+  personnel_id TEXT,
   name TEXT NOT NULL,
   rank TEXT,
   salary NUMERIC DEFAULT 0,
   salary_date TEXT,
   week_number INTEGER,
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 5. ARMORY
 CREATE TABLE public.armory (
   id TEXT PRIMARY KEY,
+  restock_date TEXT,
+  name TEXT,
+  item_type TEXT,
   item TEXT NOT NULL,
-  category TEXT,
   serial_number TEXT,
-  allocated_to TEXT,
-  status TEXT DEFAULT 'Available',
-  condition TEXT DEFAULT 'Operational',
   quantity INTEGER DEFAULT 1,
-  ammo_allocated TEXT,
+  condition TEXT DEFAULT 'Operational',
+  status TEXT DEFAULT 'Available',
+  assigned_to TEXT,
   issue_date TEXT,
-  return_date TEXT,
+  expected_return TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 6. DEPOT STOCKPILES
 CREATE TABLE public.depot_stockpiles (
-  id TEXT PRIMARY KEY,
-  item_key TEXT UNIQUE NOT NULL,
-  item_name TEXT NOT NULL,
-  category TEXT,
-  stockpile INTEGER DEFAULT 0,
-  issued INTEGER DEFAULT 0,
-  unit TEXT DEFAULT 'units',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  item_type TEXT NOT NULL,
+  item TEXT NOT NULL,
+  stock INTEGER DEFAULT 0,
+  PRIMARY KEY (item_type, item)
 );
 
 -- 7. ESCORT MISSIONS
@@ -145,12 +151,17 @@ CREATE TABLE public.escort_missions (
 -- 8. DEPARTMENT VEHICLES
 CREATE TABLE public.department_vehicles (
   id TEXT PRIMARY KEY,
-  model_name TEXT NOT NULL,
+  vehicle_name TEXT NOT NULL,
+  vehicle_type TEXT,
   plate_number TEXT UNIQUE NOT NULL,
-  assigned_to TEXT,
-  assigned_officer_id TEXT,
+  assigned_to_id TEXT,
+  assigned_to_name TEXT,
+  assigned_to_rank TEXT,
   status TEXT DEFAULT 'Available',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  assigned_date TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 9. TRAINING & CERTIFICATIONS
@@ -220,21 +231,29 @@ CREATE TABLE public.reinstatement_requests (
 CREATE TABLE public.disciplinary_letters (
   id TEXT PRIMARY KEY,
   letter_number TEXT UNIQUE,
-  recipient_id TEXT,
-  recipient_name TEXT,
-  recipient_badge TEXT,
-  recipient_rank TEXT,
   letter_type TEXT,
-  content TEXT,
-  issued_by TEXT,
-  issued_at TIMESTAMPTZ DEFAULT NOW()
+  personnel_id TEXT,
+  recipient_name TEXT,
+  badge_id TEXT,
+  rank TEXT,
+  issue_date TEXT,
+  effective_date TEXT,
+  violation_category TEXT,
+  severity TEXT,
+  incident_summary TEXT,
+  sanctions TEXT,
+  authorized_by TEXT,
+  status TEXT DEFAULT 'Active',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 15. HIERARCHY STATE
 CREATE TABLE public.hierarchy_state (
   id TEXT PRIMARY KEY,
-  state_json TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  tree_data JSONB,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_by TEXT
 );
 
 -- REALTIME CONFIGURATION
@@ -248,7 +267,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.infractions;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.resignation_proposals;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 
--- DISABLE RLS FOR SEAMLESS APPLICATION ACCESS
+-- DISABLE RLS FOR APPLICATION ACCESS
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.personnel DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.presence DISABLE ROW LEVEL SECURITY;
